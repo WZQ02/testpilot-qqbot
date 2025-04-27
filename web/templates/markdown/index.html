@@ -1,0 +1,36 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="css/markdown/index.css" id="skin">
+</head>
+<body>
+<div id="container">
+    <div id="mdcontent"></div>
+    <div id="mdraw" style="display:none;"><!-- Markdown Content --></div>
+</div>
+<script src="https://d.wzq02.top/scripts/3rdparty/marked.min.js"></script>
+<script>
+    let mdc_show = document.getElementById("mdcontent");
+    function rendermd(mdc) {
+        mdc_show.innerHTML = marked.parse(mdc);
+        for (i=0; i<127; i++) {
+            if (mdc_show.childNodes[i]) {
+                if (typeof(mdc_show.childNodes[i].childNodes[0]) == "object") {
+                    if (mdc_show.childNodes[i].childNodes[0].alt) {
+                        var alt_text = document.createElement("p");
+                        alt_text.innerText = mdc_show.childNodes[i].childNodes[0].alt;
+                        alt_text.style = "opacity: 0.75; text-align: center";
+                        mdc_show.childNodes[i].appendChild(alt_text);
+                    }
+                }
+            } else {
+                break;
+            }
+        }
+    }
+    rendermd(document.getElementById("mdraw").innerHTML)
+</script>
+</body>
+</html>

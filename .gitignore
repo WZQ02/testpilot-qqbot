@@ -1,0 +1,13 @@
+*.pyc
+__pycache__
+
+images/qrcode/*
+images/img_ccb/temp/*
+webss/1.png
+
+video/temp/*
+json/ds_quotes.json
+json/user_list.json
+json/tag_list.json
+json/nm_list.json
+json/backup

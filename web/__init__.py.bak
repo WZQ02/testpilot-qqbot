@@ -1,0 +1,24 @@
+# A flask web server.
+from flask import Flask
+import asyncio
+
+app = Flask(__name__)
+
+content = ""
+def content_init():
+    file = open("web/templates/wel.html","r",encoding="utf-8")
+    global content
+    content = file.read()
+    file.close()
+content_init()
+
+@app.route('/')
+async def main():
+    return content
+
+def change_content(con):
+    global content
+    content = con
+
+def run():
+    app.run(port=8104)
