@@ -8,8 +8,12 @@ import json
 import math
 import web, webss
 
+akfile = open("json/oa_api_key.json","r",encoding="utf-8")
+ak = json.loads(akfile.read())["key"]
+akfile.close()
+
 from openai import AsyncOpenAI
-client = AsyncOpenAI(api_key="sk-0fc94c15a3fe40ae9244396045d9ff17", base_url="https://api.deepseek.com")
+client = AsyncOpenAI(api_key=ak, base_url="https://api.deepseek.com")
 
 # 初始化语句和全局变量
 msg_init = {"role": "system", "content": "你是一个名叫testpilot的群聊机器人，致力于帮群友解决问题。"}
@@ -52,7 +56,7 @@ async def chat(dialogue):
     writeback()
     return remsg.content
 
-ads = on_command("ds", aliases={"深度求索","AI","actualdeepseek","真正的deepseek"}, priority=10, block=True)
+ads = on_command("ds", aliases={"深度求索","AI","actualdeepseek","deepseek","dick"}, priority=10, block=True)
 @ads.handle()
 async def handle_function(args: Message = CommandArg()):
     if not feature_manager.get("deepseek"):

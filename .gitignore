@@ -7,7 +7,6 @@ webss/1.png
 
 video/temp/*
 
-json/ds_quotes.json
-json/user_list.json
-json/tag_list.json
-json/nm_list.json
+json/*.json
+!json/expl_list.json
+!json/fea_list.json

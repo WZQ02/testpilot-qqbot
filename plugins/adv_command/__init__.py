@@ -108,6 +108,28 @@ async def handle_function(args: Message = CommandArg(),event: Event = Event):
         await fea4.finish(resp)
     else:
         raise FinishedException
+    
+fea5 = on_command("preset", aliases={"功能预设"}, priority=10, block=True)
+@fea5.handle()
+async def handle_function(args: Message = CommandArg(),event: Event = Event):
+    if privilege_manager.checkuser(event.get_user_id()):
+        ps_name = args.extract_plain_text()
+        res = "已启用预设："+ps_name
+        if ps_name == "enableall":
+            feature_manager.import_fea_list("{\"actualhelp\":1,\"autorepeat\":1,\"ccb\":1,\"cmd\":1,\"deepseek\":1,\"echo\":1,\"echocq\":1,\"explain\":1,\"flipoff\":1,\"help\":1,\"meme_resp\":1,\"meme_resp_laicai\":1,\"meme_resp_mai\":1,\"meme_resp_mygo\":1,\"meme_resp_sex\":1,\"ping\":1,\"poem\":1,\"poke\":1,\"qrcode\":1,\"rand_num\":1,\"rand_pic\":1,\"randomcs\":1,\"rendermd\":1,\"repeat\":1,\"revoke\":1,\"tag_1\":1,\"tag_2\":1,\"targetsend\":1,\"video_web\":1,\"webss\":1,\"wzs\":1}")
+        elif ps_name == "disableall":
+            feature_manager.import_fea_list("{\"actualhelp\":0,\"autorepeat\":0,\"ccb\":0,\"cmd\":0,\"deepseek\":0,\"echo\":0,\"echocq\":0,\"explain\":0,\"flipoff\":0,\"help\":0,\"meme_resp\":0,\"meme_resp_laicai\":0,\"meme_resp_mai\":0,\"meme_resp_mygo\":0,\"meme_resp_sex\":0,\"ping\":0,\"poem\":0,\"poke\":0,\"qrcode\":0,\"rand_num\":0,\"rand_pic\":0,\"randomcs\":0,\"rendermd\":0,\"repeat\":0,\"revoke\":0,\"tag_0\":0,\"tag_2\":0,\"targetsend\":0,\"video_web\":0,\"webss\":0,\"wzs\":0}")
+        elif ps_name == "nomeme":
+            feature_manager.import_fea_list("{\"meme_resp\":0,\"meme_resp_laicai\":0,\"meme_resp_mai\":0,\"meme_resp_mygo\":0,\"meme_resp_sex\":0}")
+        elif ps_name == "passive":
+            feature_manager.import_fea_list("{\"actualhelp\":1,\"autorepeat\":1,\"ccb\":1,\"cmd\":1,\"deepseek\":1,\"echo\":1,\"echocq\":1,\"explain\":1,\"flipoff\":1,\"help\":1,\"meme_resp\":0,\"meme_resp_laicai\":0,\"meme_resp_mai\":0,\"meme_resp_mygo\":0,\"meme_resp_sex\":0,\"ping\":1,\"poem\":1,\"poke\":1,\"qrcode\":1,\"rand_num\":1,\"rand_pic\":1,\"randomcs\":1,\"rendermd\":1,\"repeat\":1,\"revoke\":1,\"tag_1\":1,\"tag_2\":1,\"targetsend\":1,\"video_web\":1,\"webss\":1,\"wzs\":1}")
+        elif ps_name == "justtool":
+            feature_manager.import_fea_list("{\"actualhelp\":1,\"autorepeat\":0,\"ccb\":0,\"cmd\":1,\"deepseek\":1,\"echo\":1,\"echocq\":1,\"explain\":1,\"flipoff\":0,\"help\":0,\"meme_resp\":0,\"meme_resp_laicai\":0,\"meme_resp_mai\":0,\"meme_resp_mygo\":0,\"meme_resp_sex\":0,\"ping\":1,\"poem\":0,\"poke\":0,\"qrcode\":1,\"rand_num\":1,\"rand_pic\":0,\"randomcs\":0,\"rendermd\":1,\"repeat\":0,\"revoke\":1,\"tag_1\":1,\"tag_2\":1,\"targetsend\":1,\"video_web\":1,\"webss\":1,\"wzs\":1}")
+        else:
+            res = "未找到指定的预设。可用的预设有：enableall（启用全部功能）、disableall（禁用全部功能）、nomeme（关键词不回应）、passive（被动模式）、justtool（工具模式）"
+        await fea5.finish(res)
+    else:
+        raise FinishedException
 
 addadmin = on_command("addadmin", aliases={"添加管理员","admin","adduser"}, priority=10, block=True)
 @addadmin.handle()

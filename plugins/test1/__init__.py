@@ -48,7 +48,22 @@ yes = on_command("是", aliases={"yes"}, priority=10, block=True)
 async def handle_function():
     if not feature_manager.get("meme_resp"):
         raise FinishedException
-    await yes.finish(Message('[CQ:image,file=file:///W:/soft/web_svr/testpilot_qqbot/images/xg_yes.png,sub_type=1]'))
+    rd = random.random()
+    if rd < .5:
+        await yes.finish(Message('[CQ:image,file=file:///W:/soft/web_svr/testpilot_qqbot/images/xg_yes.png,sub_type=1]'))
+    else:
+        await yes.finish("是")
+
+yes = on_command("不是", aliases={"no","否"}, priority=10, block=True)
+@yes.handle()
+async def handle_function():
+    if not feature_manager.get("meme_resp"):
+        raise FinishedException
+    rd = random.random()
+    if rd < .5:
+        await yes.finish(Message('[CQ:image,file=file:///W:/soft/web_svr/testpilot_qqbot/images/xg_no.png,sub_type=1]'))
+    else:
+        await yes.finish(Message('[CQ:image,file=file:///W:/soft/web_svr/testpilot_qqbot/images/xg_no2.png,sub_type=1]'))
 
 setu = on_keyword(["setu","色图","黄图","涩图","好涩","好色","🐍","打飞机","撸管","操逼","屄","操大逼","槽壁","草比"], priority=10, block=True)
 @setu.handle()
@@ -192,7 +207,10 @@ help = on_command("help", rule=to_me(), aliases={"帮助"}, priority=10, block=T
 @help.handle()
 async def handle_function():
     if not feature_manager.get("help"):
-        raise FinishedException
+        if not feature_manager.get("actualhelp"):
+            raise FinishedException
+        else:
+            await help.finish("请输入 /actualhelp 指令获取帮助哦！")
     rd = random.random()
     msg = ""
     if rd < .33:
@@ -203,6 +221,7 @@ async def handle_function():
         msg = "求人难，求己易，自立更生最实际。"
     await help.finish(msg)
 
+"""
 fds = on_command("deepseek", priority=10, block=True)
 @fds.handle()
 async def handle_function():
@@ -210,6 +229,7 @@ async def handle_function():
         raise FinishedException
     await asyncio.sleep(3)
     await fds.finish("服务器繁忙，请稍后再试。")
+"""
 
 flipof = on_keyword(["你是","机器人","人机","谁啊","没素质","傻逼","sb","妈","赤石","谁家","杂鱼","低能","吃屎","弱智","操","草你","滚","去死","一边去"], rule=to_me(), priority=10, block=True)
 @flipof.handle()
