@@ -2,6 +2,8 @@
 __pycache__
 
 images/qrcode/*
+images/xkcd/*
+images/pix/temp/*
 images/img_ccb/temp/*
 webss/1.png
 

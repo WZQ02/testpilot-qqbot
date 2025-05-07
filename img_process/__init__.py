@@ -1,9 +1,18 @@
 import requests
+from bs4 import BeautifulSoup
 from io import BytesIO
 
 import tkinter as tk
 from tkinter import Canvas
 from PIL import Image, ImageTk, ImageDraw
+import json
+import feature_manager
+
+from pixivpy3 import AppPixivAPI
+
+tkfile = open("json/tokens.json","r",encoding="utf-8")
+pix_rt = json.loads(tkfile.read())["pixiv_refresh_token"]
+tkfile.close()
 
 def download_img(url,path):
     resp = requests.get(url)
@@ -49,3 +58,34 @@ def canvas_to_image(canvas):
     image = Image.open(BytesIO(bytes(eps,'ascii')))
     return image
 
+def getrandomxkcdlink(num):
+    url = "https://c.xkcd.com/random/comic/"
+    if num:
+        url = "https://xkcd.com/"+str(num)
+    res = requests.get(url)
+    con = res.text
+    soup = BeautifulSoup(con, "lxml")
+    for i in soup.find_all("div"):
+        if i.get("id") == "comic":
+            return i.find_all("img")[0].get("src")
+        
+def getpixivimg(pid):
+    papi = AppPixivAPI()
+    papi.auth(refresh_token=pix_rt)
+    detail = papi.illust_detail(pid)
+    # 没有获取到图片
+    if detail.illust == None:
+        print(detail)
+        return 1
+    # r18
+    if detail.illust.sanity_level > 5 and not feature_manager.get("pixiv-r18"):
+        return 2
+    url = detail.illust.image_urls.large
+    if detail.illust.meta_single_page != None and detail.illust.meta_single_page.original_image_url != None:
+        url = detail.illust.meta_single_page.original_image_url
+    # fmt = str.split(url,".")[-1]
+    fnm = str.split(url,"/")[-1]
+    papi.download(url, path="images/pix/temp/", fname=fnm)
+    path = "images/pix/temp/"+fnm
+    return path
+    

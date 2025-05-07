@@ -105,7 +105,7 @@ async def handle_function():
         raise FinishedException
     await mygo.finish("还在go还在go")
 
-choslif = on_keyword(["牯岭街","袁正","choose life","人生","虚无主义","犬儒"], priority=10, block=True)
+choslif = on_keyword(["牯岭街","袁正","choose life","虚无主义","犬儒"], priority=10, block=True)
 @choslif.handle()
 async def handle_function():
     if not feature_manager.get("meme_resp"):
