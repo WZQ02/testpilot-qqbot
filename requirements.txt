@@ -1,0 +1,11 @@
+beautifulsoup4==4.13.4
+chardet==5.2.0
+httpx==0.28.1
+nonebot2==2.4.2
+openai==1.77.0
+Pillow==11.2.1
+pixivpy3==3.7.5
+pyzbar==0.1.9
+Requests==2.32.3
+selenium==4.32.0
+webdriver_manager==4.0.2

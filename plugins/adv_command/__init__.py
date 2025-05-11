@@ -24,7 +24,7 @@ async def handle_function(args: Message = CommandArg(),event: Event = Event):
         raise FinishedException
 
 # 定向发送（至群聊）
-tar_send = on_command("send", aliases={"targetsend","定向发送","snd","sendcq"}, priority=10, block=True)
+tar_send = on_command("send", aliases={"targetsend","定向发送","snd","sendcq","隔空传话"}, priority=10, block=True)
 @tar_send.handle()
 async def handle_function(args: Message = CommandArg(),event: Event = Event):
     # 改为所有人可用
@@ -34,7 +34,7 @@ async def handle_function(args: Message = CommandArg(),event: Event = Event):
             grnum = data[0]
             data.remove(data[0])
             target = TargetQQGroup(group_id=int(grnum))
-            await MessageFactory(data).send_to(target=target)
+            await MessageFactory(" ".join(data)).send_to(target=target)
             raise FinishedException
         else:
             await tar_send.finish("参数错误。使用方法：/send [群号] [文本内容]")

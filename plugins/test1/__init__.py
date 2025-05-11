@@ -50,7 +50,7 @@ async def handle_function():
         raise FinishedException
     rd = random.random()
     if rd < .5:
-        await yes.finish(Message('[CQ:image,file=file:///W:/soft/web_svr/testpilot_qqbot/images/xg_yes.png,sub_type=1]'))
+        await yes.finish(Message('[CQ:image,file=file:///W:/soft/web_svr/testpilot_qqbot/images/xg_yes.png,sub_type=1,summary=是]'))
     else:
         await yes.finish("是")
 
@@ -61,9 +61,9 @@ async def handle_function():
         raise FinishedException
     rd = random.random()
     if rd < .5:
-        await yes.finish(Message('[CQ:image,file=file:///W:/soft/web_svr/testpilot_qqbot/images/xg_no.png,sub_type=1]'))
+        await yes.finish(Message('[CQ:image,file=file:///W:/soft/web_svr/testpilot_qqbot/images/xg_no.png,sub_type=1,summary=不是]'))
     else:
-        await yes.finish(Message('[CQ:image,file=file:///W:/soft/web_svr/testpilot_qqbot/images/xg_no2.png,sub_type=1]'))
+        await yes.finish(Message('[CQ:image,file=file:///W:/soft/web_svr/testpilot_qqbot/images/xg_no2.png,sub_type=1,summary=不是]'))
 
 setu = on_keyword(["setu","色图","黄图","涩图","好涩","好色","🐍","打飞机","撸管","操逼","屄","操大逼","槽壁","草比"], priority=10, block=True)
 @setu.handle()

@@ -14,8 +14,9 @@ async def handle_function(args: Message = CommandArg()):
     ag = args.extract_plain_text()
     if str.isdigit(ag) and int(ag) >= 1:
         num = int(ag)
-    img_process.download_img("https:"+img_process.getrandomxkcdlink(num),"images/xkcd/1.png")
-    await xkcd.finish(Message('[CQ:image,file=file:///W:/soft/web_svr/testpilot_qqbot/images/xkcd/1.png]'))
+    xkdata = img_process.getrandomxkcdlink(num)
+    img_process.download_img("https:"+xkdata["url"],"images/xkcd/"+xkdata["id"]+".png")
+    await xkcd.finish(Message('[CQ:image,file=file:///W:/soft/web_svr/testpilot_qqbot/images/xkcd/'+xkdata["id"]+'.png,summary=&#91;xkcd:'+xkdata["id"]+'&#93;]'+xkdata["title"]))
 
 pix = on_command("pix", aliases={"p站图片","p站插图"}, priority=10, block=True)
 @pix.handle()

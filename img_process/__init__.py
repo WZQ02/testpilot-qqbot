@@ -65,9 +65,17 @@ def getrandomxkcdlink(num):
     res = requests.get(url)
     con = res.text
     soup = BeautifulSoup(con, "lxml")
+    imgur = ""
+    title = ""
+    id = 0
     for i in soup.find_all("div"):
         if i.get("id") == "comic":
-            return i.find_all("img")[0].get("src")
+            imgur = i.find_all("img")[0].get("src")
+            title = i.find_all("img")[0].get("title")
+    for i in soup.find_all("meta"):
+        if i.get("property") == "og:url":
+            id = i.get("content").split("/")[-2]
+    return {"url":imgur,"id":id,"title":title}
         
 def getpixivimg(pid):
     papi = AppPixivAPI()
