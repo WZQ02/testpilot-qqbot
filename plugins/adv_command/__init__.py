@@ -1,6 +1,7 @@
 # 高级指令（只能被 wzq2002 [2975499623] 触发）
 from nonebot import on_command
 from nonebot.params import CommandArg
+from nonebot import get_bot
 from nonebot.adapters.onebot.v11 import Message, Event
 from nonebot.exception import FinishedException
 import asyncio
@@ -199,3 +200,22 @@ async def handle_function(args: Message = CommandArg(),event: Event = Event):
     if privilege_manager.checkuser(event.get_user_id()) == 2:
         eval(args.extract_plain_text())
     raise FinishedException
+
+# 广播（发送至bot所在所有群聊）
+broad = on_command("sendall", aliases={"broadcast","广播"}, priority=10, block=True)
+@broad.handle()
+async def handle_function(args: Message = CommandArg(),event: Event = Event):
+    if privilege_manager.checkuser(event.get_user_id()) and feature_manager.get("targetsend"):
+        bot = get_bot()
+        gr_list = await bot.get_group_list()
+        if len(args) > 0:
+            for i in gr_list:
+                target = TargetQQGroup(group_id=int(i["group_id"]))
+                try:
+                    await MessageFactory(args.extract_plain_text()).send_to(target=target)
+                except Exception as e:
+                    print(e)
+                # asyncio.sleep(.2)
+        raise FinishedException
+    else:
+        raise FinishedException

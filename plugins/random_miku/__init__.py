@@ -33,7 +33,7 @@ mieru = on_command("随机美瑠", aliases={"随机mieru","mieru","loulou","楼�
 async def handle_function():
     if not feature_manager.get("rand_pic"):
         raise FinishedException
-    rd = str(math.ceil(random.random()*14))
+    rd = str(math.ceil(random.random()*15))
     await mieru.finish(Message('[CQ:image,file=file:///W:/soft/web_svr/testpilot_qqbot/images/mieru/'+rd+'.jpg,sub_type=1,summary=&#91;美瑠&#93;]'))
 
 bocchi = on_command("随机bocchi", aliases={"bocchi","随机波奇","波奇","孤独摇滚","ぼっち"}, priority=10, block=True)

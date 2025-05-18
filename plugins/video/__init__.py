@@ -11,7 +11,7 @@ import random
 vid_path = "W:/soft/web_svr/testpilot_qqbot/video/temp/video.mp4"
 vid_ongoing_state = 0
 
-bilivid = on_command("bili", aliases={"视频","b站视频","video","sp"}, priority=10, block=True)
+bilivid = on_command("bili", aliases={"bilibili","视频","b站视频","video","sp"}, priority=10, block=True)
 @bilivid.handle()
 async def handle_function(args: Message = CommandArg(),event: Event = Event):
     if feature_manager.get("video_web"):
