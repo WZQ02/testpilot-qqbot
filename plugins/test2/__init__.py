@@ -3,6 +3,7 @@ from nonebot.params import CommandArg
 from nonebot.adapters.onebot.v11 import Message
 from nonebot.exception import FinishedException
 import feature_manager
+import path_manager
 import web
 import webss
 
@@ -29,4 +30,4 @@ async def handle_function(args: Message = CommandArg()):
         # await test2.finish(f"{args.extract_plain_text()}，我给你踩背来咯！")
         web.content_md(args.extract_plain_text())
         webss.take2("http://localhost:8104","container")
-        await rendermd.finish(Message('[CQ:image,file=file:///W:/soft/web_svr/testpilot_qqbot/webss/1.png]'))
+        await rendermd.finish(Message('[CQ:image,file=file:///'+path_manager.bf_path()+'webss/1.png]'))

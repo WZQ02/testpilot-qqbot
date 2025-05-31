@@ -4,6 +4,7 @@ from nonebot.adapters.onebot.v11 import Message, Event
 from nonebot.exception import FinishedException
 import feature_manager
 import privilege_manager
+import path_manager
 import json
 import math
 import web, webss
@@ -98,4 +99,4 @@ async def handle_function(args: Message = CommandArg()):
         raise FinishedException
     web.content_md(await chat(args.extract_plain_text()))
     webss.take2("http://localhost:8104","container")
-    await dsmd.finish(Message('[CQ:image,file=file:///W:/soft/web_svr/testpilot_qqbot/webss/1.png]'))
+    await dsmd.finish(Message('[CQ:image,file=file:///'+path_manager.bf_path()+'webss/1.png]'))

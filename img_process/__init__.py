@@ -7,6 +7,7 @@ from tkinter import Canvas
 from PIL import Image, ImageTk, ImageDraw
 import json
 import feature_manager
+import path_manager
 
 from pixivpy3 import AppPixivAPI
 
@@ -42,7 +43,7 @@ def gen_ccb_img():
     ccbimg = canvas.create_image(334, 280, image=ccb2, anchor='center')
     canvas.update()
     image = canvas_to_image(canvas)
-    image.save("w:/soft/web_svr/testpilot_qqbot/images/img_ccb/temp/result.png", "png")
+    image.save(path_manager.nb_path()+"images/img_ccb/temp/result.png", "png")
     root.destroy()
 
 def canvas_to_image(canvas):

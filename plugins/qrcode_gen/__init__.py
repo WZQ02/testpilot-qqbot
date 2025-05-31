@@ -6,6 +6,7 @@ from nonebot.params import CommandArg
 from nonebot.exception import FinishedException
 import feature_manager
 import img_process
+import path_manager
 from PIL import Image
 
 def genqr(data):
@@ -40,4 +41,4 @@ async def handle_function(args: Message = CommandArg()):
     # 二维码生成
     else:
         genqr(args.extract_plain_text())
-        await gqrc.finish(Message('[CQ:image,file=file:///W:/soft/web_svr/testpilot_qqbot/images/qrcode/1.png]'))
+        await gqrc.finish(Message('[CQ:image,file=file:///'+path_manager.bf_path()+'images/qrcode/1.png]'))

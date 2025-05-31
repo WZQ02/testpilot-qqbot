@@ -11,6 +11,7 @@ import webss
 import web
 import privilege_manager
 import os
+import path_manager
 
 from nonebot_plugin_saa import MessageFactory, TargetQQGroup
 from nonebot_plugin_saa import enable_auto_select_bot
@@ -68,7 +69,7 @@ webscrnshot = on_command("webss", aliases={"网页截图"}, priority=10, block=T
 async def handle_function(args: Message = CommandArg(),event: Event = Event):
     if privilege_manager.checkuser(event.get_user_id()) and feature_manager.get("webss"):
         webss.take(args.extract_plain_text())
-        await webscrnshot.finish(Message('[CQ:image,file=file:///W:/soft/web_svr/testpilot_qqbot/webss/1.png]'))
+        await webscrnshot.finish(Message('[CQ:image,file=file:///'+path_manager.bf_path()+'webss/1.png]'))
     else:
         raise FinishedException
 
@@ -79,7 +80,7 @@ async def handle_function(event: Event):
         await fea1.finish(feature_manager.get_all_features())
         #web.content_text(feature_manager.get_all_features())
         #webss.take2("http://localhost:8104","container")
-        #await fea1.finish(Message('[CQ:image,file=file:///W:/soft/web_svr/testpilot_qqbot/webss/1.png]'))
+        #await fea1.finish(Message('[CQ:image,file=file:///'+path_manager.bf_path()+'webss/1.png]'))
     else:
         raise FinishedException
     
@@ -119,7 +120,7 @@ async def handle_function(args: Message = CommandArg(),event: Event = Event):
         if ps_name == "enableall":
             feature_manager.import_fea_list("{\"actualhelp\":1,\"autorepeat\":1,\"ccb\":1,\"cmd\":1,\"deepseek\":1,\"echo\":1,\"echocq\":1,\"explain\":1,\"flipoff\":1,\"help\":1,\"meme_resp\":1,\"meme_resp_laicai\":1,\"meme_resp_mai\":1,\"meme_resp_mygo\":1,\"meme_resp_sex\":1,\"ping\":1,\"poem\":1,\"poke\":1,\"qrcode\":1,\"rand_num\":1,\"rand_pic\":1,\"randomcs\":1,\"rendermd\":1,\"repeat\":1,\"revoke\":1,\"tag_1\":1,\"tag_2\":1,\"targetsend\":1,\"video_web\":1,\"webss\":1,\"wzs\":1}")
         elif ps_name == "disableall":
-            feature_manager.import_fea_list("{\"actualhelp\":0,\"autorepeat\":0,\"ccb\":0,\"cmd\":0,\"deepseek\":0,\"echo\":0,\"echocq\":0,\"explain\":0,\"flipoff\":0,\"help\":0,\"meme_resp\":0,\"meme_resp_laicai\":0,\"meme_resp_mai\":0,\"meme_resp_mygo\":0,\"meme_resp_sex\":0,\"ping\":0,\"poem\":0,\"poke\":0,\"qrcode\":0,\"rand_num\":0,\"rand_pic\":0,\"randomcs\":0,\"rendermd\":0,\"repeat\":0,\"revoke\":0,\"tag_0\":0,\"tag_2\":0,\"targetsend\":0,\"video_web\":0,\"webss\":0,\"wzs\":0}")
+            feature_manager.import_fea_list("{\"actualhelp\":0,\"autorepeat\":0,\"ccb\":0,\"cmd\":0,\"deepseek\":0,\"echo\":0,\"echocq\":0,\"explain\":0,\"flipoff\":0,\"help\":0,\"meme_resp\":0,\"meme_resp_laicai\":0,\"meme_resp_mai\":0,\"meme_resp_mygo\":0,\"meme_resp_sex\":0,\"ping\":0,\"poem\":0,\"poke\":0,\"qrcode\":0,\"rand_num\":0,\"rand_pic\":0,\"randomcs\":0,\"rendermd\":0,\"repeat\":0,\"revoke\":0,\"tag_1\":0,\"tag_2\":0,\"targetsend\":0,\"video_web\":0,\"webss\":0,\"wzs\":0}")
         elif ps_name == "allmeme":
             feature_manager.import_fea_list("{\"meme_resp\":1,\"meme_resp_laicai\":1,\"meme_resp_mai\":1,\"meme_resp_mygo\":1,\"meme_resp_sex\":1}")
         elif ps_name == "nomeme":
@@ -217,5 +218,23 @@ async def handle_function(args: Message = CommandArg(),event: Event = Event):
                     print(e)
                 # asyncio.sleep(.2)
         raise FinishedException
+    else:
+        raise FinishedException
+
+# 切换path环境
+switch_sys_env = on_command("switchsys", priority=10, block=True)
+@switch_sys_env.handle()
+async def handle_function(event: Event = Event):
+    if privilege_manager.checkuser(event.get_user_id()) == 2:
+        await switch_sys_env.finish(path_manager.switch_sys_env())
+    else:
+        raise FinishedException
+
+# 询问path环境
+ask_sys_env = on_command("asksys", priority=10, block=True)
+@ask_sys_env.handle()
+async def handle_function(event: Event = Event):
+    if privilege_manager.checkuser(event.get_user_id()) == 2:
+        await ask_sys_env.finish(path_manager.ask_sys())
     else:
         raise FinishedException

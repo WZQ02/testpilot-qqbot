@@ -8,6 +8,7 @@ import asyncio
 import httpx
 from nonebot.exception import FinishedException
 import feature_manager
+import path_manager
 import img_process
 
 ping = on_command("ping", rule=to_me(), aliases={"喂","你好","hello","test","嗨"}, priority=10, block=True)
@@ -32,7 +33,7 @@ async def handle_function(args: Message = CommandArg()):
     if args[0].type == 'image':
         img_process.download_img(args[0].data['url'],"images/img_ccb/temp/bcb.jpg")
         img_process.gen_ccb_img()
-        await ccb.finish(Message('[CQ:image,file=file:///W:/soft/web_svr/testpilot_qqbot/images/img_ccb/temp/result.png]'))
+        await ccb.finish(Message('[CQ:image,file=file:///'+path_manager.bf_path()+'images/img_ccb/temp/result.png]'))
     else:
         await ccb.finish(f"{args.extract_plain_text()}，我给你踩背来咯！")
 
@@ -50,7 +51,7 @@ async def handle_function():
         raise FinishedException
     rd = random.random()
     if rd < .5:
-        await yes.finish(Message('[CQ:image,file=file:///W:/soft/web_svr/testpilot_qqbot/images/xg_yes.png,sub_type=1,summary=是]'))
+        await yes.finish(Message('[CQ:image,file=file:///'+path_manager.bf_path()+'images/xg_yes.png,sub_type=1,summary=是]'))
     else:
         await yes.finish("是")
 
@@ -61,9 +62,9 @@ async def handle_function():
         raise FinishedException
     rd = random.random()
     if rd < .5:
-        await yes.finish(Message('[CQ:image,file=file:///W:/soft/web_svr/testpilot_qqbot/images/xg_no.png,sub_type=1,summary=不是]'))
+        await yes.finish(Message('[CQ:image,file=file:///'+path_manager.bf_path()+'images/xg_no.png,sub_type=1,summary=不是]'))
     else:
-        await yes.finish(Message('[CQ:image,file=file:///W:/soft/web_svr/testpilot_qqbot/images/xg_no2.png,sub_type=1,summary=不是]'))
+        await yes.finish(Message('[CQ:image,file=file:///'+path_manager.bf_path()+'images/xg_no2.png,sub_type=1,summary=不是]'))
 
 setu = on_keyword(["setu","色图","黄图","涩图","好涩","好色","🐍","打飞机","撸管","操逼","屄","操大逼","槽壁","草比"], priority=10, block=True)
 @setu.handle()
@@ -181,11 +182,11 @@ async def handle_function():
         raise FinishedException
     rd = random.random()
     if rd > 0.9:
-        await yyz.finish(Message('[CQ:video,file=file:///W:/soft/web_svr/testpilot_qqbot/video/wyyyz/1.mp4]'))
+        await yyz.finish(Message('[CQ:video,file=file:///'+path_manager.bf_path()+'video/wyyyz/1.mp4]'))
     elif rd > 0.8:
-        await yyz.finish(Message('[CQ:image,file=file:///W:/soft/web_svr/testpilot_qqbot/images/wyyyz/1.webp,sub_type=1]'))
+        await yyz.finish(Message('[CQ:image,file=file:///'+path_manager.bf_path()+'images/wyyyz/1.webp,sub_type=1]'))
     elif rd > 0.7:
-        await yyz.finish(Message('[CQ:image,file=file:///W:/soft/web_svr/testpilot_qqbot/images/wyyyz/2.webp,sub_type=1]'))
+        await yyz.finish(Message('[CQ:image,file=file:///'+path_manager.bf_path()+'images/wyyyz/2.webp,sub_type=1]'))
     elif rd > 0.67:
         await yyz.finish("救我。")
     elif rd > 0.64:
@@ -238,14 +239,14 @@ async def handle_function():
         raise FinishedException
     # await flipof.finish(MessageSegment.image(await get_image_data("https://img.wzq02.top/upl/1c3c2250c945fc7430c0d3a02ff3174e.jpg")))
     # await flipof.finish(Message('[CQ:at,qq=2975499623,name=test]'))
-    await flipof.finish(Message('[CQ:image,file=file:///W:/soft/web_svr/testpilot_qqbot/images/gbc_flip_off.webp,sub_type=1]'))
+    await flipof.finish(Message('[CQ:image,file=file:///'+path_manager.bf_path()+'images/gbc_flip_off.webp,sub_type=1]'))
 
 flipof2 = on_command("flipoff", aliases={"竖中指","比中指"}, priority=10, block=True)
 @flipof2.handle()
 async def handle_function():
     if not feature_manager.get("flipoff"):
         raise FinishedException
-    await flipof2.finish(Message('[CQ:image,file=file:///W:/soft/web_svr/testpilot_qqbot/images/gbc_flip_off.webp,sub_type=1]'))
+    await flipof2.finish(Message('[CQ:image,file=file:///'+path_manager.bf_path()+'images/gbc_flip_off.webp,sub_type=1]'))
 
 flipof2 = on_keyword(["滴泪","地雷女","宝宝"], rule=to_me(), priority=10, block=True)
 @flipof2.handle()
@@ -256,7 +257,7 @@ async def handle_function():
     if rd < .2:
         await flipof2.finish('捅死你！捅死你！捅死你！捅死你！捅死你！捅死你！')
     else:
-        await flipof2.finish(Message('[CQ:image,file=file:///W:/soft/web_svr/testpilot_qqbot/images/raincandy/cantflip.png]'))
+        await flipof2.finish(Message('[CQ:image,file=file:///'+path_manager.bf_path()+'images/raincandy/cantflip.png]'))
 
 async def get_image_data(url):
     async with httpx.AsyncClient() as client:
