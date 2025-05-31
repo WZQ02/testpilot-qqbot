@@ -1,0 +1,1 @@
+(Get-Content "json/paths.json") -replace '"sys_env": "wsl"', '"sys_env": "win"' | Set-Content "json/paths.json"
