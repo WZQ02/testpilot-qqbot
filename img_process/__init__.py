@@ -16,7 +16,7 @@ pix_rt = json.loads(tkfile.read())["pixiv_refresh_token"]
 tkfile.close()
 
 def download_img(url,path):
-    resp = requests.get(url)
+    resp = requests.get(url.replace("https://multimedia.nt.qq","http://multimedia.nt.qq")) # bim获取QQ的图片时避免SSLv3报错
     with open(path,"wb") as f:
         f.write(resp.content)
     return 0

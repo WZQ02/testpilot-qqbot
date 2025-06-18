@@ -12,3 +12,4 @@ video/temp/*
 json/*.json
 !json/expl_list.json
 !json/fea_list.json
+!json/paths.json
