@@ -19,7 +19,7 @@ async def handle_function(args: Message = CommandArg(),event: Event = Event):
     raise FinishedException
 """
 
-lvstr_list = ["我喜欢你","爱你喵","我爱你","贴贴"]
+lvstr_list = ["我喜欢你","爱你喵","我爱你","贴贴","！suki！拉布！嗨嗨！"]
 
 randomcs = on_command("rdcs", aliases={"随机赤石","suiji","随机吃屎","随机扔粑粑"}, priority=10, block=True)
 @randomcs.handle()
@@ -46,7 +46,7 @@ async def handle_function(args: Message = CommandArg(),event: Event = Event):
         mbl = await bot.get_group_member_list(group_id=group_id)
         mbllen = len(mbl)
         rd = random.randint(0,mbllen-1)
-        lvstr = lvstr_list[random.randint(0,3)]
+        lvstr = lvstr_list[random.randint(0,4)]
         await randombb.finish(Message("[CQ:at,qq="+str(mbl[rd]['user_id'])+"] "+lvstr))
     else:
         raise FinishedException

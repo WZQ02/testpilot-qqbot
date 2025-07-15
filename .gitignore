@@ -13,3 +13,6 @@ json/*.json
 !json/expl_list.json
 !json/fea_list.json
 !json/paths.json
+
+node_modules
+package-lock.json

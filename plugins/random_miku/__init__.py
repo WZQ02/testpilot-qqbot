@@ -26,7 +26,7 @@ thwy = on_command("随机fio", aliases={"fio","thwy","璐璐"}, priority=10, blo
 async def handle_function():
     if not feature_manager.get("rand_pic"):
         raise FinishedException
-    rd = str(math.ceil(random.random()*10))
+    rd = str(math.ceil(random.random()*13))
     await thwy.finish(Message('[CQ:image,file=file:///'+path_manager.bf_path()+'images/fio/'+rd+'.jpg,sub_type=1,summary=&#91;fio&#93;]'))
 
 mieru = on_command("随机美瑠", aliases={"随机mieru","mieru","loulou","楼楼"}, priority=10, block=True)

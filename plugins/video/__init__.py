@@ -8,17 +8,19 @@ import privilege_manager
 import path_manager
 import os
 import random
+import time
 
 # vid_path = "W:/soft/web_svr/testpilot_qqbot/video/temp/video.mp4"
 vid_path1 = path_manager.bf_path()+"video/temp/video.mp4" # QQ看到的path
 vid_path2 = path_manager.nb_path()+"video/temp/video.mp4" # nonebot看到的path
 vid_ongoing_state = 0
+last_get_vid_time = 0
 
 bilivid = on_command("bili", aliases={"bilibili","视频","b站视频","video","sp"}, priority=10, block=True)
 @bilivid.handle()
 async def handle_function(args: Message = CommandArg(),event: Event = Event):
     if feature_manager.get("video_web"):
-        global vid_ongoing_state
+        global vid_ongoing_state,last_get_vid_time
         if vid_ongoing_state != 0:
             await bilivid.finish("且慢！正在为上一个人获取视频……")
         if os.path.exists(vid_path2):
@@ -26,7 +28,9 @@ async def handle_function(args: Message = CommandArg(),event: Event = Event):
         str = args.extract_plain_text()
         if str == "":
             await bilivid.finish("参数不够。用法 /bili [视频链接/BV号/av号]")
+        last_get_itvl = time.time() - last_get_vid_time
         vid_ongoing_state = 1
+        last_get_vid_time = time.time()
         link = ""
         if str.startswith("BV") or str.startswith("av"):
             link = "https://www.bilibili.com/video/"+str
@@ -51,7 +55,10 @@ async def handle_function(args: Message = CommandArg(),event: Event = Event):
         if os.path.exists(vid_path2):
             await bilivid.finish(Message('[CQ:video,file='+vid_path1+']'))
         else:
-            await bilivid.finish("视频获取失败！")
+            if (last_get_itvl < 15*60):
+                await bilivid.finish("视频获取失败，你过会再试试吧！")
+            else:
+                await bilivid.finish("视频获取失败！")
     else:
         raise FinishedException
     

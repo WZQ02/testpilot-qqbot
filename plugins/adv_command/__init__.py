@@ -52,10 +52,13 @@ async def handle_function(args: Message = CommandArg(),event: Event = Event):
         proc = await asyncio.create_subprocess_exec('cmd', '/c', args.extract_plain_text(), stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE)
         stdout, stderr = await proc.communicate()
         await proc.wait()
-        out_d = stdout.decode(chardet.detect(stdout)['encoding'] or 'utf-8')
-        err_d = stderr.decode(chardet.detect(stderr)['encoding'] or 'utf-8')
+        out_e = chardet.detect(stdout)['encoding']
+        err_e = chardet.detect(stderr)['encoding']
+        out_d = stdout.decode(out_e or 'utf-8')
+        err_d = stderr.decode(err_e or 'utf-8')
         resp = out_d + err_d
         # print(type(stdout),type(resp))
+        # print("命令输出编码为 "+out_e+"、"+err_e+"。")
         if resp != "":
             await cmd.finish(resp)
         else:
