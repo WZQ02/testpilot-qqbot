@@ -27,7 +27,7 @@ async def handle_function(args: Message = CommandArg(),event: Event = Event):
     if feature_manager.get("randomcs"):
         bot = get_bot()
         group_id = event.get_session_id().split("_")[1]
-        if group_id == "903627193" or group_id == "913376542" or group_id == "982438201":
+        if group_id in ["903627193","913376542","982438201","666438876","1055722896","589115001","1046037992","964101235"]:
             mbl = await bot.get_group_member_list(group_id=group_id)
             mbllen = len(mbl)
             rd = random.randint(0,mbllen-1)

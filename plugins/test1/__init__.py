@@ -94,8 +94,10 @@ async def handle_function():
     if not feature_manager.get("meme_resp_mai"):
         raise FinishedException
     rd = random.random()
-    if rd < .1:
+    if rd < .05:
         await awmc.finish("wmc！？")
+    elif rd < .15:
+        await awmc.finish("wflawmc")
     else:
         await awmc.finish("awmc")
 
@@ -141,6 +143,13 @@ async def handle_function():
         await aywdm.finish("哎呦我滴妈哈哈哈哈哈哈")
     else:
         await aywdm.finish("叮咚鸡！叮咚鸡！胖宝宝！胖宝宝！哈基米！哈基米！")
+
+whocallme = on_keyword(["w机","testpilot","wzq人机","wzqbot"], priority=10, block=True)
+@whocallme.handle()
+async def handle_function():
+    if not feature_manager.get("meme_resp"):
+        raise FinishedException
+    await whocallme.finish("谁在叫我？")
 
 sjdsw = on_keyword(["识人术","食人树"], priority=10, block=True)
 @sjdsw.handle()
@@ -203,24 +212,6 @@ async def handle_function(args: Message = EventMessage()):
             # print("用户"+i.data['qq']+"被at了，他的qq号是"+i.data['name'])
         print([i.type,i.data])
 """
-
-help = on_command("help", rule=to_me(), aliases={"帮助"}, priority=10, block=True)
-@help.handle()
-async def handle_function():
-    if not feature_manager.get("help"):
-        if not feature_manager.get("actualhelp"):
-            raise FinishedException
-        else:
-            await help.finish("请输入 /actualhelp 指令获取帮助哦！")
-    rd = random.random()
-    msg = ""
-    if rd < .33:
-        msg = "靠天靠地靠父母，不如靠自己！"
-    elif rd < .66:
-        msg = "你已经没救了，贫僧帮不了你了。"
-    else:
-        msg = "求人难，求己易，自立更生最实际。"
-    await help.finish(msg)
 
 """
 fds = on_command("deepseek", priority=10, block=True)

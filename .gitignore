@@ -14,5 +14,8 @@ json/*.json
 !json/fea_list.json
 !json/paths.json
 
+web/index.html
+web/templates/maimai_b50/df_data.json
+
 node_modules
 package-lock.json

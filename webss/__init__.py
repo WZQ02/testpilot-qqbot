@@ -13,38 +13,11 @@ def take(url):
     options.add_argument('--headless')
     driver = webdriver.Chrome(options=options)
     driver.get(url)
-    driver.set_window_size(1440+16, 900+147)
+    # driver.set_window_size(1280+16, 1024+147) 100%缩放下的设置
+    driver.set_window_size(1280+22, 1024+150)
     time.sleep(5)
     driver.save_screenshot("webss/1.png")
     driver.quit()
-
-"""
-def take2(url,res):
-    driver = webdriver.Chrome()
-    driver.get(url)
-    driver.set_window_size(res[0]+16, res[1]+147)
-    time.sleep(2)
-    driver.save_screenshot("webss/1.png")
-    driver.quit()
-"""
-"""
-def take2(url,dom_id):
-    driver = webdriver.Chrome()
-    driver.get(url)
-    time.sleep(2)
-    el = driver.find_element(By.ID, dom_id)
-    lo = el.location
-    size = el.size
-    ss = driver.get_screenshot_as_png()
-    ssim = Image.open(io.BytesIO(ss))
-    left = lo['x']
-    top = lo['y']
-    right = lo['x']+size['width']
-    bottom = lo['y']+size['height']
-    ssim = ssim.crop((left, top, right, bottom))
-    ssim.save("webss/1.png")
-    driver.quit()
-"""
 
 def take2(url,dom_id):
     options = Options()
@@ -53,7 +26,8 @@ def take2(url,dom_id):
     driver.get(url)
     time.sleep(.5)
     el = driver.find_element(By.ID, dom_id)
-    driver.set_window_size(el.size['width']+16, el.size['height']+148)
+    # driver.set_window_size(el.size['width']+16, el.size['height']+148)
+    driver.set_window_size(el.size['width']+40, el.size['height']+160)
     time.sleep(.5)
     cdp_method = 'Page.captureScreenshot'
     params = {'clip': {'x': el.location['x'], 'y': el.location['y'], 'width': el.size['width'], 'height': el.size['height'], 'scale': 1}}

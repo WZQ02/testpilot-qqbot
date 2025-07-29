@@ -5,6 +5,7 @@ from nonebot.adapters.onebot.v11 import Message, Event
 from nonebot.exception import FinishedException
 import feature_manager
 import asyncio
+import random
 
 bot_qq_id = 3978644480
 
@@ -38,7 +39,8 @@ async def handle_function(args: Message = CommandArg(),event: Event = Event):
         if (times > 10):
             times = 10
         for i in range(times):
-            await asyncio.sleep(.2)
+            sltim = pow(random.random(),3)*5
+            await asyncio.sleep(sltim)
             await bot.group_poke(group_id=groupid, user_id=qqnum)
     else:
         raise FinishedException

@@ -6,18 +6,41 @@ from nonebot.exception import FinishedException
 import feature_manager
 import json
 import path_manager
+import time
 
 bot_qq_id = 3978644480
 default_name = "testpilot"
 default_pic = "images/headpic.jpg"
 
 data = open("json/imbotate_data.json","r",encoding="utf-8")
-faked = json.loads(data.read())['data']
+datar = json.loads(data.read())
+faked = datar['data']
+hist = datar['history']
+
 data.close()
+
+def howlong1(unixtime):
+    hl = time.time() - float(unixtime)
+    if (hl) < 60:
+        return str(int(hl))+"秒"
+    elif (hl) < 3600:
+        return str(int(hl/60))+"分钟"
+    elif (hl) < 86400:
+        return str(int(hl/3600))+"小时"
+    else:
+        return str(int(hl/86400))+"天"
+
+def add_history(time,fakeid,fakenm,fromid,fromnm,groupid):
+    # 如果历史记录超过5条，删去最旧的一条
+    if len(hist) >= 5:
+        hist.remove(hist[0])
+    hist.append({"time":time,"fakeid":fakeid,"fakenm":fakenm,"fromid":fromid,"fromnm":fromnm,"group":groupid})
+    # 写回数据
+    writeback()
 
 def writeback():
     file = open("json/imbotate_data.json","w",encoding="utf-8")
-    json.dump({'data':faked},file,ensure_ascii=False,sort_keys=True)
+    json.dump({'data':faked,'history':hist},file,ensure_ascii=False,sort_keys=True)
 
 fake = on_command("fake", aliases={"假扮","impersonate","imbotate","模仿"}, priority=10, block=True)
 @fake.handle()
@@ -58,6 +81,11 @@ async def handle_function(args: Message = CommandArg(),event: Event = Event):
             faked["ori_group_nick"] = btnam
         # json回写
         writeback()
+        # 获取fake发起人QQ号和名称
+        fak_fromid = event.get_user_id()
+        fak_fromnm = dict(await bot.get_stranger_info(user_id=fak_fromid))["nick"]
+        # 写入fake历史记录
+        add_history(time.time(),qqnum,qqnam,fak_fromid,fak_fromnm,group_id)
         # 修改bot群昵称
         setnam = ""
         if (grnam == ""):
@@ -97,3 +125,25 @@ async def handle_function():
         await defake.finish("我变回来啦！")
     else:
         raise FinishedException
+    
+sethead = on_command("sethead", aliases={"设置头像","头像","headpic"}, priority=10, block=True)
+@sethead.handle()
+async def handle_function(args: Message = CommandArg(),event: Event = Event):
+    if feature_manager.get("fake_headpic"):
+        bot = get_bot()
+        url = args.extract_plain_text()
+        try:
+            await bot.set_qq_avatar(file=url)
+            await sethead.send("已设置头像。")
+        except:
+            await sethead.finish("设置头像失败！")
+        raise FinishedException
+
+gfhistory = on_command("fakehistory", aliases={"getfakehistory","假扮记录","假扮历史记录"}, priority=10, block=True)
+@gfhistory.handle()
+async def handle_function(event: Event = Event):
+    if feature_manager.get("fake"):
+        res = "变身记录："
+        for i in hist:
+            res += ("\n- "+howlong1(i["time"])+"前 "+i["fromnm"]+"("+i["fromid"]+") 把bot变成了 "+i["fakenm"]+"("+i["fakeid"]+")")
+        await gfhistory.finish(res)

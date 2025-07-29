@@ -33,7 +33,8 @@ async def handle_function(event: Event):
     if sid[0] == 'group':
         groupid = sid[1]
         msg = event.get_message()
-        if "/repeat" not in msg.extract_plain_text() and "/复读上一句" not in msg.extract_plain_text() and "/重复" not in msg.extract_plain_text():
+        # if "/repeat" not in msg.extract_plain_text() and "/复读上一句" not in msg.extract_plain_text() and "/重复" not in msg.extract_plain_text():
+        if msg.extract_plain_text() and msg.extract_plain_text()[0] != "/":
             # msglis[groupid] = msg
             msg_cache.cache_msg(groupid,msg)
         # 如果最近三条消息重复，则复读
