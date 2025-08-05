@@ -13,6 +13,7 @@ json/*.json
 !json/expl_list.json
 !json/fea_list.json
 !json/paths.json
+!json/achievement.json
 
 web/index.html
 web/templates/maimai_b50/df_data.json

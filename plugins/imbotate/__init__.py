@@ -7,6 +7,7 @@ import feature_manager
 import json
 import path_manager
 import time
+import achievement_manager
 
 bot_qq_id = 3978644480
 default_name = "testpilot"
@@ -16,8 +17,10 @@ data = open("json/imbotate_data.json","r",encoding="utf-8")
 datar = json.loads(data.read())
 faked = datar['data']
 hist = datar['history']
-
 data.close()
+
+specd = open("json/spec_qq_list.json","r",encoding="utf-8")
+spec_list = json.loads(specd.read())
 
 def howlong1(unixtime):
     hl = time.time() - float(unixtime)
@@ -60,6 +63,7 @@ async def handle_function(args: Message = CommandArg(),event: Event = Event):
             await fake.finish("参数错误。用法：/fake [要假扮的@群员或群员QQ号]")
         # 如果提供的qq号就是bot自己
         if int(qqnum) == bot_qq_id:
+            await achievement_manager.add(1,event)
             await fake.finish("你不能让我假扮自己哦！")
         # 获取该群员昵称
         qqnam = dict(await bot.get_stranger_info(user_id=qqnum))["nick"]
@@ -97,6 +101,23 @@ async def handle_function(args: Message = CommandArg(),event: Event = Event):
         await bot.set_qq_profile(nickname=qqnam)
         if feature_manager.get("fake_headpic"):
             await bot.set_qq_avatar(file="https://q1.qlogo.cn/g?b=qq&nk="+qqnum+"&s=640")
+        # 成就(除了“试图让bot假扮自己”以外的)
+        try:
+            # 让bot假扮fake发起人自己
+            if int(qqnum) == int(fak_fromid):
+                await achievement_manager.add(13,event)
+            # 让bot假扮别的bot
+            if int(qqnum) in spec_list["bots"]:
+                await achievement_manager.add(7,event)
+            # 让bot假扮。。。
+            if int(qqnum) == spec_list["special_users"][0]:
+                await achievement_manager.add(12,event)
+            if int(qqnum) == spec_list["special_users"][1]:
+                await achievement_manager.add(8,event)
+            if int(qqnum) == spec_list["special_users"][2]:
+                await achievement_manager.add(9,event)
+        except:
+            print("")
         await fake.finish("大家好啊，我是"+setnam+"。")
     else:
         raise FinishedException

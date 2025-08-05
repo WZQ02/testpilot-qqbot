@@ -2,7 +2,7 @@ from nonebot import on_command
 from nonebot import on_keyword
 from nonebot.rule import to_me
 from nonebot.params import CommandArg
-from nonebot.adapters.onebot.v11 import Message
+from nonebot.adapters.onebot.v11 import Message, Event
 import random
 import asyncio
 import httpx
@@ -10,6 +10,7 @@ from nonebot.exception import FinishedException
 import feature_manager
 import path_manager
 import img_process
+import achievement_manager
 
 ping = on_command("ping", rule=to_me(), aliases={"喂","你好","hello","test","嗨"}, priority=10, block=True)
 @ping.handle()
@@ -110,10 +111,12 @@ async def handle_function():
 
 choslif = on_keyword(["牯岭街","袁正","choose life","虚无主义","犬儒"], priority=10, block=True)
 @choslif.handle()
-async def handle_function():
+async def handle_function(event: Event = Event):
     if not feature_manager.get("meme_resp"):
         raise FinishedException
     rd = random.random()
+    if ("choose life" in event.get_plaintext()):
+        await achievement_manager.add(10,event)
     if rd < .8:
         await choslif.finish("choose life？！")
     else:
@@ -255,3 +258,9 @@ async def get_image_data(url):
         resp = await client.get(url)
         data = resp.text.strip()
     return data
+
+getachi = on_command("achievements", aliases={"cj","我的成就","成就列表"}, priority=10, block=True)
+@getachi.handle()
+async def handle_function(event: Event = Event):
+    await achievement_manager.list(event)
+    raise FinishedException

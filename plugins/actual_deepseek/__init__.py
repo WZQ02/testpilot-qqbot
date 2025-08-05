@@ -60,7 +60,8 @@ async def chat(dialogue):
 ads = on_command("ds", aliases={"深度求索","AI","actualdeepseek","deepseek","dick"}, priority=10, block=True)
 @ads.handle()
 async def handle_function(args: Message = CommandArg()):
-    if not feature_manager.get("deepseek"):
+    # 虽然没什么必要但有时发/dscount会同时触发ds，很奇怪，还是修补一下好了
+    if (not feature_manager.get("deepseek")) or args.extract_plain_text() == "count" or args.extract_plain_text() == "md":
         raise FinishedException
     await ads.finish(await chat(args.extract_plain_text()))
 

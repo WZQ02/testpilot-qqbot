@@ -9,6 +9,7 @@ import json
 import math
 import web, webss
 import aiohttp
+import achievement_manager
 
 async def getb50data(info):
     async with aiohttp.request("POST", "https://www.diving-fish.com/api/maimaidxprober/query/player", json=info) as resp:
@@ -65,7 +66,7 @@ async def quedfdata(qqid,qtype,uname,iself):
             # 写入获取的json到文件
             file = open("web/templates/maimai_b50/df_data.json","w",encoding="utf-8")
             json.dump(data,file,ensure_ascii=False)
-            return 0
+            return int(data["rating"])
         
 def dxdvcalc(json):
     b15avg = 0
@@ -116,6 +117,32 @@ def dxdvcalc(json):
     #return [b15avg,b15dv,b35avg,b35dv]
     return [b35dv,b15dv,avgcomp,comment]
 
+def fakeap50():
+    file = open("web/templates/maimai_b50/df_data.json","r",encoding="utf-8")
+    list_raw = file.read()
+    file.close()
+    list = json.loads(list_raw)
+    charts = list["charts"]
+    newdxs = 0
+    for i in charts["dx"]:
+        i["achievements"] = 101.0000
+        i["fc"] = "app"
+        i["rate"] = "sssp"
+        i["ra"] = int(float(i["ds"])*22.5)
+        newdxs += i["ra"]
+    charts["dx"].sort(key=lambda x:x["ra"],reverse = True)
+    for i in charts["sd"]:
+        i["achievements"] = 101.0000
+        i["fc"] = "app"
+        i["rate"] = "sssp"
+        i["ra"] = int(float(i["ds"])*22.5)
+        newdxs += i["ra"]
+    charts["sd"].sort(key=lambda x:x["ra"],reverse = True)
+    list["charts"] = charts
+    list["rating"] = newdxs
+    file2 = open("web/templates/maimai_b50/df_data.json","w",encoding="utf-8")
+    json.dump(list,file2,ensure_ascii=False,sort_keys=True)
+
 b50 = on_command("b50", priority=10, block=True)
 @b50.handle()
 async def handle_function(args: Message = CommandArg(),event: Event = Event):
@@ -123,21 +150,25 @@ async def handle_function(args: Message = CommandArg(),event: Event = Event):
         raise FinishedException
     # await b50.finish("awmc！抱歉，阁下不能帮你查b50，请另请高明吧！")
     val = await qddata_pre(args,event,"list")
-    if (val == 0):
+    if (isinstance(val,int)):
         file = open("web/templates/maimai_b50/index.html","r",encoding="utf-8")
         web.content = file.read()
         file.close()
         web.writehtml()
         webss.take2("http://localhost:8104/","container")
-        await dxra.finish(Message('[CQ:image,file=file:///'+path_manager.bf_path()+'webss/1.png]'))
+        # 查自己并且底分大于1w
+        if (len(args) == 0 and val > 10000):
+            await achievement_manager.add(2,event)
+        await b50.finish(Message('[CQ:image,file=file:///'+path_manager.bf_path()+'webss/1.png]'))
     else:
-        await dxra.finish(val)
+        await b50.finish(val)
 
 dxra = on_command("dxra", aliases={"rating"}, priority=10, block=True)
 @dxra.handle()
 async def handle_function(args: Message = CommandArg(),event: Event = Event):
     if not feature_manager.get("maimai"):
         raise FinishedException
+    #await achievement_manager.add(2,event)
     result = await qddata_pre(args,event,"dxra")
     await dxra.finish(result)
 
@@ -148,4 +179,21 @@ async def handle_function(args: Message = CommandArg(),event: Event = Event):
         raise FinishedException
     result = await qddata_pre(args,event,"dxdv")
     await dxdv.finish(result)
-    
+
+ap50 = on_command("ap50", priority=10, block=True)
+@ap50.handle()
+async def handle_function(args: Message = CommandArg(),event: Event = Event):
+    if not feature_manager.get("maimai"):
+        raise FinishedException
+    val = await qddata_pre(args,event,"list")
+    if (isinstance(val,int)):
+        file = open("web/templates/maimai_b50/index.html","r",encoding="utf-8")
+        web.content = file.read()
+        file.close()
+        web.writehtml()
+        fakeap50()
+        webss.take2("http://localhost:8104/","container")
+        await ap50.finish(Message('[CQ:image,file=file:///'+path_manager.bf_path()+'webss/1.png]'))
+    else:
+        await ap50.finish(val)
+

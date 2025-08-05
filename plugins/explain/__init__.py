@@ -4,6 +4,7 @@ from nonebot.params import CommandArg
 from nonebot.exception import FinishedException
 import feature_manager
 import json
+import achievement_manager
 
 expl = on_command("expl", aliases={"名词解释","explain","meaning","什么意思"}, priority=10, block=True)
 @expl.handle()
@@ -14,11 +15,12 @@ async def handle_function(args: Message = CommandArg()):
 
 admn = on_command("admn", aliases={"添加名词解释","添加含义","addmean"}, priority=10, block=True)
 @admn.handle()
-async def handle_function(args: Message = CommandArg()):
+async def handle_function(args: Message = CommandArg(),event: Event = Event):
     if feature_manager.get("explain"):
         tg_cm = args.extract_plain_text().split()
         if len(tg_cm) > 1:
             if tg_cm[-1] == '/override':
+                await achievement_manager.add(5,event)
                 await admn.finish(add_explain(tg_cm[0],args.extract_plain_text().replace(tg_cm[0]+" ","",1).replace(" /override","",1),True))
             else:
                 await admn.finish(add_explain(tg_cm[0],args.extract_plain_text().replace(tg_cm[0]+" ","",1),False))

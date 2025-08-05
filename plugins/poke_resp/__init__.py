@@ -4,8 +4,11 @@ import random, math
 from nonebot.exception import FinishedException
 import feature_manager
 import path_manager
+import achievement_manager
 
 pokeresp = on_notice()
+
+poke_user_history = []
 
 @pokeresp.handle()
 async def handle_function(event: NoticeEvent):
@@ -29,4 +32,17 @@ async def handle_function(event: NoticeEvent):
                 msg = "诶呦！"
             elif 17 < rd < 20:
                 msg = "喵"
+            await poke_user_chk(event)
             await pokeresp.finish(msg)
+
+async def poke_user_chk(event):
+    id = event.user_id
+    poke_user_history.append(id)
+    if len(poke_user_history) > 5:
+        poke_user_history.remove(poke_user_history[0])
+    user_pc = 0
+    for i in poke_user_history:
+        if i == id:
+            user_pc += 1
+    if user_pc >= 3:
+        await achievement_manager.add(3,event)

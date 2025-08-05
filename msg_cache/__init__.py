@@ -12,7 +12,10 @@ def get_cached_msg(groupid,seq):
     return msglis[groupid][-1-seq]
 
 def get_cached_msg_count(groupid):
-    return len(msglis[groupid])
+    if groupid in msglis:
+        return len(msglis[groupid])
+    else:
+        return 0
 
 def rem_cached_msg(groupid,seq):
     del msglis[groupid][-1-seq]

@@ -1,11 +1,12 @@
 from nonebot import on_command
 from nonebot.params import CommandArg
-from nonebot.adapters.onebot.v11 import Message
+from nonebot.adapters.onebot.v11 import Message, Event
 from nonebot.exception import FinishedException
 import feature_manager
 import path_manager
 import img_process
 import random
+import achievement_manager
 
 xkcd = on_command("xkcd", aliases={"随机xkcd"}, priority=10, block=True)
 @xkcd.handle()
@@ -22,7 +23,7 @@ async def handle_function(args: Message = CommandArg()):
 
 pix = on_command("pix", aliases={"p站图片","p站插图"}, priority=10, block=True)
 @pix.handle()
-async def handle_function(args: Message = CommandArg()):
+async def handle_function(args: Message = CommandArg(),event: Event = Event):
     if not feature_manager.get("pixiv"):
         raise FinishedException
     ag = args.extract_plain_text()
@@ -31,6 +32,7 @@ async def handle_function(args: Message = CommandArg()):
         if pix_res == 1:
             await pix.finish("获取插图失败！")
         elif pix_res == 2:
+            await achievement_manager.add(4,event)
             if random.random() > .6:
                 await pix.finish("你要的图片太色了，哈哈，我私吞了！")
             else:
