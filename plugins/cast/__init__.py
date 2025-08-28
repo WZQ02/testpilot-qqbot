@@ -28,6 +28,21 @@ async def handle_function(args: Message = CommandArg(),event: Event = Event):
     castit(uname,msg,picurl,"")
     raise FinishedException
 
+anocast = on_command("anocast", aliases={"匿名投放"}, priority=10, block=True)
+@anocast.handle()
+async def handle_function(args: Message = CommandArg(),event: Event = Event):
+    if not feature_manager.get("cast"):
+        raise FinishedException
+    bot = get_bot()
+    #uid = event.get_user_id()
+    #uname = dict(await bot.get_stranger_info(user_id=uid))["nick"]
+    msg = args.extract_plain_text()
+    picurl = ""
+    if args[0].type == 'image':
+        picurl = args[0].data['url']
+    castit("",msg,picurl,"")
+    raise FinishedException
+
 castgroup = on_command("castgroup", aliases={"投放群聊"}, priority=10, block=True)
 @castgroup.handle()
 async def handle_function(args: Message = CommandArg(),event: Event = Event):

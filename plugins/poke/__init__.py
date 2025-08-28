@@ -42,5 +42,6 @@ async def handle_function(args: Message = CommandArg(),event: Event = Event):
             sltim = pow(random.random(),3)*5
             await asyncio.sleep(sltim)
             await bot.group_poke(group_id=groupid, user_id=qqnum)
+        raise FinishedException
     else:
         raise FinishedException

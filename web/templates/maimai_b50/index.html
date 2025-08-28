@@ -3,98 +3,13 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <style>
-        body {
-            overflow: hidden;
-        }
-        * {
-            font-family: "Comic Sans MS","Source Han Serif CN";
-        }
-        #container {
-            background-color: #eee;
-            width: 704px;
-            padding: 32px;
-            background-size: 100% 100%;
-        }
-        .b50_song_list {
-            position: relative;
-            width: 100%;
-            height: 28px;
-            margin-bottom: 8px;
-            background-color: #555;
-        }
-        .bsl_title,.bsl_songid,.bsl_levelds,.bsl_songra {
-            color: #fff;
-            line-height: 28px;
-            position: absolute;
-            font-weight: bold;
-        }
-        .bsl_songid,.bsl_levelds,.bsl_songra {
-            width: 32px;
-            text-align: center;
-        }
-        .bsl_songid {
-            font-size: 10px;
-            left: 2px;
-        }
-        .bsl_title {
-            font-size: 18px;
-            left: 40px;
-        }
-        .b50_song_list.basic {
-            background-color: #3c3;
-        }
-        .b50_song_list.advanced {
-            background-color: #cc3;
-        }
-        .b50_song_list.expert {
-            background-color: #c33;
-        }
-        .b50_song_list.master {
-            background-color: #a3c;
-        }
-        .b50_song_list.remaster {
-            background-color: #cac;
-        }
-        .completion_filter {
-            position: absolute;
-            height: 100%;
-            background-color: #0004;
-        }
-        .bsl_levelds {
-            font-family: Impact;
-            font-weight: normal;
-            font-size: 15px;
-            right: 64px;
-        }
-        .bsl_songra {
-            font-size: 12px;
-            right: 0px;
-        }
-        .bsl_ico {
-            position: absolute;
-            width: 32px;
-            height: 32px;
-            top: -2px;
-            background-size: cover;
-        }
-        .bsl_ico.rank {
-            right: 32px;
-        }
-        .bsl_ico.fc {
-            right: 128px;
-        }
-        .bsl_ico.sync {
-            right: 96px;
-        }
-    </style>
+    <link rel="stylesheet" href="/css/maimai_b50/prism.css">
 </head>
 <body>
 <div id="container">
     <div id="content">
-        <!--<h2 style="margin-top: 0px"><span id="username"></span> 的舞易云音乐歌单</h2>
-        <h3 style="margin-bottom: 0px;">当前用户积分：<span id="rating"></span></h2>-->
-        <h3 style="margin-top: 0px"><span id="username"></span> (<span id="rating"></span>)</h3>
+        <h3 style="margin-top: 0px"><span id="username"></span></h3>
+        <h3 id="rating_box"><span id="rating"></span></h3>
         <div id="b35"><h3>老歌</h3></div>
         <div id="b15"><h3>新歌</h3></div>
     </div>
@@ -102,6 +17,8 @@
 <script>
     let cont = document.getElementById("content")
     let df_data
+    let assets_dir = "/templates/maimai_b50/assets/prism/";
+
     (()=>{
         let req = new XMLHttpRequest()
         req.open("get", "/templates/maimai_b50/df_data.json")
@@ -115,13 +32,23 @@
     })()
     function makelist() {
         document.getElementById("username").innerText = df_data["nickname"]
-        document.getElementById("rating").innerText = df_data["rating"]
-        if (Number(df_data["rating"]) >= 10000) {
-            document.getElementById("container").style.backgroundImage = "url('/templates/maimai_b50/assets/background.jpg')"
+        let dxra = df_data["rating"]
+        document.getElementById("rating").innerText = dxra
+        let ra_icon_id = Math.floor(Number(dxra)/1000)
+        if (ra_icon_id == 3){ra_icon_id = 2}
+        if (ra_icon_id > 4 && ra_icon_id < 7){ra_icon_id = 4}
+        if (ra_icon_id > 7 && ra_icon_id < 10){ra_icon_id = 7}
+        if (ra_icon_id == 11){ra_icon_id = 10}
+        if (dxra >= 14500 && dxra < 15000){ra_icon_id = 14.5}
+        if (dxra >= 16000){ra_icon_id = 15}
+        ra_icon_id *= 1000
+        document.getElementById("rating_box").style.backgroundImage = "url("+assets_dir+"rating/"+ra_icon_id+".png)"
+        if (Number(dxra) >= 10000) {
+            cont.style.backgroundColor = "#fff"
+            cont.style.backgroundImage = "linear-gradient(0deg,#fff9 14%,#ffd5cf99 24%,#ffd5cf99 46%,#ffc5d599 56%,#eaabff99 67%,#72bcfe99 85%,#65f2df99 95%)"
         }
         let b35lst = df_data["charts"]["sd"]
         let b15lst = df_data["charts"]["dx"]
-        //let b50lst = b35lst.concat(b15lst)
         for (i=0; i<b35lst.length; i++) {
             makeitem(b35lst[i],document.getElementById("b35"))
         }
@@ -168,7 +95,7 @@
         let fc = item["fc"]
         if (fc) {
             bslfc.classList.add(fc)
-            bslfc.style.backgroundImage = "url('/templates/maimai_b50/assets/"+fc+".jpg')"
+            bslfc.style.backgroundImage = "url('"+assets_dir+fc+".jpg')"
         }
         //sync icon
         let bslsy = document.createElement("div")
@@ -176,14 +103,14 @@
         let sy = item["fs"]
         if (sy) {
             bslsy.classList.add(sy)
-            bslsy.style.backgroundImage = "url('/templates/maimai_b50/assets/"+sy+".png')"
+            bslsy.style.backgroundImage = "url('"+assets_dir+sy+".png')"
         }
         //rank icon
         let bslrk = document.createElement("div")
         bslrk.className = "bsl_ico rank"
         let rank = item["rate"]
         bslrk.classList.add(rank)
-        bslrk.style.backgroundImage = "url('/templates/maimai_b50/assets/rank_"+rank+".png')"
+        bslrk.style.backgroundImage = "url('"+assets_dir+"rank_"+rank+".png')"
         //level ds
         let bslds = document.createElement("div")
         bslds.className = "bsl_levelds"

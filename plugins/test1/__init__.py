@@ -112,11 +112,11 @@ async def handle_function():
 choslif = on_keyword(["牯岭街","袁正","choose life","虚无主义","犬儒"], priority=10, block=True)
 @choslif.handle()
 async def handle_function(event: Event = Event):
+    if ("choose life" in event.get_plaintext()):
+        await achievement_manager.add(10,event)
     if not feature_manager.get("meme_resp"):
         raise FinishedException
     rd = random.random()
-    if ("choose life" in event.get_plaintext()):
-        await achievement_manager.add(10,event)
     if rd < .8:
         await choslif.finish("choose life？！")
     else:
@@ -206,6 +206,20 @@ async def handle_function():
     else:
         raise FinishedException
 
+haosharen1 = on_keyword(["你这人就好杀人"], priority=10, block=True)
+@haosharen1.handle()
+async def handle_function():
+    if not feature_manager.get("meme_resp"):
+        raise FinishedException
+    await haosharen1.finish("对！")
+
+haosharen2 = on_keyword(["就说不听你话就全杀呗","就说不听你话全杀"], priority=10, block=True)
+@haosharen2.handle()
+async def handle_function():
+    if not feature_manager.get("meme_resp"):
+        raise FinishedException
+    await haosharen2.finish("全杀！")
+
 """
 test = on_message(priority=10, block=True)
 @test.handle()
@@ -242,16 +256,16 @@ async def handle_function():
         raise FinishedException
     await flipof2.finish(Message('[CQ:image,file=file:///'+path_manager.bf_path()+'images/gbc_flip_off.webp,sub_type=1]'))
 
-flipof2 = on_keyword(["滴泪","地雷女","宝宝"], rule=to_me(), priority=10, block=True)
-@flipof2.handle()
+flipof3 = on_keyword(["滴泪","地雷女","宝宝"], rule=to_me(), priority=10, block=True)
+@flipof3.handle()
 async def handle_function():
     if not feature_manager.get("flipoff"):
         raise FinishedException
     rd = random.random()
     if rd < .2:
-        await flipof2.finish('捅死你！捅死你！捅死你！捅死你！捅死你！捅死你！')
+        await flipof3.finish('捅死你！捅死你！捅死你！捅死你！捅死你！捅死你！')
     else:
-        await flipof2.finish(Message('[CQ:image,file=file:///'+path_manager.bf_path()+'images/raincandy/cantflip.png]'))
+        await flipof3.finish(Message('[CQ:image,file=file:///'+path_manager.bf_path()+'images/raincandy/cantflip.png]'))
 
 async def get_image_data(url):
     async with httpx.AsyncClient() as client:
@@ -259,7 +273,7 @@ async def get_image_data(url):
         data = resp.text.strip()
     return data
 
-getachi = on_command("achievements", aliases={"cj","我的成就","成就列表"}, priority=10, block=True)
+getachi = on_command("achievements", aliases={"成就","cj","我的成就","成就列表"}, priority=10, block=True)
 @getachi.handle()
 async def handle_function(event: Event = Event):
     await achievement_manager.list(event)

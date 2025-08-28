@@ -1,0 +1,135 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="/css/maimai_b50/prism.css">
+</head>
+<body>
+<div id="container">
+    <div id="content">
+        <h3 style="margin-top: 0px"><span id="username"></span></h3>
+        <h3 id="rating_box"><span id="rating"></span></h3>
+        <div id="b35"><h3>老歌</h3></div>
+        <div id="b15"><h3>新歌</h3></div>
+    </div>
+</div>
+<script>
+    let cont = document.getElementById("content")
+    let df_data
+    let assets_dir = "/templates/maimai_b50/assets/prism/";
+
+    (()=>{
+        let req = new XMLHttpRequest()
+        req.open("get", "/templates/maimai_b50/df_data.json")
+        req.send(null)
+        req.onload = () => {
+            if (req.status == 200) {
+                df_data = JSON.parse(req.responseText)
+                makelist()
+            }
+        }
+    })()
+    function makelist() {
+        document.getElementById("username").innerText = df_data["nickname"]
+        let dxra = df_data["rating"]
+        document.getElementById("rating").innerText = dxra
+        let ra_icon_id = Math.floor(Number(dxra)/1000)
+        if (ra_icon_id == 3){ra_icon_id = 2}
+        if (ra_icon_id > 4 && ra_icon_id < 7){ra_icon_id = 4}
+        if (ra_icon_id > 7 && ra_icon_id < 10){ra_icon_id = 7}
+        if (ra_icon_id == 11){ra_icon_id = 10}
+        if (dxra >= 14500 && dxra < 15000){ra_icon_id = 14.5}
+        if (dxra >= 16000){ra_icon_id = 15}
+        ra_icon_id *= 1000
+        document.getElementById("rating_box").style.backgroundImage = "url("+assets_dir+"rating/"+ra_icon_id+".png)"
+        if (Number(dxra) >= 10000) {
+            cont.style.backgroundColor = "#fff"
+            cont.style.backgroundImage = "linear-gradient(0deg,#fff9 14%,#ffd5cf99 24%,#ffd5cf99 46%,#ffc5d599 56%,#eaabff99 67%,#72bcfe99 85%,#65f2df99 95%)"
+        }
+        let b35lst = df_data["charts"]["sd"]
+        let b15lst = df_data["charts"]["dx"]
+        for (i=0; i<b35lst.length; i++) {
+            makeitem(b35lst[i],document.getElementById("b35"))
+        }
+        for (i=0; i<b15lst.length; i++) {
+            makeitem(b15lst[i],document.getElementById("b15"))
+        }
+    }
+    function makeitem(item,where) {
+        //bsl root
+        let bsl = document.createElement("div")
+        bsl.className = "b50_song_list"
+        //level color
+        switch (item["level_index"]) {
+            case 0:
+                bsl.classList.add("basic")
+                break
+            case 1:
+                bsl.classList.add("advanced")
+                break
+            case 2:
+                bsl.classList.add("expert")
+                break
+            case 3:
+                bsl.classList.add("master")
+                break
+            case 4:
+                bsl.classList.add("remaster")
+        }
+        //songid
+        let bslsid = document.createElement("div")
+        bslsid.className = "bsl_songid"
+        bslsid.innerText = item["song_id"]
+        //title
+        let bslt = document.createElement("div")
+        bslt.className = "bsl_title"
+        bslt.innerText = item["title"]
+        //comp filter
+        let bslcf = document.createElement("div")
+        bslcf.className = "completion_filter"
+        bslcf.style.width = Math.pow(item["achievements"]/101,8)*100+"%"
+        //fc icon
+        let bslfc = document.createElement("div")
+        bslfc.className = "bsl_ico fc"
+        let fc = item["fc"]
+        if (fc) {
+            bslfc.classList.add(fc)
+            bslfc.style.backgroundImage = "url('"+assets_dir+fc+".jpg')"
+        }
+        //sync icon
+        let bslsy = document.createElement("div")
+        bslsy.className = "bsl_ico sync"
+        let sy = item["fs"]
+        if (sy) {
+            bslsy.classList.add(sy)
+            bslsy.style.backgroundImage = "url('"+assets_dir+sy+".png')"
+        }
+        //rank icon
+        let bslrk = document.createElement("div")
+        bslrk.className = "bsl_ico rank"
+        let rank = item["rate"]
+        bslrk.classList.add(rank)
+        bslrk.style.backgroundImage = "url('"+assets_dir+"rank_"+rank+".png')"
+        //level ds
+        let bslds = document.createElement("div")
+        bslds.className = "bsl_levelds"
+        bslds.innerText = item["ds"]
+        //song ra
+        let bssra = document.createElement("div")
+        bssra.className = "bsl_songra"
+        bssra.innerText = "+"+item["ra"]
+        //merge
+        bsl.appendChild(bslcf)
+        bsl.appendChild(bslsid)
+        bsl.appendChild(bslt)
+        bsl.appendChild(bslfc)
+        bsl.appendChild(bslsy)
+        bsl.appendChild(bslrk)
+        bsl.appendChild(bslds)
+        bsl.appendChild(bssra)
+        where.append(bsl)
+    }
+</script>
+</body>
+</html>

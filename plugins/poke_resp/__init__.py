@@ -7,6 +7,7 @@ import path_manager
 import achievement_manager
 
 pokeresp = on_notice()
+emojiresp = on_notice()
 
 poke_user_history = []
 
@@ -15,6 +16,7 @@ async def handle_function(event: NoticeEvent):
     if not feature_manager.get("poke"):
         raise FinishedException
     if isinstance(event, PokeNotifyEvent):
+        # print(str(event.get_user_id()))
         if event.target_id == event.self_id:
             # group_id = event.group_id
             # user_id = event.user_id
@@ -35,6 +37,14 @@ async def handle_function(event: NoticeEvent):
             await poke_user_chk(event)
             await pokeresp.finish(msg)
 
+@emojiresp.handle()
+async def handle_function(event: NoticeEvent):
+    if event.notice_type == 'group_msg_emoji_like':
+        if event.likes and event.likes[0]["emoji_id"] == "38":
+            await achievement_manager.add2(15,event.user_id,event.group_id)
+    raise FinishedException
+
+# 最近5次poke中，有user触发3次poke，授予该用户“戳你戳你戳戳你”成就
 async def poke_user_chk(event):
     id = event.user_id
     poke_user_history.append(id)

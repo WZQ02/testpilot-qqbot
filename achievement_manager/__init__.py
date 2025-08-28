@@ -14,6 +14,14 @@ user_list = json.loads(ach_list_raw)['users']
 async def add(acid,event):
     qqid = str(event.get_user_id())
     groupid = str(event.get_session_id().split("_")[1])
+    await do_add(acid,qqid,groupid)
+
+async def add2(acid,qqid,groupid):
+    qqid = str(qqid)
+    groupid = str(groupid)
+    await do_add(acid,qqid,groupid)
+
+async def do_add(acid,qqid,groupid):
     acid = str(acid)
     if qqid in user_list:
         if acid in user_list[qqid]:

@@ -10,6 +10,7 @@ import math
 import web, webss
 import aiohttp
 import achievement_manager
+import shutil
 
 async def getb50data(info):
     async with aiohttp.request("POST", "https://www.diving-fish.com/api/maimaidxprober/query/player", json=info) as resp:
@@ -197,3 +198,16 @@ async def handle_function(args: Message = CommandArg(),event: Event = Event):
     else:
         await ap50.finish(val)
 
+b50_styles = ["testpilot","prism"]
+
+b50stysw = on_command("bstyle", aliases={"b50样式"}, priority=10, block=True)
+@b50stysw.handle()
+async def handle_function(args: Message = CommandArg()):
+    if not feature_manager.get("maimai"):
+        raise FinishedException
+    style = args.extract_plain_text()
+    if style in b50_styles:
+        shutil.copy("web/templates/maimai_b50/"+style+"/index.html","web/templates/maimai_b50/index.html")
+        await b50stysw.finish("已将 b50 图表样式设置为："+style)
+    else:
+        await b50stysw.finish("参数错误。可用的 b50 图表样式有："+"、".join(b50_styles))
