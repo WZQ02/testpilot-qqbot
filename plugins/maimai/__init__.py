@@ -1,5 +1,6 @@
 from nonebot import on_command
 from nonebot.params import CommandArg
+from nonebot import get_bot
 from nonebot.adapters.onebot.v11 import Message, Event
 from nonebot.exception import FinishedException
 import feature_manager
@@ -144,6 +145,48 @@ def fakeap50():
     file2 = open("web/templates/maimai_b50/df_data.json","w",encoding="utf-8")
     json.dump(list,file2,ensure_ascii=False,sort_keys=True)
 
+# 根据二人的 QQ 号查询b50重合度
+async def getb50overlaplist(qqid_1,qqid_2):
+    data1 = await getb50data({"qq": qqid_1,"b50": True})
+    data2 = await getb50data({"qq": qqid_2,"b50": True})
+    # 有数据查询不到
+    if type(data1) != dict or type(data2) != dict:
+        return -1
+    data1_b35 = data1["charts"]["sd"]
+    data1_b15 = data1["charts"]["dx"]
+    data2_b35 = data2["charts"]["sd"]
+    data2_b15 = data2["charts"]["dx"]
+    b35_overlap = listoverlapquery(data1_b35,data2_b35)
+    b15_overlap = listoverlapquery(data1_b15,data2_b15)
+    # 统计重合铺面数量和平均达成率
+    b35_ol_count = len(b35_overlap)
+    b35_ol_rate_diff = 0
+    b35_ol_song_list = []
+    if (b35_ol_count > 0):
+        for i in b35_overlap:
+            b35_ol_rate_diff += i["achievements_1"] - i["achievements_2"]
+            b35_ol_song_list.append({"title": i["title"], "type": i["type"], "level_label": i["level_label"]})
+        b35_ol_rate_diff = round(b35_ol_rate_diff/b35_ol_count,2)
+    b15_ol_count = len(b15_overlap)
+    b15_ol_rate_diff = 0
+    b15_ol_song_list = []
+    if (b15_ol_count > 0):
+        for i in b15_overlap:
+            b15_ol_rate_diff += i["achievements_1"] - i["achievements_2"]
+            b15_ol_song_list.append({"title": i["title"], "type": i["type"], "level_label": i["level_label"]})
+        b15_ol_rate_diff = round(b15_ol_rate_diff/b15_ol_count,2)
+    # 返回值：b35重合铺面数量，b35平均达成率差值，b15重合铺面数量，b15平均达成率差值，b35重合歌曲列表，b15重合歌曲列表
+    return [b35_ol_count,b35_ol_rate_diff,b15_ol_count,b15_ol_rate_diff,b35_ol_song_list,b15_ol_song_list]
+
+def listoverlapquery(list1,list2):
+    overlap_list = []
+    for i in list1:
+        for j in list2:
+            if j["song_id"] == i["song_id"] and j["level_index"] == i["level_index"]:
+                overlap_list.append({"title": i["title"], "type": i["type"], "level_label": i["level_label"], "song_id": i["song_id"], "ds": i["ds"], "level_index": i["level_index"], "achievements_1": i["achievements"], "achievements_2": j["achievements"], "ra_1": i["ra"], "ra_2": j["ra"]})
+    return overlap_list
+
+
 b50 = on_command("b50", priority=10, block=True)
 @b50.handle()
 async def handle_function(args: Message = CommandArg(),event: Event = Event):
@@ -211,3 +254,80 @@ async def handle_function(args: Message = CommandArg()):
         await b50stysw.finish("已将 b50 图表样式设置为："+style)
     else:
         await b50stysw.finish("参数错误。可用的 b50 图表样式有："+"、".join(b50_styles))
+
+boverlap = on_command("boverlap", aliases={"b50重合"}, priority=10, block=True)
+@boverlap.handle()
+async def handle_function(args: Message = CommandArg(),event: Event = Event):
+    if not feature_manager.get("maimai"):
+        raise FinishedException
+    qqnum1 = 0
+    qqnum2 = 0
+    # 用户给定了参数
+    if len(args) > 0:
+        # 用户给定一个参数
+        if len(args) == 1 and len(args.extract_plain_text().split()) == 1:
+            # 第一个QQ号使用发起指令者的
+            qqnum1 = event.get_user_id()
+            # 第一个参数是@群员
+            if args[0].type == 'at':
+                qqnum2 = args[0].data['qq']
+            # 第一个参数是QQ号
+            elif str.isdigit(args.extract_plain_text().split()[0]):
+                qqnum2 = args.extract_plain_text().split()[0]
+            # 第一个参数不是@也不是数字（重合度不考虑用户名查询）
+            # else:
+        # 用户给定2个以上参数
+        if len(args) > 1 or len(args.extract_plain_text().split()) > 1:
+            # 前两个参数都是@群员
+            print(args,len(args))
+            if args[0].type == 'at' and args[1].type == 'at':
+                qqnum1 = args[0].data['qq']
+                qqnum2 = args[1].data['qq']
+            # 两个@中间存在空格
+            elif args[0].type == 'at' and args[2].type == 'at':
+                qqnum1 = args[0].data['qq']
+                qqnum2 = args[2].data['qq']
+            # 前两个参数都是QQ号
+            elif str.isdigit(args.extract_plain_text().split()[0]) and str.isdigit(args.extract_plain_text().split()[1]):
+                qqnum1 = args.extract_plain_text().split()[0]
+                qqnum2 = args.extract_plain_text().split()[1]
+            # 不考虑其他情况
+            # else:
+    if qqnum1 != 0 and qqnum2 != 0:
+        bot = get_bot()
+        # 获取两人QQ昵称
+        qqnam1 = dict(await bot.get_stranger_info(user_id=qqnum1))["nick"]
+        qqnam2 = dict(await bot.get_stranger_info(user_id=qqnum2))["nick"]
+        result = await getb50overlaplist(qqnum1,qqnum2)
+        comment = ""
+        # 查询失败
+        if type(result) != list:
+            await boverlap.finish("查询失败！你提供的至少其中一个QQ号无法查询到游戏数据！")
+        # b35
+        if (result[0] > 0):
+            comment += qqnam1+" 和 "+qqnam2+" 的b35中，有 "+str(result[0])+" 张重合的谱面，\n在这些铺面中，"+qqnam1+" 的平均达成率比 "+qqnam2
+            if (result[1] > 0):
+                comment += " 高 "+str(result[1])+" %。"
+            else:
+                comment += " 低 "+str(-result[1])+" %。"
+            comment += "\n重合的谱面有：\n"
+            for i in result[4]:
+                comment += ""+i["title"]+" ["+i["type"]+"] "" ["+i["level_label"]+"] \n"
+        else:
+            comment += qqnam1+" 和 "+qqnam2+" 的b35没有一张谱面重合！\n"
+        # b15
+        if (result[2] > 0):
+            comment += "\n"+qqnam1+" 和 "+qqnam2+" 的b15中，有 "+str(result[2])+" 张重合的谱面，\n在这些铺面中，"+qqnam1+" 的平均达成率比 "+qqnam2
+            if (result[3] > 0):
+                comment += " 高 "+str(result[3])+" %。"
+            else:
+                comment += " 低 "+str(-result[3])+" %。"
+            comment += "\n重合的谱面有："
+            for i in result[5]:
+                comment += "\n"+i["title"]+" ["+i["type"]+"] "" ["+i["level_label"]+"]"
+        else:
+            comment += "\n"+qqnam1+" 和 "+qqnam2+" 的b15没有一张谱面重合！"
+        await boverlap.finish(comment)
+    # 用户未给定参数或参数不正确（如果成功查询，则提前finish，不执行到这一步）。
+    await boverlap.finish("参数错误。用法：/boverlap [要查询的QQ号/@群成员1] [要查询的QQ号/@群成员2]")
+    

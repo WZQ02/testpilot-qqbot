@@ -8,6 +8,7 @@ from PIL import Image, ImageTk, ImageDraw
 import json
 import feature_manager
 import path_manager
+import asyncio
 
 from pixivpy3 import AppPixivAPI
 
@@ -97,4 +98,10 @@ def getpixivimg(pid):
     papi.download(url, path="images/pix/temp/", fname=fnm)
     path = "images/pix/temp/"+fnm
     return path
-    
+
+# 图片放大（调用realesrgan）
+async def img4x():
+    cmd = "W:/soft/av_tools/realesrgan-ncnn-vulkan-20220424-windows/realesrgan-ncnn-vulkan.exe -i "+path_manager.nb_path()+"images/upscale/source.jpg -o "+path_manager.nb_path()+"images/upscale/result.png"
+    proc = await asyncio.create_subprocess_exec('cmd', '/c', cmd)
+    await proc.wait()
+    return

@@ -76,7 +76,7 @@ async def handle_function():
     if rd < .5:
         await setu.finish("哈比下，我看到自己的兄弟，有时很ruan有时很应")
     else:
-        await setu.finish("ccb")
+        await setu.finish("群友又在涩涩哦")
 
 mtf = on_keyword(["男娘","南梁","香香软软"], priority=10, block=True)
 @mtf.handle()
@@ -85,9 +85,9 @@ async def handle_function():
         raise FinishedException
     rd = random.random()
     if rd < .5:
-        await mtf.finish("好香")
+        await mtf.finish("哪里有小南梁？")
     else:
-        await mtf.finish("嗯！香香软软的")
+        await mtf.finish("嗯！")
 
 awmc = on_keyword(["maimai","打mai","舞萌","乌蒙","大力拍打或滑动","滴蜡熊","迪拉熊","拉兹","纱露朵","新的旅行伙伴","101.0000%"], priority=10, block=True)
 @awmc.handle()
@@ -95,11 +95,13 @@ async def handle_function():
     if not feature_manager.get("meme_resp_mai"):
         raise FinishedException
     rd = random.random()
-    if rd < .05:
+    if rd < .1:
         await awmc.finish("wmc！？")
     elif rd < .15:
-        await awmc.finish("wflawmc")
-    else:
+        await awmc.finish("mai批收收味")
+    elif rd < .4:
+        await awmc.finish(Message('[CQ:image,file=file:///'+path_manager.bf_path()+'images/awmc.jpg,sub_type=1]'))
+    elif rd < .7:
         await awmc.finish("awmc")
 
 mygo = on_keyword(["mygo","MyGO","春日影","crychic","Crychic","组一辈子乐队","你这个人，真是满脑子都","素世","长期素食","要乐奈","丰川祥子","椎名立希","千早爱音","为什么要演奏","高松灯"], priority=10, block=True)
@@ -107,9 +109,9 @@ mygo = on_keyword(["mygo","MyGO","春日影","crychic","Crychic","组一辈子�
 async def handle_function():
     if not feature_manager.get("meme_resp_mygo"):
         raise FinishedException
-    await mygo.finish("还在go还在go")
+    await mygo.finish("go批！？")
 
-choslif = on_keyword(["牯岭街","袁正","choose life","虚无主义","犬儒"], priority=10, block=True)
+choslif = on_keyword(["牯岭街","袁正","choose life","虚无主义","犬儒","选择生活"], priority=10, block=True)
 @choslif.handle()
 async def handle_function(event: Event = Event):
     if ("choose life" in event.get_plaintext()):
@@ -117,8 +119,10 @@ async def handle_function(event: Event = Event):
     if not feature_manager.get("meme_resp"):
         raise FinishedException
     rd = random.random()
-    if rd < .8:
+    if rd < .6:
         await choslif.finish("choose life？！")
+    elif rd < .8:
+        await choslif.finish("初四来福？！")
     else:
         await choslif.finish("我选择不去choose life。我选择别的。至于理由呢？没什么理由。因为我是人机啊哈哈哈哈哈哈哈哈哈哈哈哈哈！！！！！！！")
 
@@ -134,7 +138,7 @@ zlkj = on_keyword(["粘连","网络油饼","网络油侠"], priority=10, block=T
 async def handle_function():
     if not feature_manager.get("meme_resp"):
         raise FinishedException
-    await zlkj.finish("😭😭😭😭😭😭😭😭😭😭")
+    await zlkj.finish("😭😭😭😭😭")
 
 aywdm = on_keyword(["哎呦我滴妈","哈基米","胖宝宝"], priority=10, block=True)
 @aywdm.handle()
@@ -142,17 +146,23 @@ async def handle_function():
     if not feature_manager.get("meme_resp"):
         raise FinishedException
     rd = random.random()
-    if rd < .5:
+    if rd < .4:
         await aywdm.finish("哎呦我滴妈哈哈哈哈哈哈")
+    elif rd < .6:
+        await aywdm.finish("离离原上咪，春风吹又咪，野火哈基米")
     else:
-        await aywdm.finish("叮咚鸡！叮咚鸡！胖宝宝！胖宝宝！哈基米！哈基米！")
+        await aywdm.finish("曼波~")
 
 whocallme = on_keyword(["w机","testpilot","wzq人机","wzqbot"], priority=10, block=True)
 @whocallme.handle()
 async def handle_function():
     if not feature_manager.get("meme_resp"):
         raise FinishedException
-    await whocallme.finish("谁在叫我？")
+    rd = random.random()
+    if rd < .6:
+        await whocallme.finish("谁在叫我？")
+    else:
+        await whocallme.finish("在")
 
 sjdsw = on_keyword(["识人术","食人树"], priority=10, block=True)
 @sjdsw.handle()
@@ -187,6 +197,14 @@ async def handle_function():
         raise FinishedException
     await whosbot.finish("妈妈生的")
 
+jiahao = on_keyword(["嘉豪","佳豪","alan walker","艾伦沃克","faded","走路人"], priority=10, block=True)
+@jiahao.handle()
+async def handle_function():
+    if not feature_manager.get("meme_resp"):
+        raise FinishedException
+    await jiahao.finish("哎呦我去艾露迪克")
+
+"""
 yyz = on_keyword(["快乐","开心"], priority=10, block=True)
 @yyz.handle()
 async def handle_function():
@@ -205,6 +223,7 @@ async def handle_function():
         await yyz.finish("我好痛苦。")
     else:
         raise FinishedException
+"""
 
 haosharen1 = on_keyword(["你这人就好杀人"], priority=10, block=True)
 @haosharen1.handle()
@@ -263,7 +282,7 @@ async def handle_function():
         raise FinishedException
     rd = random.random()
     if rd < .2:
-        await flipof3.finish('捅死你！捅死你！捅死你！捅死你！捅死你！捅死你！')
+        await flipof3.finish('捅死你喵！捅死你喵！捅死你喵！捅死你喵！捅死你喵！捅死你喵！')
     else:
         await flipof3.finish(Message('[CQ:image,file=file:///'+path_manager.bf_path()+'images/raincandy/cantflip.png]'))
 
@@ -278,3 +297,15 @@ getachi = on_command("achievements", aliases={"成就","cj","我的成就","成�
 async def handle_function(event: Event = Event):
     await achievement_manager.list(event)
     raise FinishedException
+
+upscale = on_command("upscale", aliases={"放大","zoom"}, priority=10, block=True)
+@upscale.handle()
+async def handle_function(args: Message = CommandArg()):
+    #if not feature_manager.get("ccb"):
+        #raise FinishedException
+    if len(args) > 0 and args[0].type == 'image':
+        img_process.download_img(args[0].data['url'],"images/upscale/source.jpg")
+        await img_process.img4x()
+        await upscale.finish(Message('[CQ:image,file=file:///'+path_manager.bf_path()+'images/upscale/result.png]'))
+    else:
+        await upscale.finish("请提供要放大的图片！")

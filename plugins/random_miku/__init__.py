@@ -9,7 +9,7 @@ import feature_manager
 import path_manager
 import achievement_manager
 
-miku = on_command("随机miku", aliases={"随机miratsu","miratsu","miku"}, priority=10, block=True)
+miku = on_command("随机miku", aliases={"随机miratsu","miratsu","miku","39"}, priority=10, block=True)
 @miku.handle()
 async def handle_function():
     if not feature_manager.get("rand_pic"):
