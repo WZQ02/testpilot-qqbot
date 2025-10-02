@@ -56,3 +56,12 @@ async def list(event):
 def writeback():
     file = open("json/achievement.json","w",encoding="utf-8")
     json.dump({'achievements':ach_list,'users':user_list},file,ensure_ascii=False,sort_keys=True)
+
+def getachicountlist():
+    ach_list_copy = ach_list
+    for i in ach_list_copy:
+        ach_list_copy[i]["usecount"] = 0
+        for j in user_list:
+            if str(i) in user_list[j]:
+                ach_list_copy[i]["usecount"] += 1
+    return ach_list_copy

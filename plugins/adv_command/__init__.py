@@ -12,6 +12,7 @@ import web
 import privilege_manager
 import os
 import path_manager
+import achievement_manager
 
 from nonebot_plugin_saa import MessageFactory, TargetQQGroup
 from nonebot_plugin_saa import enable_auto_select_bot
@@ -239,5 +240,18 @@ ask_sys_env = on_command("asksys", priority=10, block=True)
 async def handle_function(event: Event = Event):
     if privilege_manager.checkuser(event.get_user_id()) == 2:
         await ask_sys_env.finish(path_manager.ask_sys())
+    else:
+        raise FinishedException
+    
+# 查看成就获得人数
+achi_ask = on_command("askachi", priority=10, block=True)
+@achi_ask.handle()
+async def handle_function(event: Event = Event):
+    if privilege_manager.checkuser(event.get_user_id()):
+        list = achievement_manager.getachicountlist()
+        resp = "成就系统记录："
+        for i in list:
+            resp += "\n"+list[i]["name"]+" - 触发次数："+str(list[i]["usecount"])
+        await achi_ask.finish(resp)
     else:
         raise FinishedException

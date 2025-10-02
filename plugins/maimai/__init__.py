@@ -12,6 +12,7 @@ import web, webss
 import aiohttp
 import achievement_manager
 import shutil
+import plugins.actual_deepseek
 
 async def getb50data(info):
     async with aiohttp.request("POST", "https://www.diving-fish.com/api/maimaidxprober/query/player", json=info) as resp:
@@ -69,6 +70,9 @@ async def quedfdata(qqid,qtype,uname,iself):
             file = open("web/templates/maimai_b50/df_data.json","w",encoding="utf-8")
             json.dump(data,file,ensure_ascii=False)
             return int(data["rating"])
+        # 直接获取json原始数据，不做进一步解析（AI锐评b50用）
+        if qtype == "json":
+            return data
         
 def dxdvcalc(json):
     b15avg = 0
@@ -331,3 +335,14 @@ async def handle_function(args: Message = CommandArg(),event: Event = Event):
     # 用户未给定参数或参数不正确（如果成功查询，则提前finish，不执行到这一步）。
     await boverlap.finish("参数错误。用法：/boverlap [要查询的QQ号/@群成员1] [要查询的QQ号/@群成员2]")
     
+aib50 = on_command("aib50", aliases={"dsb50","ai锐评b50","AI锐评b50"}, priority=10, block=True)
+@aib50.handle()
+async def handle_function(args: Message = CommandArg(),event: Event = Event):
+    if (not feature_manager.get("maimai")) or (not feature_manager.get("deepseek")):
+        raise FinishedException
+    result = await qddata_pre(args,event,"json")
+    if type(result) != dict:
+        await aib50.finish("没有查询到玩家数据！")
+    web.content_md(await plugins.actual_deepseek.ds_b50(result))
+    webss.take2("http://localhost:8104","container")
+    await aib50.finish(Message('[CQ:image,file=file:///'+path_manager.bf_path()+'webss/1.png]'))

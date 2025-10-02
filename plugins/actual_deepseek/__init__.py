@@ -57,6 +57,20 @@ async def chat(dialogue):
     writeback()
     return remsg.content
 
+dsb50_sysquo = "《舞萌DX》是一款街机音乐游戏，用户将会提供一份json格式的游玩数据，包含该玩家所有游戏记录中的50个最佳记录，其中包括35个旧有曲目的记录（数据charts中sd项），以及15个新版本，即《舞萌DX 2025》歌曲的记录（数据charts中dx项），**你需要根据这份数据做出一份详细的评价**（不超过1400字）。另外，总体评级（ra）是所有曲目单曲ra的总和，最高为16500左右，数值越高越难提升，15000以上可认为是高级玩家；单曲等级（level）最高为15；chart中的“sd”及“dx”（只表示旧曲目和新曲目）和单曲数据中的“sd”及“dx”（表示标准谱面和DX谱面）不是一个意思；additional_rating可以被随便设置，请忽略掉；单曲数据中的“fs”一项代表双人游玩同步评价，也可以忽略。"
+
+async def ds_b50(json):
+    b50msglist = [{"role": "system", "content": dsb50_sysquo},{"role": "user", "content": str(json)}]
+    resp = await client.chat.completions.create(
+        model = "deepseek-reasoner",
+        messages = b50msglist,
+        stream = False
+    )
+    remsg = resp.choices[0].message
+    # 在控制台输出深度思考内容
+    print(remsg.reasoning_content)
+    return remsg.content
+
 ads = on_command("ds", aliases={"深度求索","AI","actualdeepseek","deepseek","dick"}, priority=10, block=True)
 @ads.handle()
 async def handle_function(args: Message = CommandArg()):
