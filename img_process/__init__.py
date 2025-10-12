@@ -101,7 +101,7 @@ def getpixivimg(pid):
 
 # 图片放大（调用realesrgan）
 async def img4x():
-    cmd = "W:/soft/av_tools/realesrgan-ncnn-vulkan-20220424-windows/realesrgan-ncnn-vulkan.exe -i "+path_manager.nb_path()+"images/upscale/source.jpg -o "+path_manager.nb_path()+"images/upscale/result.png"
-    proc = await asyncio.create_subprocess_exec('cmd', '/c', cmd)
+    # cmd = "W:/soft/av_tools/realesrgan-ncnn-vulkan-20220424-windows/realesrgan-ncnn-vulkan.exe -i "+path_manager.nb_path()+"images/upscale/source.jpg -o "+path_manager.nb_path()+"images/upscale/result.png"
+    proc = await asyncio.create_subprocess_exec("W:/soft/av_tools/realesrgan-ncnn-vulkan-20220424-windows/realesrgan-ncnn-vulkan.exe", "-i", path_manager.nb_path()+"images/upscale/source.jpg", "-o", path_manager.nb_path()+"images/upscale/result.png")
     await proc.wait()
     return

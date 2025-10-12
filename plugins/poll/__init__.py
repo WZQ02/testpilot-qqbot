@@ -34,7 +34,7 @@ async def handle_function(args: Message = CommandArg(),event: Event = Event):
         await poll.finish("参数错误。用法：/poll [投票标题] [选项1] [选项2]")
     elif (len(params) < 3):
         await poll.finish("请提供至少两个投票选项！")
-    elif (len(params) < 12):
+    elif (len(params) < 17):
         title = params[0]
         params.remove(title)
         options = {}
@@ -44,7 +44,7 @@ async def handle_function(args: Message = CommandArg(),event: Event = Event):
         result = await createpoll(title,qqid,options)
         await poll.finish("已创建投票。回复 /viewpoll "+str(result)+" 查看该投票。")
     else:
-        await poll.finish("投票选项太多了！请减少到10个选项以内。")
+        await poll.finish("投票选项太多了！请减少到15个选项以内。")
 
 async def createpoll(title,qqid,options):
     polllength = len(poll_list)

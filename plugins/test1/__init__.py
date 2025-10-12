@@ -301,8 +301,8 @@ async def handle_function(event: Event = Event):
 upscale = on_command("upscale", aliases={"放大","zoom"}, priority=10, block=True)
 @upscale.handle()
 async def handle_function(args: Message = CommandArg()):
-    #if not feature_manager.get("ccb"):
-        #raise FinishedException
+    if not feature_manager.get("upscale"):
+        raise FinishedException
     if len(args) > 0 and args[0].type == 'image':
         img_process.download_img(args[0].data['url'],"images/upscale/source.jpg")
         await img_process.img4x()
