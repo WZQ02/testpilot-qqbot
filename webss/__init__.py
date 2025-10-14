@@ -8,18 +8,18 @@ from selenium.webdriver.chrome.options import Options
 from webdriver_manager.chrome import ChromeDriverManager
 from PIL import Image
 
-def take(url):
+def take(url,sleep=5):
     options = Options()
     options.add_argument('--headless')
     driver = webdriver.Chrome(options=options)
     driver.get(url)
     # driver.set_window_size(1280+16, 1024+147) 100%缩放下的设置
     driver.set_window_size(1280+22, 1024+150)
-    time.sleep(5)
+    time.sleep(sleep)
     driver.save_screenshot("webss/1.png")
     driver.quit()
 
-def take2(url,dom_id):
+def take2(url,dom_id,sleep=.5):
     options = Options()
     options.add_argument('--headless')
     driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=options)
@@ -28,7 +28,7 @@ def take2(url,dom_id):
     el = driver.find_element(By.ID, dom_id)
     # driver.set_window_size(el.size['width']+16, el.size['height']+148)
     driver.set_window_size(el.size['width']+40, el.size['height']+160)
-    time.sleep(.5)
+    time.sleep(sleep)
     cdp_method = 'Page.captureScreenshot'
     params = {'clip': {'x': el.location['x'], 'y': el.location['y'], 'width': el.size['width'], 'height': el.size['height'], 'scale': 1}}
     data = driver.execute_cdp_cmd(cdp_method, params)

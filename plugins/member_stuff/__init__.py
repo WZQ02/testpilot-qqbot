@@ -7,6 +7,11 @@ import privilege_manager
 import feature_manager
 import random
 import achievement_manager
+import json
+
+# 获取特殊qq号列表
+specd = open("json/spec_qq_list.json","r",encoding="utf-8")
+spec_list = json.loads(specd.read())
 
 # 获取群员列表
 """
@@ -28,7 +33,7 @@ async def handle_function(args: Message = CommandArg(),event: Event = Event):
     if feature_manager.get("randomcs"):
         bot = get_bot()
         group_id = event.get_session_id().split("_")[1]
-        if group_id in ["903627193","913376542","982438201","666438876","1055722896","589115001","1046037992","964101235"]:
+        if int(group_id) in spec_list["randomcs_whitelist_groups"]:
             mbl = await bot.get_group_member_list(group_id=group_id)
             mbllen = len(mbl)
             rd = random.randint(0,mbllen-1)

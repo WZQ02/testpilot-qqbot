@@ -1,17 +1,8 @@
 from nonebot import on_command
-from nonebot import on_keyword
-from nonebot import get_bot
-from nonebot.rule import to_me
 from nonebot.params import CommandArg
 from nonebot.adapters.onebot.v11 import Message, Event
-import random
-import asyncio
-import httpx
 from nonebot.exception import FinishedException
 import feature_manager
-import path_manager
-import img_process
-import achievement_manager
 import json
 import time
 
@@ -127,6 +118,11 @@ async def pollvote(polnum,optionnum,qqnum):
     writeback()
     return
 
+async def setpollexp(polnum,expt_sec):
+    poll_list[polnum]["expiry"] = expt_sec
+    writeback()
+    return
+
 vote = on_command("vote", aliases={"投票","参与投票"}, priority=10, block=True)
 @vote.handle()
 async def handle_function(args: Message = CommandArg(),event: Event = Event):
@@ -141,7 +137,7 @@ async def handle_function(args: Message = CommandArg(),event: Event = Event):
         thepoll = polldata[0]
         polnum = polldata[1]
         if polnum == -1:
-            await viewpoll.finish("没有找到这个投票！")
+            await vote.finish("没有找到这个投票！")
         # thepolldata = thepoll["polldata"]
         # 查找对应的投票项
         optionnum = -1
@@ -154,12 +150,50 @@ async def handle_function(args: Message = CommandArg(),event: Event = Event):
             for i in thepoll["options"]:
                 reply += "\n"
                 reply += "- "+thepoll["options"][i]
-            await viewpoll.finish(reply)
+            await vote.finish(reply)
         # 检查是否符合投票条件（该qq号是否已参与过投票、投票是否过期）
         if time.time() > thepoll["expiry"]:
-            await viewpoll.finish("此投票已经结束！请发送 /viewpoll "+polnum+" 查看结果。")
+            await vote.finish("此投票已经结束！请发送 /viewpoll "+polnum+" 查看结果。")
         if str(event.get_user_id()) in str(thepoll["polldata"]):
-            await viewpoll.finish("你已参与过此投票！请在投票结束后发送 /viewpoll "+polnum+" 查看结果。")
+            await vote.finish("你已参与过此投票！请在投票结束后发送 /viewpoll "+polnum+" 查看结果。")
         # 写入项目
         await pollvote(polnum,optionnum,event.get_user_id())
-        await viewpoll.finish("投票成功！你投给了 "+params[1])
+        await vote.finish("投票成功！你投给了 "+params[1])
+
+setpollexpiry = on_command("voteexp", aliases={"setpollexpiry","设置投票有效期"}, priority=10, block=True)
+@setpollexpiry.handle()
+async def handle_function(args: Message = CommandArg(),event: Event = Event):
+    if not feature_manager.get("poll"):
+        raise FinishedException
+    params = args.extract_plain_text().split()
+    if (len(params) < 2):
+        await setpollexpiry.finish("参数错误。用法：/voteexp [投票ID/标题] [过期时间（以小时为单位）]")
+    else:
+        polldata = getpolldata(params[0])
+        # 被指定的投票项目
+        thepoll = polldata[0]
+        polnum = polldata[1]
+        if polnum == -1:
+            await setpollexpiry.finish("没有找到这个投票！")
+        # 判断项目是否是个数字
+        if str.isdigit(params[1].replace(".", "")):
+            exptime = float(params[1])
+            # 投票过期时间最多一周
+            if (exptime > 24*7):
+                await setpollexpiry.finish("过期时间太长了！控制在一周以内吧！")
+            expt_sec = int(time.time()) + int(exptime*3600)
+        else:
+            await setpollexpiry.finish("请输入投票过期时间（不要带单位字符）！")
+        # 投票是否已经过期
+        if time.time() > thepoll["expiry"]:
+            await setpollexpiry.finish("此投票已经过期，再创建一个吧！")
+        # 身份验证（指令发起者是否是投票发起者）
+        if (event.get_user_id() != thepoll["qq"]):
+            await setpollexpiry.finish("慢着！这个投票不是你发起的吧！")
+        # 符合条件，修改投票有效期
+        await setpollexp(polnum,expt_sec)
+        if (exptime > 0.001):
+            await setpollexpiry.finish(f"以下投票过期时间将设置为距现在 {params[1]} 小时后：\n{thepoll["title"]} [ID: {str(polnum)}]")
+        else:
+            await setpollexpiry.finish(f"以下投票将立即结束！\n{thepoll["title"]} [ID: {str(polnum)}]")
+        

@@ -14,6 +14,10 @@ import json
 import requests
 import re
 
+# 获取特殊qq号列表
+specd = open("json/spec_qq_list.json","r",encoding="utf-8")
+spec_list = json.loads(specd.read())
+
 # vid_path = "W:/soft/web_svr/testpilot_qqbot/video/temp/video.mp4"
 vid_path1 = path_manager.bf_path()+"video/temp/video.mp4" # QQ看到的path
 vid_path2 = path_manager.nb_path()+"video/temp/video.mp4" # nonebot看到的path
@@ -142,6 +146,10 @@ bilixcx = on_message(priority=10, block=True)
 @bilixcx.handle()
 async def handle_function(event: MessageEvent):
     if feature_manager.get("bilixcx"):
+        # 检查是否在黑名单群聊（存在其他解析b站小程序bot的群聊）
+        group_id = event.get_session_id().split("_")[1]
+        if int(group_id) in spec_list["bilixcx_blacklist_groups"]:
+            raise FinishedException
         # 获取原始消息
         message = event.get_message()
         for segment in message:
@@ -164,7 +172,7 @@ async def handle_function(event: MessageEvent):
                     replcont = title+"\n"+url
                     # 判断是否需要添加小提示
                     global xcxrepl_lastnotitime
-                    if (time.time() - xcxrepl_lastnotitime) > 3600*5:
+                    if (time.time() - xcxrepl_lastnotitime) > 3600*2 and feature_manager.get("video_web"):
                         xcxrepl_lastnotitime = time.time()
                         replcont += "\n小提示：发送 /bili "+bvid+" 即可在群聊预览该视频！"
                     await bilixcx.send(MessageSegment.reply(reply_id)+replcont)
