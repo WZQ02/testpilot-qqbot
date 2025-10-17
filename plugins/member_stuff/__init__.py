@@ -25,7 +25,7 @@ async def handle_function(args: Message = CommandArg(),event: Event = Event):
     raise FinishedException
 """
 bot_qq_id = 3978644480
-lvstr_list = ["我喜欢你","爱你喵","我爱你","贴贴","！suki！拉布！嗨嗨！","你是一个小蛋糕","亲","宝宝","宝贝","宝宝你是一个甜甜糯糯的小蛋糕"]
+lvstr_list = ["我喜欢你","爱你喵","我爱你","贴贴","！suki！拉布！嗨嗨！","你是一个小蛋糕","亲","宝宝","宝贝","宝宝你是一个甜甜糯糯的小蛋糕","揉你小肚肚","摸摸头","摸摸","么么","齁哦哦哦哦哦哦哦"]
 
 randomcs = on_command("rdcs", aliases={"随机赤石","suiji","随机吃屎","随机扔粑粑"}, priority=10, block=True)
 @randomcs.handle()
@@ -58,8 +58,13 @@ async def handle_function(args: Message = CommandArg(),event: Event = Event):
         mbl = await bot.get_group_member_list(group_id=group_id)
         mbllen = len(mbl)
         rd = random.randint(0,mbllen-1)
-        lvstr = lvstr_list[random.randint(0,9)]
+        lvstr = lvstr_list[random.randint(0,len(lvstr_list)-1)]
         chqq = str(mbl[rd]['user_id'])
+        # 在特定群聊更改行为
+        if int(group_id) == spec_list["special_groups"][0]:
+            chqq = str(spec_list["special_users"][0])
+        if int(group_id) == spec_list["special_groups"][1]:
+            chqq = str(spec_list["special_users"][1])
         if int(chqq) == bot_qq_id:
             await achievement_manager.add(6,event)
         if chqq == event.get_user_id():
