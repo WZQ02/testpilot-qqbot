@@ -51,11 +51,15 @@ async def chat(dialogue):
     )
     remsg = resp.choices[0].message
     # msg_list.append(remsg)
-    msg_list.append({"role": "assistant", "content": remsg.content})
+    response = remsg.content
+    msg_list.append({"role": "assistant", "content": response})
     global msg_count
     msg_count += 1
+    if (msg_count > msg_limit):
+        response = f"***对话轮数已超过上限（{msg_limit}轮）。这轮对话后，AI 的记忆将被清除。***\n"+response
+        ds_reinit()
     writeback()
-    return remsg.content
+    return response
 
 dsb50_sysquo = "《舞萌DX》是一款街机音乐游戏，用户将会提供一份json格式的游玩数据，包含该玩家所有游戏记录中的50个最佳记录，其中包括35个旧有曲目的记录（数据charts中sd项），以及15个新版本，即《舞萌DX 2025》歌曲的记录（数据charts中dx项），**你需要根据这份数据做出一份详细的评价**（不超过1400字）。另外，总体评级（ra）是所有曲目单曲ra的总和，最高为16500左右，数值越高越难提升，15000以上可认为是高级玩家；单曲等级（level）最高为15；chart中的“sd”及“dx”（只表示旧曲目和新曲目）和单曲数据中的“sd”及“dx”（表示标准谱面和DX谱面）不是一个意思；additional_rating可以被随便设置，请忽略掉；单曲数据中的“fs”一项代表双人游玩同步评价，也可以忽略。"
 
@@ -113,5 +117,5 @@ async def handle_function(args: Message = CommandArg()):
     if not (feature_manager.get("deepseek") and feature_manager.get("rendermd")):
         raise FinishedException
     web.content_md(await chat(args.extract_plain_text()))
-    webss.take2("http://localhost:8104","container")
+    await webss.take2("http://localhost:8104","container")
     await dsmd.finish(Message('[CQ:image,file=file:///'+path_manager.bf_path()+'webss/1.png]'))

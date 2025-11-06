@@ -72,7 +72,7 @@ webscrnshot = on_command("webss", aliases={"网页截图"}, priority=10, block=T
 @webscrnshot.handle()
 async def handle_function(args: Message = CommandArg(),event: Event = Event):
     if privilege_manager.checkuser(event.get_user_id()) and feature_manager.get("webss"):
-        webss.take(args.extract_plain_text())
+        await webss.take(args.extract_plain_text())
         await webscrnshot.finish(Message('[CQ:image,file=file:///'+path_manager.bf_path()+'webss/1.png]'))
     else:
         raise FinishedException
@@ -83,7 +83,7 @@ async def handle_function(event: Event):
     if privilege_manager.checkuser(event.get_user_id()):
         await fea1.finish(feature_manager.get_all_features())
         #web.content_text(feature_manager.get_all_features())
-        #webss.take2("http://localhost:8104","container")
+        #await webss.take2("http://localhost:8104","container")
         #await fea1.finish(Message('[CQ:image,file=file:///'+path_manager.bf_path()+'webss/1.png]'))
     else:
         raise FinishedException

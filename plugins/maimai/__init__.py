@@ -15,6 +15,10 @@ import shutil
 import plugins.actual_deepseek
 
 async def getb50data(info):
+    if ("qq" in info and info["qq"] == "3978644480") or ("username" in info and info["username"] == "testpilot"):
+        with open("web/templates/maimai_b50/example/df_exa.json","r",encoding="utf-8") as f:
+            example = f.read()
+            return json.loads(example)
     async with aiohttp.request("POST", "https://www.diving-fish.com/api/maimaidxprober/query/player", json=info) as resp:
         if resp.status == 400:
             return 400
@@ -203,7 +207,7 @@ async def handle_function(args: Message = CommandArg(),event: Event = Event):
         web.content = file.read()
         file.close()
         web.writehtml()
-        webss.take2("http://localhost:8104/","container")
+        await webss.take2("http://localhost:8104/","container")
         # 查自己并且底分大于1w
         if (len(args) == 0 and val > 10000):
             await achievement_manager.add(2,event)
@@ -240,8 +244,9 @@ async def handle_function(args: Message = CommandArg(),event: Event = Event):
         file.close()
         web.writehtml()
         fakeap50()
-        webss.take2("http://localhost:8104/","container")
-        await ap50.finish(Message('[CQ:image,file=file:///'+path_manager.bf_path()+'webss/1.png]'))
+        await webss.take2("http://localhost:8104/","container")
+        await ap50.send(Message('[CQ:image,file=file:///'+path_manager.bf_path()+'webss/1.png]'))
+        await ap50.finish("*本bot生成的ap50与其他bot的不同，是由b50所有成绩换成ap+重新计算得到。")
     else:
         await ap50.finish(val)
 
@@ -344,5 +349,5 @@ async def handle_function(args: Message = CommandArg(),event: Event = Event):
     if type(result) != dict:
         await aib50.finish("没有查询到玩家数据！")
     web.content_md(await plugins.actual_deepseek.ds_b50(result))
-    webss.take2("http://localhost:8104","container")
+    await webss.take2("http://localhost:8104","container")
     await aib50.finish(Message('[CQ:image,file=file:///'+path_manager.bf_path()+'webss/1.png]'))

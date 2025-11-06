@@ -1,10 +1,21 @@
-from nonebot import on_notice
-from nonebot.adapters.onebot.v11 import NoticeEvent, PokeNotifyEvent, Message
-import random, math
+from nonebot import on_notice, on_command
+from nonebot.adapters.onebot.v11 import NoticeEvent, PokeNotifyEvent, Message, Event
+import random, math, json
 from nonebot.exception import FinishedException
 import feature_manager
 import path_manager
 import achievement_manager
+import plugins.member_stuff
+
+#specd = open("json/spec_qq_list.json","r",encoding="utf-8")
+#plugins.member_stuff.spec_list = json.loads(specd.read())
+
+miscd = open("json/misc.json","r",encoding="utf-8")
+misc_data = json.loads(miscd.read())
+
+def writeback():
+    file = open("json/misc.json","w",encoding="utf-8")
+    json.dump(misc_data,file,ensure_ascii=False,sort_keys=True)
 
 pokeresp = on_notice()
 emojiresp = on_notice()
@@ -35,7 +46,11 @@ async def handle_function(event: NoticeEvent):
             elif 19 < rd < 22:
                 msg = "喵"
             await poke_user_chk(event)
-            await pokeresp.finish(msg)
+            await pokeresp.send(msg)
+        elif int(event.target_id) == plugins.member_stuff.spec_list["special_users"][1]:
+            misc_data["aira_poke_count"] += 1
+            writeback()
+        raise FinishedException
 
 @emojiresp.handle()
 async def handle_function(event: NoticeEvent):
@@ -56,3 +71,12 @@ async def poke_user_chk(event):
             user_pc += 1
     if user_pc >= 3:
         await achievement_manager.add(3,event)
+
+a_poke_count = on_command("airapokecount", priority=10, block=True)
+@a_poke_count.handle()
+async def handle_function(event: Event = Event):
+    group_id = event.get_session_id().split("_")[1]
+    if int(group_id) == plugins.member_stuff.spec_list["special_groups"][1]:
+        await a_poke_count.finish(f"艾拉的白丝被捏了 {misc_data["aira_poke_count"]} 次。")
+    else:
+        raise FinishedException

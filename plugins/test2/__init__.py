@@ -29,5 +29,5 @@ async def handle_function(args: Message = CommandArg()):
     else:
         # await test2.finish(f"{args.extract_plain_text()}，我给你踩背来咯！")
         web.content_md(args.extract_plain_text())
-        webss.take2("http://localhost:8104","container")
+        await webss.take2("http://localhost:8104","container")
         await rendermd.finish(Message('[CQ:image,file=file:///'+path_manager.bf_path()+'webss/1.png]'))

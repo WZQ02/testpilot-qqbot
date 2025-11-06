@@ -9,6 +9,7 @@ import path_manager
 import time
 import achievement_manager
 import random
+import plugins.member_stuff
 
 bot_qq_id = 3978644480
 default_name = "testpilot"
@@ -20,8 +21,8 @@ faked = datar['data']
 hist = datar['history']
 data.close()
 
-specd = open("json/spec_qq_list.json","r",encoding="utf-8")
-spec_list = json.loads(specd.read())
+#specd = open("json/spec_qq_list.json","r",encoding="utf-8")
+#plugins.member_stuff.spec_list = json.loads(specd.read())
 
 def howlong1(unixtime):
     hl = time.time() - float(unixtime)
@@ -139,14 +140,14 @@ async def do_fake(bot,event,qqnum,group_id):
         if int(qqnum) == int(fak_fromid):
             await achievement_manager.add(13,event)
         # 让bot假扮别的bot
-        if int(qqnum) in spec_list["bots"]:
+        if int(qqnum) in plugins.member_stuff.spec_list["bots"]:
             await achievement_manager.add(7,event)
         # 让bot假扮。。。
-        if int(qqnum) == spec_list["special_users"][0]:
+        if int(qqnum) == plugins.member_stuff.spec_list["special_users"][0]:
             await achievement_manager.add(12,event)
-        if int(qqnum) == spec_list["special_users"][1]:
+        if int(qqnum) == plugins.member_stuff.spec_list["special_users"][1]:
             await achievement_manager.add(8,event)
-        if int(qqnum) == spec_list["special_users"][2]:
+        if int(qqnum) == plugins.member_stuff.spec_list["special_users"][2]:
             await achievement_manager.add(9,event)
     except:
         print("")  
