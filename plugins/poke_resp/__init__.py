@@ -49,7 +49,12 @@ async def handle_function(event: NoticeEvent):
             await pokeresp.send(msg)
         elif int(event.target_id) == plugins.member_stuff.spec_list["special_users"][1]:
             misc_data["aira_poke_count"] += 1
-            writeback()
+        group_id = event.get_session_id().split("_")[1]
+        if (group_id in misc_data["group_poke_count"]):
+            misc_data["group_poke_count"][group_id] += 1
+        else:
+            misc_data["group_poke_count"][group_id] = 1
+        writeback()
         raise FinishedException
 
 @emojiresp.handle()
@@ -72,11 +77,17 @@ async def poke_user_chk(event):
     if user_pc >= 3:
         await achievement_manager.add(3,event)
 
-a_poke_count = on_command("airapokecount", priority=10, block=True)
+a_poke_count = on_command("airapokecount", aliases={"艾拉捏捏次数"}, priority=10, block=True)
 @a_poke_count.handle()
 async def handle_function(event: Event = Event):
     group_id = event.get_session_id().split("_")[1]
     if int(group_id) == plugins.member_stuff.spec_list["special_groups"][1]:
-        await a_poke_count.finish(f"艾拉的白丝被捏了 {misc_data["aira_poke_count"]} 次。")
+        await a_poke_count.finish(f"艾拉的雪糕被捏了 {misc_data["aira_poke_count"]} 次。")
     else:
         raise FinishedException
+    
+group_poke_count = on_command("grouppokecount", aliases={"群戳戳次数","群戳戳统计"}, priority=10, block=True)
+@group_poke_count.handle()
+async def handle_function(event: Event = Event):
+    group_id = event.get_session_id().split("_")[1]
+    await group_poke_count.finish(f"这个群的戳戳次数为 {misc_data["group_poke_count"][group_id]} 次。")

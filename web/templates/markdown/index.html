@@ -8,13 +8,13 @@
 <body>
 <div id="container">
     <div id="mdcontent"></div>
-    <div id="mdraw" style="display:none;"><!-- Markdown Content --></div>
 </div>
 <script src="https://d.wzq02.top/scripts/3rdparty/marked.min.js"></script>
+<script src="https://d.wzq02.top/scripts/3rdparty/purify.min.js"></script>
 <script>
     let mdc_show = document.getElementById("mdcontent");
     function rendermd(mdc) {
-        mdc_show.innerHTML = marked.parse(mdc);
+        mdc_show.innerHTML = DOMPurify.sanitize(marked.parse(mdc));
         for (i=0; i<127; i++) {
             if (mdc_show.childNodes[i]) {
                 if (typeof(mdc_show.childNodes[i].childNodes[0]) == "object") {
@@ -30,7 +30,17 @@
             }
         }
     }
-    rendermd(document.getElementById("mdraw").innerHTML)
+
+    (()=>{
+        let req = new XMLHttpRequest()
+        req.open("get", "/templates/markdown/md.md")
+        req.send(null)
+        req.onload = () => {
+            if (req.status == 200) {
+                rendermd(req.responseText)
+            }
+        }
+    })()
 </script>
 </body>
 </html>

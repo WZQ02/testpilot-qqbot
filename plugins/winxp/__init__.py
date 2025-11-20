@@ -35,7 +35,11 @@ async def xp_sendkey(key):
 async def xp_sendtext(text):
     client = await connect_qemu()
     for i in text:
-        await client.execute("human-monitor-command",{"command-line": "sendkey "+i})
+        keys: dict[str, str] = {" ": "spc","\n": "ret", ".": "dot", "/": "slash", "\\": "backslash", "-": "minus", "+": "plus"}
+        thekey = keys.get(i)
+        if thekey is None:
+            thekey = i
+        await client.execute("human-monitor-command",{"command-line": "sendkey "+thekey})
     await client.disconnect()
     return
 

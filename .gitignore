@@ -19,6 +19,7 @@ json/*.json
 
 web/index.html
 web/templates/maimai_b50/df_data.json
+web/templates/markdown/md.md
 
 node_modules
 package-lock.json

@@ -197,14 +197,27 @@ if os.path.exists("reload_triggered"):
         target = TargetQQGroup(group_id=int(grnum))
 """
 
-# bot调试
-b_debug = on_command("debug", aliases={"调试","测试"}, priority=10, block=True)
+# bot调试（同步函数）
+b_debug = on_command("debug", aliases={"调试","测试","botdbg"}, priority=10, block=True)
 @b_debug.handle()
 async def handle_function(args: Message = CommandArg(),event: Event = Event):
     # 限定超管可用
     if privilege_manager.checkuser(event.get_user_id()) == 2:
-        eval(args.extract_plain_text())
+        bot = get_bot()
+        exec(args.extract_plain_text())
     raise FinishedException
+
+"""
+# bot调试（异步函数）
+b_debug2 = on_command("debug2", aliases={"adebug","异步调试","botdbg2"}, priority=10, block=True)
+@b_debug2.handle()
+async def handle_function(args: Message = CommandArg(),event: Event = Event):
+    # 限定超管可用
+    if privilege_manager.checkuser(event.get_user_id()) == 2:
+        bot = get_bot()
+        await asyncio.eval(args.extract_plain_text())
+    raise FinishedException
+"""
 
 # 广播（发送至bot所在所有群聊）
 broad = on_command("sendall", aliases={"broadcast","广播"}, priority=10, block=True)

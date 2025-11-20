@@ -8,6 +8,7 @@ from nonebot.exception import FinishedException
 import feature_manager
 import path_manager
 import achievement_manager
+import asyncio
 
 miku = on_command("随机miku", aliases={"随机miratsu","miratsu","miku","39"}, priority=10, block=True)
 @miku.handle()
@@ -73,3 +74,25 @@ async def handle_function():
     if not feature_manager.get("meme_resp"):
         raise FinishedException
     await gugugaga.finish(Message('[CQ:record,file=file:///'+path_manager.bf_path()+'audio/gugugaga/gggg'+str(math.ceil(random.random()*8))+'.mp3]'))
+
+passthe_flag = 0
+passthe_lock = 0
+
+passthebutter = on_keyword(["pass the butter"], priority=10, block=True)
+@passthebutter.handle()
+async def handle_function():
+    if not feature_manager.get("meme_resp"):
+        raise FinishedException
+    global passthe_flag, passthe_lock
+    if not passthe_flag:
+        rd = str(math.ceil(random.random()*7))
+        await passthebutter.send(Message('[CQ:image,file=file:///'+path_manager.bf_path()+'images/butter/'+rd+'.webp,sub_type=1,summary=&#91;butter&#93;]'))
+        passthe_lock = 1
+        await asyncio.sleep(5)
+        passthe_flag = 1
+        if passthe_lock:
+            passthe_lock = 0
+            await passthebutter.finish("what is my purpose?")
+    else:
+        passthe_flag = 0
+        await passthebutter.finish("oh my god")

@@ -172,7 +172,7 @@ async def handle_function(event: MessageEvent):
                     replcont = title+"\n"+url
                     # 判断是否需要添加小提示
                     global xcxrepl_lastnotitime
-                    if (time.time() - xcxrepl_lastnotitime) > 3600*2 and feature_manager.get("video_web"):
+                    if (time.time() - xcxrepl_lastnotitime) > 3600*5 and feature_manager.get("video_web"):
                         xcxrepl_lastnotitime = time.time()
                         replcont += "\n小提示：发送 /bili "+bvid+" 即可在群聊预览该视频！"
                     await bilixcx.send(MessageSegment.reply(reply_id)+replcont)

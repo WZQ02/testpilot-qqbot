@@ -14,13 +14,19 @@ def change_content(con):
 def writehtml():
     file = open("web/index.html","w",encoding="utf-8")
     file.write(content)
+    file.close()
 
 # markdown
 def content_md(md):
     file = open("web/templates/markdown/index.html","r",encoding="utf-8")
     page = file.read()
     global content
-    content = page.replace("<!-- Markdown Content -->",md)
+    # content = page.replace("<!-- Markdown Content -->",md)
+    content = page
+    # write md file
+    mdf = open("web/templates/markdown/md.md","w",encoding="utf-8")
+    mdf.write(md)
+    mdf.close()
     file.close()
     writehtml()
 

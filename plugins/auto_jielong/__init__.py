@@ -11,6 +11,8 @@ import plugins.poke_resp
 start_character = ""
 # 出现过的成语
 noted_words = []
+# 接龙触发概率
+jielong_probability = .5
 
 # 同步出现过的成语到misc.json
 def sync():
@@ -43,7 +45,7 @@ async def handle_function(event: Event = Event):
                 word = random.choice(avail_list)
                 print(f"找到匹配词：{word}")
                 # 一半的几率触发自动接龙（不是有匹配就一定会发）
-                if random.random() < .5:
+                if random.random() < jielong_probability:
                     await autojielong.finish(word)
             else:
                 print(f"未找到匹配的词语。")
@@ -74,3 +76,17 @@ async def handle_function():
     noted_words = []
     sync()
     await clear_jielong_his.finish(Message('[CQ:image,file=file:///'+path_manager.bf_path()+'images/haoba.jpg,sub_type=1]'))
+
+change_jielong_probability = on_command("自动接龙概率", priority=10, block=True)
+@change_jielong_probability.handle()
+async def handle_function(args: Message = CommandArg()):
+    if not feature_manager.get("autojie"):
+        raise FinishedException
+    ag = args.extract_plain_text()
+    pattern = r'^[-+]?[0-9]+\.[0-9]+$'
+    if re.match(pattern, str(ag)) is not None and float(ag) > 0 and float(ag) < 1:
+        global jielong_probability
+        jielong_probability = float(ag)
+        await change_jielong_probability.finish("已更改接龙概率为 "+ag+"。")
+    else:
+        await change_jielong_probability.finish("数据不符合要求（大于0，小于1）。")
