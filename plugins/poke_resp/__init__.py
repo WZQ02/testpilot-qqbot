@@ -6,16 +6,10 @@ import feature_manager
 import path_manager
 import achievement_manager
 import plugins.member_stuff
+import misc_manager
 
 #specd = open("json/spec_qq_list.json","r",encoding="utf-8")
 #plugins.member_stuff.spec_list = json.loads(specd.read())
-
-miscd = open("json/misc.json","r",encoding="utf-8")
-misc_data = json.loads(miscd.read())
-
-def writeback():
-    file = open("json/misc.json","w",encoding="utf-8")
-    json.dump(misc_data,file,ensure_ascii=False,sort_keys=True)
 
 pokeresp = on_notice()
 emojiresp = on_notice()
@@ -48,13 +42,13 @@ async def handle_function(event: NoticeEvent):
             await poke_user_chk(event)
             await pokeresp.send(msg)
         elif int(event.target_id) == plugins.member_stuff.spec_list["special_users"][1]:
-            misc_data["aira_poke_count"] += 1
+            misc_manager.misc_data["aira_poke_count"] += 1
         group_id = event.get_session_id().split("_")[1]
-        if (group_id in misc_data["group_poke_count"]):
-            misc_data["group_poke_count"][group_id] += 1
+        if (group_id in misc_manager.misc_data["group_poke_count"]):
+            misc_manager.misc_data["group_poke_count"][group_id] += 1
         else:
-            misc_data["group_poke_count"][group_id] = 1
-        writeback()
+            misc_manager.misc_data["group_poke_count"][group_id] = 1
+        misc_manager.writeback()
         raise FinishedException
 
 @emojiresp.handle()
@@ -82,7 +76,7 @@ a_poke_count = on_command("airapokecount", aliases={"艾拉捏捏次数"}, prior
 async def handle_function(event: Event = Event):
     group_id = event.get_session_id().split("_")[1]
     if int(group_id) == plugins.member_stuff.spec_list["special_groups"][1]:
-        await a_poke_count.finish(f"艾拉的雪糕被捏了 {misc_data["aira_poke_count"]} 次。")
+        await a_poke_count.finish(f"艾拉的雪糕被捏了 {misc_manager.misc_data["aira_poke_count"]} 次。")
     else:
         raise FinishedException
     
@@ -90,4 +84,4 @@ group_poke_count = on_command("grouppokecount", aliases={"群戳戳次数","群�
 @group_poke_count.handle()
 async def handle_function(event: Event = Event):
     group_id = event.get_session_id().split("_")[1]
-    await group_poke_count.finish(f"这个群的戳戳次数为 {misc_data["group_poke_count"][group_id]} 次。")
+    await group_poke_count.finish(f"这个群的戳戳次数为 {misc_manager.misc_data["group_poke_count"][group_id]} 次。")

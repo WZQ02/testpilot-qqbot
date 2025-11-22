@@ -9,7 +9,7 @@ import random
 import achievement_manager
 import json
 import plugins.imbotate
-import plugins.poke_resp
+import misc_manager
 import plugins.member_stuff
 
 # 获取特殊qq号列表
@@ -102,9 +102,9 @@ async def handle_function(args: Message = CommandArg(),event: Event = Event):
 
 bot_sex = 0
 def sync_bot_sex():
-    plugins.poke_resp.misc_data["bot_sex"] = bot_sex
-    plugins.poke_resp.writeback()
-bot_sex = plugins.poke_resp.misc_data["bot_sex"]
+    misc_manager.misc_data["bot_sex"] = bot_sex
+    misc_manager.writeback()
+bot_sex = misc_manager.misc_data["bot_sex"]
 
 changesex = on_command("changesex", aliases={"变性","更改性别"}, priority=10, block=True)
 @changesex.handle()

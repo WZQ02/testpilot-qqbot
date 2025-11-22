@@ -6,18 +6,20 @@ from nonebot.exception import FinishedException
 import msg_cache, feature_manager, path_manager
 import re, json
 import random
-import plugins.poke_resp
+import misc_manager
 
 start_character = ""
 # 出现过的成语
 noted_words = []
+# 读取json
+noted_words = misc_manager.misc_data["jielong_noted_words"]
 # 接龙触发概率
 jielong_probability = .5
 
 # 同步出现过的成语到misc.json
 def sync():
-    plugins.poke_resp.misc_data["jielong_noted_words"] = noted_words
-    plugins.poke_resp.writeback()
+    misc_manager.misc_data["jielong_noted_words"] = noted_words
+    misc_manager.writeback()
 
 autojielong = on_message(priority=10, block=True)
 @autojielong.handle()
