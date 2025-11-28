@@ -13,6 +13,8 @@ bot_mai_status = 0 # -1死机，-2爆炸
 current_difficulty = 0 # 大于0
 track_count = 0
 
+played_time_in_this_session = {}
+
 async def get_rating(qq):
     ra = await plugins.maimai.quedfdata(qq,"list","",0)
     if (not isinstance(ra,int) or ra < 4000):
@@ -92,40 +94,62 @@ def stress():
     if random.random() < mai_bsod_poss:
         bot_mai_status = -1
 
+def valid_player(qq):
+    return not (qq in misc_manager.misc_data["bot_mai_blacklist"])
+
+def calc_death_possibility(qq):
+    if (qq in misc_manager.misc_data["mai_expl_count"]):
+        expl_count = misc_manager.misc_data["mai_expl_count"][qq]
+        if expl_count < 5:
+            return 0
+        elif expl_count < 20:
+            if (qq in played_time_in_this_session):
+                times = played_time_in_this_session[qq]
+                return pow(expl_count,2)*times/5000
+            else:
+                return 0
+        else:
+            return 0.25
+    else:
+        return -1
+
 play_mai1 = on_command("出勤", aliases={"打舞萌","我要打舞萌","我要打乌蒙","我要打mai"}, priority=10, block=True)
 @play_mai1.handle()
 async def handle_function(event: Event = Event):
-    if not feature_manager.get("maimai_emu"):
+    qqid = event.get_user_id()
+    if not feature_manager.get("maimai_emu") or not valid_player(qqid):
         raise FinishedException
     global bot_mai_status
     if (bot_mai_status >= 0):
         bot_mai_status = 1
-        qqid = event.get_user_id()
+        await play_mai1.send(Message('[CQ:image,file=file:///'+path_manager.bf_path()+'images/bot_mai/cab_start.webp,sub_type=1]'))
         if qqid in misc_manager.misc_data["bot_mai_noti_list"]:
             expl_count = misc_manager.misc_data["mai_expl_count"][qqid]
             if expl_count >= 20:
-                await play_mai1.send(Message(f"[CQ:at,qq={qqid}] 你已经炸掉了本市{str(expl_count)}个机厅的舞萌dx。\n因为造成的经济损失过多，你已经被全市通缉。\n你随时可能在下一次出勤时候被就地伏法。\n祝你好运！"))
+                await play_mai1.send(Message(f"[CQ:at,qq={qqid}]\n你已经炸掉了本市{str(expl_count)}个机厅的舞萌dx。\n因为造成的经济损失过多，你已经被全市通缉。\n你随时可能在下一次出勤时候被就地伏法。\n祝你好运！"))
             elif expl_count >= 10:
-                await play_mai1.send(Message(f"[CQ:at,qq={qqid}] 你已经炸掉了本市{str(expl_count)}个机厅的舞萌dx。\n现在，你除了被越来越多的机厅老板盯上，一些原本在你去过的机厅打舞萌的玩家，因为你把机台搞炸玩不成了！现在，有一群地雷女玩家开始调查你的行踪，并准备在你去的下一家机厅对你改花刀。\n一定要保护好自己哦！"))
+                await play_mai1.send(Message(f"[CQ:at,qq={qqid}]\n你已经炸掉了本市{str(expl_count)}个机厅的舞萌dx。\n现在，你除了被越来越多的机厅老板盯上，一些原本在你去过的机厅打舞萌的玩家，因为你把机台搞炸玩不成了！现在，有一群地雷女玩家开始调查你的行踪，并准备在你去的下一家机厅对你改花刀。\n一定要保护好自己哦！"))
             elif expl_count >= 5:
-                await play_mai1.send(Message(f"[CQ:at,qq={qqid}] 你已经炸掉了本市{str(expl_count)}个机厅的舞萌dx。\n每次你玩炸机器后，你没有向机厅老板赔偿损失，而是逃离到下一家，继续游戏。\n现在，这几家机厅的老板已经打听到了你的身份，要在你可能前往的下一个机厅对你围堵追截，把你暗杀掉。\n为了防止被追杀，以后请不要在同一个机厅出勤太多次哦！"))
+                await play_mai1.send(Message(f"[CQ:at,qq={qqid}]\n你已经炸掉了本市{str(expl_count)}个机厅的舞萌dx。\n每次你玩炸机器后，你没有向机厅老板赔偿损失，而是逃离到下一家，继续游戏。\n现在，这几家机厅的老板已经打听到了你的身份，要在你可能前往的下一个机厅对你围堵追截，把你暗杀掉。\n为了防止被追杀，以后请不要在同一个机厅出勤太多次哦！"))
             misc_manager.misc_data["bot_mai_noti_list"].remove(qqid)
             misc_manager.writeback()
-        await play_mai1.send(Message('[CQ:image,file=file:///'+path_manager.bf_path()+'images/bot_mai/cab_start.webp,sub_type=1]'))
-        await play_mai1.send("要开始了哟！")
-        await asyncio.sleep(.5)
-        await play_mai1.finish("请选择难度！")
+            raise FinishedException
+        else:
+            await play_mai1.send("要开始了哟！")
+            await asyncio.sleep(.5)
+            await play_mai1.finish("请选择难度！")
     else:
         imgname = "cab_exploded"
         if bot_mai_status == -1:
             imgname = "cab_bsod"
         await play_mai1.finish(Message('[CQ:image,file=file:///'+path_manager.bf_path()+'images/bot_mai/'+imgname+'.webp,sub_type=1]'))
 
-play_mai2 = on_command("选择难度", priority=10, block=True)
+play_mai2 = on_command("选择难度", aliases={"难度"}, priority=10, block=True)
 @play_mai2.handle()
-async def handle_function(args: Message = CommandArg()):
+async def handle_function(args: Message = CommandArg(),event: Event = Event):
+    qqid = event.get_user_id()
     global bot_mai_status, current_difficulty
-    if not feature_manager.get("maimai_emu") or bot_mai_status < 1:
+    if (not feature_manager.get("maimai_emu") or bot_mai_status < 1) or not valid_player(qqid):
         raise FinishedException
     current_difficulty = parse_difficulty(args.extract_plain_text())
     if current_difficulty > 0:
@@ -134,38 +158,63 @@ async def handle_function(args: Message = CommandArg()):
     else:
         await play_mai2.finish("没有这个难度哦！请重新选择")
     
-play_mai3 = on_command("开始游戏", priority=10, block=True)
+play_mai3 = on_command("开始游戏", aliases={"开始"}, priority=10, block=True)
 @play_mai3.handle()
 async def handle_function(event: Event = Event):
+    qqid = event.get_user_id()
     global bot_mai_status, current_difficulty, track_count
-    if not feature_manager.get("maimai_emu") or bot_mai_status < 1:
+    if (not feature_manager.get("maimai_emu") or bot_mai_status < 1) or not valid_player(qqid):
         raise FinishedException
     if bot_mai_status == 1:
         await play_mai3.finish("你还没选择难度！")
-    qqid = event.get_user_id()
     stress()
     ac = await calc_achievement(qqid)
     rank = getrank(ac)
     fc = getfc(ac)
     ac = round(ac,4)
     current_difficulty = 0
+    # 死亡结局
+    death_possibility = calc_death_possibility(qqid)
+    if random.random() < death_possibility:
+        expl_count = misc_manager.misc_data["mai_expl_count"][qqid]
+        if expl_count >= 20:
+            await play_mai1.send(Message(f"[CQ:at,qq={qqid}]\n市里的特警部队在你出勤期间找到了你！不过，他们没有立即击毙你，而是选择在看你打完歌后，再把你押走。\n虽然你不会马上被处决，但你剩下的日子也将在牢狱中度过，再也去不了机厅了。\n以后你将无法再使用本bot的 /出勤 功能。"))
+        elif expl_count >= 10:
+            await play_mai1.send(Message(f"[CQ:at,qq={qqid}]\n不好！你被一个之前在被你炸掉舞萌的机厅出勤的地雷女玩家找到了，你在打歌期间没注意到，被她捅了刀子，当场毙命！\n以后你将无法再使用本bot的 /出勤 功能。"))
+        elif expl_count >= 5:
+            await play_mai1.send(Message(f"[CQ:at,qq={qqid}]\n不好！之前被你炸掉舞萌的机厅老板找到你了，你在打歌期间没注意到，被老板当场击杀了！\n以后你将无法再使用本bot的 /出勤 功能。"))
+        misc_manager.misc_data["bot_mai_blacklist"].append(qqid)
+        misc_manager.writeback()
+        raise FinishedException
+    # 机台死机或爆炸
     if bot_mai_status == -2:
         if (qqid in misc_manager.misc_data["mai_expl_count"]):
             misc_manager.misc_data["mai_expl_count"][qqid] += 1
         else:
             misc_manager.misc_data["mai_expl_count"][qqid] = 1
         misc_manager.writeback()
+        count = misc_manager.misc_data["mai_expl_count"][qqid]
+        if count == 5 or count == 10 or count == 20:
+            misc_manager.misc_data["bot_mai_noti_list"].append(qqid)
+            misc_manager.writeback()
         await play_mai2.send(Message('[CQ:image,file=file:///'+path_manager.bf_path()+'images/bot_mai/explosion.gif,sub_type=1]'))
-        await play_mai2.finish(Message(f"[CQ:at,qq={qqid}] 谱子太难了！你越级拆机，把机台拆炸了！"))
+        await play_mai2.finish(Message(f"[CQ:at,qq={qqid}]\n谱子太难了！你越级拆机，把机台拆炸了！"))
     elif bot_mai_status == -1:
         await play_mai2.send(Message('[CQ:image,file=file:///'+path_manager.bf_path()+'images/bot_mai/cab_bsod.webp,sub_type=1]'))
-        await play_mai2.finish(Message(f"[CQ:at,qq={qqid}] 你选择的难度太高，机台承受不住死机了！"))
+        await play_mai2.finish(Message(f"[CQ:at,qq={qqid}]\n你选择的难度太高，机台承受不住死机了！"))
+    # 正常通关
     else:
         track_count += 1
-        if ac <= 80:
-            await play_mai3.send(Message(f"[CQ:at,qq={qqid}] 你没有通关！rank {rank} ，达成率 {ac}%"))
+        # 在 this_session 中计数
+        if qqid in played_time_in_this_session:
+            played_time_in_this_session[qqid] += 1
         else:
-            await play_mai3.send(Message(f"[CQ:at,qq={qqid}] rank {rank} clear！达成率 {ac}%！{fc}通关啦！"))
+            played_time_in_this_session[qqid] = 1
+        # 报告达成率
+        if ac <= 80:
+            await play_mai3.send(Message(f"[CQ:at,qq={qqid}]\n你没有通关！rank {rank} ，达成率 {ac}%"))
+        else:
+            await play_mai3.send(Message(f"[CQ:at,qq={qqid}]\nrank {rank} clear！达成率 {ac}%！{fc}通关啦！"))
         if (track_count >= 4):
             bot_mai_status = 0
             await asyncio.sleep(5)
@@ -176,10 +225,11 @@ async def handle_function(event: Event = Event):
             await asyncio.sleep(5)
             await play_mai3.finish(f"下一首！请选择难度！")
 
-call_help = on_command("召唤机修", priority=10, block=True)
+call_help = on_command("召唤机修", aliases={"呼叫机修"}, priority=10, block=True)
 @call_help.handle()
-async def handle_function():
-    if not feature_manager.get("maimai_emu"):
+async def handle_function(event: Event = Event):
+    qqid = event.get_user_id()
+    if not feature_manager.get("maimai_emu") or not valid_player(qqid):
         raise FinishedException
     global bot_mai_status
     if bot_mai_status >= 0:
@@ -194,15 +244,18 @@ async def handle_function():
 
 runaway = on_command("更换机厅", priority=10, block=True)
 @runaway.handle()
-async def handle_function():
-    if not feature_manager.get("maimai_emu"):
+async def handle_function(event: Event = Event):
+    qqid = event.get_user_id()
+    if not feature_manager.get("maimai_emu") or not valid_player(qqid):
         raise FinishedException
-    global bot_mai_status
-    bot_mai_status = 1
+    global bot_mai_status, track_count, played_time_in_this_session
+    bot_mai_status = 0
+    track_count = 0
+    played_time_in_this_session = {}
     await runaway.send(Message('[CQ:image,file=file:///'+path_manager.bf_path()+'images/bot_mai/cab_home.webp,sub_type=1]'))
     await runaway.finish(f"你来到了新的机厅！发送 /出勤 开始游戏吧！")
 
-explos_his = on_command("炸机记录", aliases={"舞萌炸炸记录"}, priority=10, block=True)
+explos_his = on_command("炸机记录", aliases={"舞萌炸炸记录","炸机次数"}, priority=10, block=True)
 @explos_his.handle()
 async def handle_function(event: Event = Event):
     if not feature_manager.get("maimai_emu"):
@@ -210,9 +263,6 @@ async def handle_function(event: Event = Event):
     qqid = event.get_user_id()
     if (qqid in misc_manager.misc_data["mai_expl_count"]):
         count = misc_manager.misc_data["mai_expl_count"][qqid]
-        if count == 5 or count == 10 or count == 20:
-            misc_manager.misc_data["bot_mai_noti_list"].append(qqid)
-            misc_manager.writeback()
-        await explos_his.finish(Message(f"[CQ:at,qq={qqid}] 你玩炸了{str(count)}个舞萌机台，累计经济损失{str(count*8)}万元！"))
+        await explos_his.finish(Message(f"[CQ:at,qq={qqid}]\n你玩炸了{str(count)}个舞萌机台，累计经济损失{str(count*8)}万元！"))
     else:
-        await explos_his.finish(Message(f"[CQ:at,qq={qqid}] 你没有炸掉任何一台舞萌dx！是不拆机的好孩子哦？"))
+        await explos_his.finish(Message(f"[CQ:at,qq={qqid}]\n你没有炸掉任何一台舞萌dx！是不拆机的好孩子哦？"))

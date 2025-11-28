@@ -58,6 +58,9 @@ async def handle_function(args: Message = CommandArg(),event: Event = Event):
         splitex = args.extract_plain_text().split()
         if len(splitex) > 0 and str.isdigit(splitex[0]):
             times = int(splitex[0])
+        # 对于非管理员，times超过10次减为10
+        if (not privilege_manager.checkuser(event.get_user_id()) and times > 10):
+            times = 10
         for i in range(times):
             sltim = pow(random.random(),3)*5
             await asyncio.sleep(sltim)

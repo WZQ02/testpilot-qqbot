@@ -1,6 +1,6 @@
 from nonebot import on_command
 from nonebot.params import CommandArg
-from nonebot.adapters.onebot.v11 import Message, Event
+from nonebot.adapters.onebot.v11 import Message, Event, Bot, MessageEvent
 from nonebot.exception import FinishedException
 import feature_manager
 import privilege_manager
@@ -8,13 +8,15 @@ import path_manager
 import json
 import math
 import web, webss
+import base64, mimetypes
+import plugins.test1, img_process
 
-akfile = open("json/oa_api_key.json","r",encoding="utf-8")
-ak = json.loads(akfile.read())["key"]
-akfile.close()
+config_f = open("json/oa_data.json","r",encoding="utf-8")
+config = json.loads(config_f.read())["configs"]
+config_f.close()
 
 from openai import AsyncOpenAI
-client = AsyncOpenAI(api_key=ak, base_url="https://api.deepseek.com")
+client = AsyncOpenAI(api_key=config[config["current_engine"]]["key"], base_url=config[config["current_engine"]]["base_url"])
 
 # 初始化语句和全局变量
 msg_init = {"role": "system", "content": "你是一个名叫testpilot的群聊机器人，致力于帮群友解决问题。"}
@@ -41,11 +43,15 @@ def writeback():
     file = open("json/ds_quotes.json","w",encoding="utf-8")
     json.dump(msg_list,file,ensure_ascii=False,sort_keys=True)
 
+def cfg_writeback():
+    file = open("json/oa_data.json","w",encoding="utf-8")
+    json.dump({"configs":config},file,ensure_ascii=False,sort_keys=True)
+
 async def chat(dialogue):
     msg_list.append({"role": "user", "content": dialogue})
     # print(msg_list)
     resp = await client.chat.completions.create(
-        model = "deepseek-chat",
+        model = config[config["current_engine"]]["models"][0],
         messages = msg_list,
         stream = False
     )
@@ -66,14 +72,54 @@ dsb50_sysquo = "《舞萌DX》是一款街机音乐游戏，用户将会提供�
 async def ds_b50(json):
     b50msglist = [{"role": "system", "content": dsb50_sysquo},{"role": "user", "content": str(json)}]
     resp = await client.chat.completions.create(
-        model = "deepseek-reasoner",
+        model = config[config["current_engine"]]["models"][1],
         messages = b50msglist,
         stream = False
     )
     remsg = resp.choices[0].message
-    # 在控制台输出深度思考内容
-    print(remsg.reasoning_content)
+    # 在控制台输出深度思考内容（当深度思考内容存在时）
+    if hasattr(remsg, 'reasoning_content'):
+        print(remsg.reasoning_content)
     return remsg.content
+
+async def analyze_image(url,prompt):
+    path = "images/analyze/1.jpg"
+    img_process.download_img(url, path)
+    # 编码图片
+    b64 = encode_image(path)
+    if not prompt:
+        prompt = "图片里面有什么？"
+    resp = await client.chat.completions.create(
+        model = config[config["current_engine"]]["models"][1],
+        messages = [
+            {
+                "role": "user",
+                "content": [
+                    {
+                    "type": "text",
+                    "text": prompt,
+                    },
+                    {
+                    "type": "image_url",
+                    "image_url": {
+                        "url":  f"data:image/jpeg;base64,{b64}"
+                    },
+                    },
+                ],
+            }
+        ],
+        stream = False
+    )
+    remsg = resp.choices[0].message
+    return remsg.content
+
+def encode_image(image_path):
+  with open(image_path, "rb") as image_file:
+    return base64.b64encode(image_file.read()).decode('utf-8')
+
+def reload_client(engine):
+    global client
+    client = AsyncOpenAI(api_key=config[engine]["key"], base_url=config[engine]["base_url"])
 
 ads = on_command("ds", aliases={"深度求索","AI","actualdeepseek","deepseek","dick"}, priority=10, block=True)
 @ads.handle()
@@ -119,3 +165,37 @@ async def handle_function(args: Message = CommandArg()):
     web.content_md(await chat(args.extract_plain_text()))
     await webss.take2("http://localhost:8104","container")
     await dsmd.finish(Message('[CQ:image,file=file:///'+path_manager.bf_path()+'webss/1.png]'))
+
+switchengine = on_command("switchai", aliases={"更换AI引擎","切换AI"}, priority=10, block=True)
+@switchengine.handle()
+async def handle_function():
+    if not feature_manager.get("deepseek"):
+        raise FinishedException
+    current = config["current_engine"]
+    list = config["available_engine_list"]
+    next = list[(list.index(current)+1) % len(list)]
+    config["current_engine"] = next
+    cfg_writeback()
+    reload_client(next)
+    await switchengine.finish(f"已切换 AI 引擎为 {next}。")
+
+anaimg = on_command("anaimg", aliases={"fxtp","分析图片","AI分析图片"}, priority=10, block=True)
+@anaimg.handle()
+async def handle_function(args: Message = CommandArg(),bot: Bot = Bot, event: MessageEvent = Event):
+    if not feature_manager.get("deepseek"):
+        raise FinishedException
+    if config["current_engine"] != "gemini":
+        await anaimg.finish("当前 AI 引擎不支持图片分析！请用 /switchai 切换引擎再试哦！")
+    rep_con = await plugins.test1.get_reply_content(event.original_message,bot)
+    # 优先从args附带的图片获取
+    if len(args) > 0 and args[0].type == 'image':
+        await anaimg.finish(await analyze_image(args[0].data['url']))
+    # 检查回复的消息内容
+    elif rep_con and rep_con[0]["type"] == 'image':
+        # 如果存在文本参数，则作为自定义prompt传入
+        custom_prompt = None
+        if len(args) > 0 and args[0].type == 'text':
+            custom_prompt = args.extract_plain_text()
+        await anaimg.finish(await analyze_image(rep_con[0]["data"]['url'],custom_prompt))
+    else:
+        await anaimg.finish("请提供要分析的图片！")

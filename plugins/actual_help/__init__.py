@@ -1,12 +1,17 @@
 from nonebot import on_command
 from nonebot.rule import to_me
+from nonebot.params import CommandArg
 from nonebot.exception import FinishedException
-from nonebot.adapters.onebot.v11 import Event
+from nonebot.adapters.onebot.v11 import Message, Event
 import feature_manager
 import random
 
 helptext = "https://testpilot.wzq02.top/guide/"
 wztext = "https://wzq02.top/ WZQ'02 的小站\nhttps://s.wzq02.top/1drive WZQ'02 的网盘\nhttps://s.wzq02.top/ask WZQ'02 的提问箱\nhttps://wzq02.top/otomader-sites/ 音 MADer 网站收集\nhttps://testpilot.wzq02.top/ Bot 介绍页"
+wztext2 = "https://storage.aira.cafe/ 艾了个拉的软件库\nhttps://otomad.wiki/ OtomadWiki - 音MAD的百科全书 (｡･∀･)ﾉﾞ"
+wztext3 = "https://otm.ink/ 音之墨官网"
+wztext4 = "https://jazzwhom.top/ 帕斯镇"
+wztext5 = "https://wzq02.top/otomader-sites/ 音 MAD 作者 / 社团相关网站收录"
 
 ahelp = on_command("actualhelp", aliases={"actual_help","真正的帮助","实际的帮助","真实的帮助"}, priority=10, block=True)
 @ahelp.handle()
@@ -15,12 +20,14 @@ async def handle_function():
         raise FinishedException
     await ahelp.finish(helptext)
 
-wzs = on_command("wzq", aliases={"wzs","小站导航","网站导航"}, priority=10, block=True)
+wzs = on_command("sites", aliases={"wzs","小站导航","网站导航"}, priority=10, block=True)
 @wzs.handle()
-async def handle_function():
+async def handle_function(args: Message = CommandArg()):
     if not feature_manager.get("wzs"):
         raise FinishedException
-    await wzs.finish(wztext)
+    text = args.extract_plain_text()
+    table = {"": wztext, "aira": wztext2, "yzm": wztext3, "pt": wztext4, "otomad": wztext5}
+    await wzs.finish(table.get(text) or wztext)
 
 help = on_command("help", aliases={"帮助"}, priority=10, block=True)
 @help.handle()

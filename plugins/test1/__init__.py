@@ -2,7 +2,7 @@ from nonebot import on_command
 from nonebot import on_keyword
 from nonebot.rule import to_me
 from nonebot.params import CommandArg
-from nonebot.adapters.onebot.v11 import Message, Event
+from nonebot.adapters.onebot.v11 import Message, Event, Bot, MessageEvent
 import random, math
 import asyncio
 import httpx
@@ -29,15 +29,22 @@ async def handle_function():
 
 ccb = on_command("ccb", aliases={"踩背","cb"}, priority=10, block=True)
 @ccb.handle()
-async def handle_function(args: Message = CommandArg()):
+async def handle_function(args: Message = CommandArg(),bot: Bot = Bot, event: MessageEvent = Event):
     if not feature_manager.get("ccb"):
         raise FinishedException
-    if args[0].type == 'image':
-        img_process.download_img(args[0].data['url'],"images/img_ccb/temp/bcb.jpg")
-        img_process.gen_ccb_img()
-        await ccb.finish(Message('[CQ:image,file=file:///'+path_manager.bf_path()+'images/img_ccb/temp/result.png]'))
+    # 优先获取args
+    if len(args) > 0:
+        if args[0].type == 'image':
+            await ccb.finish(await ccb_image(args[0].data['url']))
+        else:
+            await ccb.finish(f"{args.extract_plain_text()}，我给你踩背来咯！")
+    # 获取回复内容
     else:
-        await ccb.finish(f"{args.extract_plain_text()}，我给你踩背来咯！")
+        rep_con = await get_reply_content(event.original_message,bot)
+        if rep_con and rep_con[0]["type"] == 'image':
+            await ccb.finish(await ccb_image(rep_con[0]['data']['url']))
+    raise FinishedException
+
 
 echo = on_command("echo", aliases={"复读"}, priority=10, block=True)
 @echo.handle()
@@ -313,13 +320,16 @@ async def handle_function(event: Event = Event):
 
 upscale = on_command("upscale", aliases={"放大","zoom"}, priority=10, block=True)
 @upscale.handle()
-async def handle_function(args: Message = CommandArg()):
+async def handle_function(args: Message = CommandArg(),bot: Bot = Bot, event: MessageEvent = Event):
     if not feature_manager.get("upscale"):
         raise FinishedException
+    rep_con = await get_reply_content(event.original_message,bot)
+    # 优先从args附带的图片获取
     if len(args) > 0 and args[0].type == 'image':
-        img_process.download_img(args[0].data['url'],"images/upscale/source.jpg")
-        await img_process.img4x()
-        await upscale.finish(Message('[CQ:image,file=file:///'+path_manager.bf_path()+'images/upscale/result.png]'))
+        await upscale.finish(await zoom_image(args[0].data['url']))
+    # 检查回复的消息内容
+    elif rep_con and rep_con[0]["type"] == 'image':
+        await upscale.finish(await zoom_image(rep_con[0]["data"]['url']))
     else:
         await upscale.finish("请提供要放大的图片！")
 
@@ -331,3 +341,26 @@ async def handle_function():
     await acexplode.send("开空调")
     await asyncio.sleep(.5)
     await acexplode.finish("空调升温 "+str(math.ceil(random.random()*1000)))
+
+async def get_reply_content(message,bot):
+    reply_segment = None
+    for segment in message:
+        if segment.type == "reply":
+            reply_segment = segment
+            break
+    if reply_segment:
+        reply_id = reply_segment.data.get("id")
+        message_info = await bot.get_msg(message_id=int(reply_id))
+        return message_info.get("message")
+    else:
+        return 0
+    
+async def zoom_image(url):
+    img_process.download_img(url,"images/upscale/source.jpg")
+    await img_process.img4x()
+    return Message('[CQ:image,file=file:///'+path_manager.bf_path()+'images/upscale/result.png]')
+
+async def ccb_image(url):
+    img_process.download_img(url,"images/img_ccb/temp/bcb.jpg")
+    img_process.gen_ccb_img()
+    return Message('[CQ:image,file=file:///'+path_manager.bf_path()+'images/img_ccb/temp/result.png]')
