@@ -13,6 +13,7 @@ import privilege_manager
 import os
 import path_manager
 import achievement_manager
+import misc_manager
 
 from nonebot_plugin_saa import MessageFactory, TargetQQGroup
 from nonebot_plugin_saa import enable_auto_select_bot
@@ -175,11 +176,25 @@ async def handle_function(event: Event):
 # 重载bot
 reload = on_command("reload", aliases={"重载bot","reboot"}, priority=10, block=True)
 @reload.handle()
-async def handle_function(args: Message = CommandArg(),event: Event = Event):
+async def handle_function(event: Event = Event):
     if privilege_manager.checkuser(event.get_user_id()):
-        await reload.send("我重生啦！")
-        #e = open("reload_triggered","w")
-        #e.write(event.get_session_id())
+        if len(misc_manager.tasks) < 1:
+            await reload.send("收到！重启中。。。")
+            #e = open("reload_triggered","w")
+            #e.write(event.get_session_id())
+            f = open("plugins/placeholder/__init__.py","w")
+            f.write(" ")
+        else:
+            await reload.send("当前有任务正在进行，稍后再试吧！\n正在进行的任务有："+str(misc_manager.tasks))
+    else:
+        raise FinishedException
+    
+# 强制重载
+forcereload = on_command("forcereload", aliases={"强制重载"}, priority=10, block=True)
+@forcereload.handle()
+async def handle_function(event: Event = Event):
+    if privilege_manager.checkuser(event.get_user_id()):
+        await reload.send("注意，我要重启了，谁都别拦着我！")
         f = open("plugins/placeholder/__init__.py","w")
         f.write(" ")
     else:

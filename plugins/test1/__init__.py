@@ -333,15 +333,6 @@ async def handle_function(args: Message = CommandArg(),bot: Bot = Bot, event: Me
     else:
         await upscale.finish("请提供要放大的图片！")
 
-acexplode = on_command("炸空调", priority=10, block=True)
-@acexplode.handle()
-async def handle_function():
-    if not feature_manager.get("meme_resp"):
-        raise FinishedException
-    await acexplode.send("开空调")
-    await asyncio.sleep(.5)
-    await acexplode.finish("空调升温 "+str(math.ceil(random.random()*1000)))
-
 async def get_reply_content(message,bot):
     reply_segment = None
     for segment in message:

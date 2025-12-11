@@ -10,6 +10,7 @@ import math
 import web, webss
 import base64, mimetypes
 import plugins.test1, img_process
+import misc_manager
 
 config_f = open("json/oa_data.json","r",encoding="utf-8")
 config = json.loads(config_f.read())["configs"]
@@ -21,7 +22,7 @@ client = AsyncOpenAI(api_key=config[config["current_engine"]]["key"], base_url=c
 # 初始化语句和全局变量
 msg_init = {"role": "system", "content": "你是一个名叫testpilot的群聊机器人，致力于帮群友解决问题。"}
 msg_list = []
-msg_limit = 25
+msg_limit = config["chat_msg_limit"]
 msg_count = 0
 
 # 加载json
@@ -90,7 +91,9 @@ async def analyze_image(url,prompt):
     if not prompt:
         prompt = "图片里面有什么？"
     resp = await client.chat.completions.create(
-        model = config[config["current_engine"]]["models"][1],
+        # model = config[config["current_engine"]]["models"][1],
+        # 始终使用gemini分析图片
+        model = config["gemini"]["models"][1],
         messages = [
             {
                 "role": "user",
@@ -110,6 +113,7 @@ async def analyze_image(url,prompt):
         ],
         stream = False
     )
+    print(resp)
     remsg = resp.choices[0].message
     return remsg.content
 
@@ -127,7 +131,14 @@ async def handle_function(args: Message = CommandArg()):
     # 虽然没什么必要但有时发/dscount会同时触发ds，很奇怪，还是修补一下好了
     if (not feature_manager.get("deepseek")) or args.extract_plain_text() == "count" or args.extract_plain_text() == "md":
         raise FinishedException
-    await ads.finish(await chat(args.extract_plain_text()))
+    misc_manager.tasks.append("ds_chat")
+    text = await chat(args.extract_plain_text())
+    # 输出内容每3000字分段，避免长消息发不出
+    segs = split_str_by_length(text, 3000)
+    for i in segs:
+        await ads.send(i)
+    misc_manager.tasks.remove("ds_chat")
+    raise FinishedException
 
 dscount = on_command("dscount", aliases={"AI对话轮数","deepseek对话轮数","对话轮数"}, priority=10, block=True)
 @dscount.handle()
@@ -162,8 +173,10 @@ dsmd = on_command("dsmd", aliases={"deepseekmarkdown"}, priority=10, block=True)
 async def handle_function(args: Message = CommandArg()):
     if not (feature_manager.get("deepseek") and feature_manager.get("rendermd")):
         raise FinishedException
+    misc_manager.tasks.append("ds_chat")
     web.content_md(await chat(args.extract_plain_text()))
     await webss.take2("http://localhost:8104","container")
+    misc_manager.tasks.remove("ds_chat")
     await dsmd.finish(Message('[CQ:image,file=file:///'+path_manager.bf_path()+'webss/1.png]'))
 
 switchengine = on_command("switchai", aliases={"更换AI引擎","切换AI"}, priority=10, block=True)
@@ -177,6 +190,8 @@ async def handle_function():
     config["current_engine"] = next
     cfg_writeback()
     reload_client(next)
+    if "desc" in config[next]:
+        next = config[next]["desc"]
     await switchengine.finish(f"已切换 AI 引擎为 {next}。")
 
 anaimg = on_command("anaimg", aliases={"fxtp","分析图片","AI分析图片"}, priority=10, block=True)
@@ -184,18 +199,51 @@ anaimg = on_command("anaimg", aliases={"fxtp","分析图片","AI分析图片"}, 
 async def handle_function(args: Message = CommandArg(),bot: Bot = Bot, event: MessageEvent = Event):
     if not feature_manager.get("deepseek"):
         raise FinishedException
-    if config["current_engine"] != "gemini":
-        await anaimg.finish("当前 AI 引擎不支持图片分析！请用 /switchai 切换引擎再试哦！")
+    #if config["current_engine"] != "gemini":
+        #await anaimg.finish("当前 AI 引擎不支持图片分析！请用 /switchai 切换引擎再试哦！")
+    misc_manager.tasks.append("ds_anaimg")
     rep_con = await plugins.test1.get_reply_content(event.original_message,bot)
     # 优先从args附带的图片获取
     if len(args) > 0 and args[0].type == 'image':
-        await anaimg.finish(await analyze_image(args[0].data['url']))
+        text = await analyze_image(args[0].data['url'])
+        misc_manager.tasks.remove("ds_anaimg")
+        await anaimg.finish(text)
     # 检查回复的消息内容
     elif rep_con and rep_con[0]["type"] == 'image':
         # 如果存在文本参数，则作为自定义prompt传入
         custom_prompt = None
         if len(args) > 0 and args[0].type == 'text':
             custom_prompt = args.extract_plain_text()
-        await anaimg.finish(await analyze_image(rep_con[0]["data"]['url'],custom_prompt))
+        text = await analyze_image(rep_con[0]["data"]['url'],custom_prompt)
+        misc_manager.tasks.remove("ds_anaimg")
+        await anaimg.finish(text)
     else:
+        misc_manager.tasks.remove("ds_anaimg")
         await anaimg.finish("请提供要分析的图片！")
+
+checkengine = on_command("checkai", aliases={"查看AI引擎","当前AI引擎"}, priority=10, block=True)
+@checkengine.handle()
+async def handle_function():
+    if not feature_manager.get("deepseek"):
+        raise FinishedException
+    current = config["current_engine"]
+    if "desc" in config[current]:
+        current = config[current]["desc"]
+    await checkengine.finish(f"当前 AI 引擎为 {current}。")
+
+# 按固定长度切分字符串
+def split_str_by_length(s, chunk_size):
+    return [s[i:i + chunk_size] for i in range(0, len(s), chunk_size)]
+
+changedslimit = on_command("setdscount", priority=10, block=True)
+@changedslimit.handle()
+async def handle_function(args: Message = CommandArg(),event: Event = Event):
+    if privilege_manager.checkuser(event.get_user_id()) and feature_manager.get("deepseek"):
+        aaa = args.extract_plain_text()
+        if str.isdigit(aaa):
+            global msg_limit
+            msg_limit = config["chat_msg_limit"] = int(aaa)
+            cfg_writeback()
+        await changedslimit.finish(f"已将 AI 对话次数上限设置为 {msg_limit} 次。")
+    else:
+        raise FinishedException

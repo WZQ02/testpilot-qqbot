@@ -11,6 +11,8 @@ import json
 import plugins.imbotate
 import misc_manager
 import plugins.member_stuff
+import path_manager
+import asyncio, math
 
 # 获取特殊qq号列表
 specd = open("json/spec_qq_list.json","r",encoding="utf-8")
@@ -127,3 +129,28 @@ async def handle_function():
     sync_bot_sex()
     quotes = {0:"",1:"男",2:"女"}
     await changesex.finish("大家好啊，我是"+quotes.get(sex)+nick+"。")
+
+xxhq_id = 3889784836
+cf_id = 3928110595
+
+acexplode = on_command("炸空调", priority=10, block=True)
+@acexplode.handle()
+async def handle_function(event: Event = Event):
+    if not feature_manager.get("meme_resp"):
+        raise FinishedException
+    bot = get_bot()
+    group_id = event.get_session_id().split("_")[1]
+    mbl = await bot.get_group_member_list(group_id=group_id)
+    target_id = 0
+    for i in mbl:
+        if int(i['user_id']) == xxhq_id:
+            target_id = xxhq_id
+    for i in mbl:
+        if int(i['user_id']) == cf_id:
+            target_id = cf_id
+    if target_id != 0:
+        await acexplode.send(Message(f"[CQ:at,qq={str(target_id)}] 开空调"))
+        await asyncio.sleep(.5)
+        await acexplode.finish(Message(f"[CQ:at,qq={str(target_id)}] 空调升温 {str(math.ceil((random.random()+.111)*900))}"))
+    else:
+        await acexplode.finish("此地无空调可炸，请不要再试了！")

@@ -13,6 +13,7 @@ import yt_dlp
 import json
 import requests
 import re
+import misc_manager
 
 # 获取特殊qq号列表
 specd = open("json/spec_qq_list.json","r",encoding="utf-8")
@@ -23,12 +24,14 @@ vid_path1 = path_manager.bf_path()+"video/temp/video.mp4" # QQ看到的path
 vid_path2 = path_manager.nb_path()+"video/temp/video.mp4" # nonebot看到的path
 vid_ongoing_state = 0
 last_get_vid_time = 0
+current_video_title = ""
 
 bilivid = on_command("bili", aliases={"bilibili","视频","b站视频","video","sp"}, priority=10, block=True)
 @bilivid.handle()
 async def handle_function(args: Message = CommandArg(),event: Event = Event):
     if feature_manager.get("video_web"):
-        global vid_ongoing_state,last_get_vid_time
+        global vid_ongoing_state,last_get_vid_time, current_video_title
+        current_video_title = ""
         if vid_ongoing_state != 0:
             await bilivid.finish("且慢！正在为上一个人获取视频……")
         if os.path.exists(vid_path2):
@@ -38,6 +41,7 @@ async def handle_function(args: Message = CommandArg(),event: Event = Event):
             await bilivid.finish("参数不够。用法 /bili [视频链接/BV号/av号]")
         last_get_itvl = time.time() - last_get_vid_time
         vid_ongoing_state = 1
+        misc_manager.tasks.append("video_download")
         last_get_vid_time = time.time()
         link = ""
         if str.startswith("BV") or str.startswith("av"):
@@ -63,9 +67,12 @@ async def handle_function(args: Message = CommandArg(),event: Event = Event):
         """
         result = await download_video(link)
         vid_ongoing_state = 0
+        misc_manager.tasks.remove("video_download")
         if (result == 10):
             await bilivid.finish("你要的视频太大太长了啊啊啊！请另请高明吧！")
         if os.path.exists(vid_path2):
+            if current_video_title:
+                await bilivid.send(current_video_title)
             await bilivid.finish(Message('[CQ:video,file='+vid_path1+']'))
         else:
             if (last_get_itvl < 15*60):
@@ -106,6 +113,8 @@ async def download_video(url,path="video/temp/video.mp4"):
             file_mb = filesz / 1048576
             # 控制台输出视频信息
             print(f"视频标题：{info.get('title')}\n文件体积：{file_mb:.2f} MB")
+            global current_video_title
+            current_video_title = info.get('title')
             if (file_mb > 100):
                 # 大于100m，拒绝下载
                 return 10

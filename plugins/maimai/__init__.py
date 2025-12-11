@@ -13,6 +13,7 @@ import aiohttp
 import achievement_manager
 import shutil
 import plugins.actual_deepseek
+import misc_manager
 
 async def getb50data(info):
     if ("qq" in info and info["qq"] == "3978644480") or ("username" in info and info["username"] == "testpilot"):
@@ -201,6 +202,7 @@ async def handle_function(args: Message = CommandArg(),event: Event = Event):
     if not feature_manager.get("maimai"):
         raise FinishedException
     # await b50.finish("awmc！抱歉，阁下不能帮你查b50，请另请高明吧！")
+    misc_manager.tasks.append("maimai_b50_query")
     val = await qddata_pre(args,event,"list")
     if (isinstance(val,int)):
         file = open("web/templates/maimai_b50/index.html","r",encoding="utf-8")
@@ -211,8 +213,10 @@ async def handle_function(args: Message = CommandArg(),event: Event = Event):
         # 查自己并且底分大于1w
         if (len(args) == 0 and val > 10000):
             await achievement_manager.add(2,event)
+        misc_manager.tasks.remove("maimai_b50_query")
         await b50.finish(Message('[CQ:image,file=file:///'+path_manager.bf_path()+'webss/1.png]'))
     else:
+        misc_manager.tasks.remove("maimai_b50_query")
         await b50.finish(val)
 
 dxra = on_command("dxra", aliases={"rating"}, priority=10, block=True)
@@ -232,6 +236,7 @@ async def handle_function(args: Message = CommandArg(),event: Event = Event):
     result = await qddata_pre(args,event,"dxdv")
     await dxdv.finish(result)
 
+"""这个功能有点鸡肋，弃用掉
 ap50 = on_command("ap50", priority=10, block=True)
 @ap50.handle()
 async def handle_function(args: Message = CommandArg(),event: Event = Event):
@@ -249,6 +254,7 @@ async def handle_function(args: Message = CommandArg(),event: Event = Event):
         await ap50.finish("*本bot生成的ap50与其他bot的不同，是由b50所有成绩换成ap+重新计算得到。")
     else:
         await ap50.finish(val)
+"""        
 
 b50_styles = ["testpilot","prism"]
 
@@ -345,9 +351,12 @@ aib50 = on_command("aib50", aliases={"dsb50","ai锐评b50","AI锐评b50"}, prior
 async def handle_function(args: Message = CommandArg(),event: Event = Event):
     if (not feature_manager.get("maimai")) or (not feature_manager.get("deepseek")):
         raise FinishedException
+    misc_manager.tasks.append("maimai_dsb50")
     result = await qddata_pre(args,event,"json")
     if type(result) != dict:
+        misc_manager.tasks.remove("maimai_dsb50")
         await aib50.finish("没有查询到玩家数据！")
     web.content_md(await plugins.actual_deepseek.ds_b50(result))
     await webss.take2("http://localhost:8104","container")
+    misc_manager.tasks.remove("maimai_dsb50")
     await aib50.finish(Message('[CQ:image,file=file:///'+path_manager.bf_path()+'webss/1.png]'))
