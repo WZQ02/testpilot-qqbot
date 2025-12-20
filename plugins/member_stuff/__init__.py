@@ -13,6 +13,7 @@ import misc_manager
 import plugins.member_stuff
 import path_manager
 import asyncio, math
+import unicodedata
 
 # 获取特殊qq号列表
 specd = open("json/spec_qq_list.json","r",encoding="utf-8")
@@ -154,3 +155,65 @@ async def handle_function(event: Event = Event):
         await acexplode.finish(Message(f"[CQ:at,qq={str(target_id)}] 空调升温 {str(math.ceil((random.random()+.111)*900))}"))
     else:
         await acexplode.finish("此地无空调可炸，请不要再试了！")
+
+group_poke_rank = on_command("grouppokerank", aliases={"戳戳排行榜","群戳戳排行榜"}, priority=10, block=True)
+@group_poke_rank.handle()
+async def handle_function():
+    bot = get_bot()
+    resp = "===== 群戳戳排行榜 ====="
+    thesorted = dict(sorted(misc_manager.misc_data["group_poke_count"].items(), key=lambda x: x[1], reverse=True))
+    first_10 = dict(tuple(thesorted.items())[:10])
+    for i in first_10:
+        info = await bot.get_group_info(group_id=i)
+        name = info.get("group_name")
+        """
+        if get_display_width(name) > 12:
+            name = name[0:11]+"..."
+        """
+        name = truncate_text(name, 24, ellipsis="…")
+        resp += f"\n{name}      {str(first_10[i])}"
+    await group_poke_rank.finish(resp)
+
+# 文字截断代码（DeepSeek生成）
+def get_display_width(text):
+    """
+    获取字符串的显示宽度（考虑中英文字符宽度差异）
+    :param text: 输入字符串
+    :return: 显示宽度
+    """
+    width = 0
+    for char in text:
+        # 根据Unicode字符宽度计算
+        if unicodedata.east_asian_width(char) in ('F', 'W', 'A'):
+            width += 2  # 全角字符占2个位置
+        else:
+            width += 1  # 半角字符占1个位置
+    return width
+
+def truncate_text(text, max_width, ellipsis="…"):
+    """
+    智能截断文本，考虑中英文字符宽度
+    :param text: 原始文本
+    :param max_width: 最大显示宽度
+    :param ellipsis: 省略号字符
+    :return: 截断后的文本
+    """
+    if get_display_width(text) <= max_width:
+        return text
+    
+    result = ""
+    current_width = 0
+    ellipsis_width = get_display_width(ellipsis)
+    
+    for char in text:
+        char_width = 2 if unicodedata.east_asian_width(char) in ('F', 'W', 'A') else 1
+        
+        # 检查是否还能放下这个字符+省略号
+        if current_width + char_width + ellipsis_width > max_width:
+            result += ellipsis
+            break
+        
+        result += char
+        current_width += char_width
+    
+    return result

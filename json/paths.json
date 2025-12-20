@@ -1,1 +1,1 @@
-{"paths": {"sys_env": "wsl", "win_botfile_path": "W:/soft/web_svr/testpilot_qqbot/", "wsl_botfile_path": "/mnt/w/soft/web_svr/testpilot_qqbot/", "bot_backend_path": "W:/soft/web_svr/testpilot_qqbot/"}}
+{"paths": {"sys_env": "win", "win_botfile_path": "W:/soft/web_svr/testpilot_qqbot/", "wsl_botfile_path": "/mnt/w/soft/web_svr/testpilot_qqbot/", "bot_backend_path": "W:/soft/web_svr/testpilot_qqbot/"}}

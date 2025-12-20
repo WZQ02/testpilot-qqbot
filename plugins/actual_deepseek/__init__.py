@@ -91,9 +91,7 @@ async def analyze_image(url,prompt):
     if not prompt:
         prompt = "图片里面有什么？"
     resp = await client.chat.completions.create(
-        # model = config[config["current_engine"]]["models"][1],
-        # 始终使用gemini分析图片
-        model = config["gemini"]["models"][1],
+        model = config[config["current_engine"]]["models"][1],
         messages = [
             {
                 "role": "user",
@@ -143,7 +141,7 @@ async def handle_function(args: Message = CommandArg()):
 dscount = on_command("dscount", aliases={"AI对话轮数","deepseek对话轮数","对话轮数"}, priority=10, block=True)
 @dscount.handle()
 async def handle_function(event: Event):
-    if privilege_manager.checkuser(event.get_user_id()) and feature_manager.get("deepseek"):
+    if feature_manager.get("deepseek"):
         await dscount.finish("已与 AI 进行了 "+str(msg_count)+" 轮对话。")
     else:
         raise FinishedException
@@ -199,8 +197,8 @@ anaimg = on_command("anaimg", aliases={"fxtp","分析图片","AI分析图片"}, 
 async def handle_function(args: Message = CommandArg(),bot: Bot = Bot, event: MessageEvent = Event):
     if not feature_manager.get("deepseek"):
         raise FinishedException
-    #if config["current_engine"] != "gemini":
-        #await anaimg.finish("当前 AI 引擎不支持图片分析！请用 /switchai 切换引擎再试哦！")
+    if config["current_engine"] != "gemini":
+        await anaimg.finish("当前 AI 引擎不支持图片分析！请用 /switchai 切换引擎再试哦！")
     misc_manager.tasks.append("ds_anaimg")
     rep_con = await plugins.test1.get_reply_content(event.original_message,bot)
     # 优先从args附带的图片获取

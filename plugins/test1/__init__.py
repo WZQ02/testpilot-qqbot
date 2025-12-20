@@ -333,7 +333,17 @@ async def handle_function(args: Message = CommandArg(),bot: Bot = Bot, event: Me
     else:
         await upscale.finish("请提供要放大的图片！")
 
-async def get_reply_content(message,bot):
+# 消息转换为cq码，以文本发出
+parsecq = on_command("parsecq", priority=10, block=True)
+@parsecq.handle()
+async def handle_function(bot: Bot = Bot, event: MessageEvent = Event):
+    rep_con = await get_reply_content(event.original_message,bot,1)
+    if rep_con:
+        await parsecq.finish(rep_con)
+    else:
+        raise FinishedException
+
+async def get_reply_content(message,bot,cq=0):
     reply_segment = None
     for segment in message:
         if segment.type == "reply":
@@ -342,7 +352,10 @@ async def get_reply_content(message,bot):
     if reply_segment:
         reply_id = reply_segment.data.get("id")
         message_info = await bot.get_msg(message_id=int(reply_id))
-        return message_info.get("message")
+        if cq:
+            return message_info.get("raw_message")
+        else:
+            return message_info.get("message")
     else:
         return 0
     
