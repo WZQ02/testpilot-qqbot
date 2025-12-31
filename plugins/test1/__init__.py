@@ -279,7 +279,7 @@ async def handle_function():
     await fds.finish("服务器繁忙，请稍后再试。")
 """
 
-flipof = on_keyword(["你是","机器人","人机","谁啊","没素质","傻逼","sb","妈","赤石","谁家","杂鱼","低能","吃屎","弱智","操","草你","滚","去死","一边去"], rule=to_me(), priority=10, block=True)
+flipof = on_keyword(["你是","机器人","人机","谁啊","没素质","傻逼","sb","妈","赤石","谁家","杂鱼","低能","吃屎","弱智","操","草你","滚","去死","一边去","idiot","douchebag","bitch","脑残","asshole"], rule=to_me(), priority=10, block=True)
 @flipof.handle()
 async def handle_function():
     if not feature_manager.get("flipoff"):

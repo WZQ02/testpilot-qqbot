@@ -1,4 +1,5 @@
 from nonebot import on_command
+from nonebot import get_bot
 from nonebot.params import CommandArg
 from nonebot.adapters.onebot.v11 import Message, Event, Bot, MessageEvent
 from nonebot.exception import FinishedException
@@ -19,8 +20,12 @@ config_f.close()
 from openai import AsyncOpenAI
 client = AsyncOpenAI(api_key=config[config["current_engine"]]["key"], base_url=config[config["current_engine"]]["base_url"])
 
+# chat 是否启用群聊模式
+group_mode = 1
+
 # 初始化语句和全局变量
 msg_init = {"role": "system", "content": "你是一个名叫testpilot的群聊机器人，致力于帮群友解决问题。"}
+msg_init_group = {"role": "system", "content": "**你是一个名叫testpilot的群聊机器人，致力于帮群友解决问题。**之后的对话中，前面会加上[发言人]：，用于区分不同群友的发言，你只需要留意之后的内容，你自己的发言不需要加这个前缀。"}
 msg_list = []
 msg_limit = config["chat_msg_limit"]
 msg_count = 0
@@ -35,7 +40,10 @@ msg_count = math.floor(len(msg_list)/2)
 def ds_reinit():
     global msg_list,msg_count #操作全局变量msg_list、msg_count
     msg_list = []
-    msg_list.append(msg_init)
+    if group_mode:
+        msg_list.append(msg_init_group)
+    else:
+        msg_list.append(msg_init)
     msg_count = 0
     writeback()
 
@@ -48,7 +56,9 @@ def cfg_writeback():
     file = open("json/oa_data.json","w",encoding="utf-8")
     json.dump({"configs":config},file,ensure_ascii=False,sort_keys=True)
 
-async def chat(dialogue):
+async def chat(dialogue, username=None):
+    if username:
+        dialogue = f"{username}："+dialogue
     msg_list.append({"role": "user", "content": dialogue})
     # print(msg_list)
     resp = await client.chat.completions.create(
@@ -125,12 +135,20 @@ def reload_client(engine):
 
 ads = on_command("ds", aliases={"深度求索","AI","actualdeepseek","deepseek","dick"}, priority=10, block=True)
 @ads.handle()
-async def handle_function(args: Message = CommandArg()):
+async def handle_function(args: Message = CommandArg(),event: Event = Event):
     # 虽然没什么必要但有时发/dscount会同时触发ds，很奇怪，还是修补一下好了
     if (not feature_manager.get("deepseek")) or args.extract_plain_text() == "count" or args.extract_plain_text() == "md":
         raise FinishedException
     misc_manager.tasks.append("ds_chat")
-    text = await chat(args.extract_plain_text())
+    # 可选获取用户名
+    text = ""
+    if group_mode:
+        bot = get_bot()
+        qqid = event.get_user_id()
+        qqnam = dict(await bot.get_stranger_info(user_id=qqid))["nick"]
+        text = await chat(args.extract_plain_text(),qqnam)
+    else:
+        text = await chat(args.extract_plain_text())
     # 输出内容每3000字分段，避免长消息发不出
     segs = split_str_by_length(text, 3000)
     for i in segs:
@@ -168,11 +186,17 @@ async def handle_function(event: Event):
     
 dsmd = on_command("dsmd", aliases={"deepseekmarkdown"}, priority=10, block=True)
 @dsmd.handle()
-async def handle_function(args: Message = CommandArg()):
+async def handle_function(args: Message = CommandArg(),event: Event = Event):
     if not (feature_manager.get("deepseek") and feature_manager.get("rendermd")):
         raise FinishedException
     misc_manager.tasks.append("ds_chat")
-    web.content_md(await chat(args.extract_plain_text()))
+    if group_mode:
+        bot = get_bot()
+        qqid = event.get_user_id()
+        qqnam = dict(await bot.get_stranger_info(user_id=qqid))["nick"]
+        web.content_md(await chat(args.extract_plain_text(),qqnam))
+    else:
+        web.content_md(await chat(args.extract_plain_text()))
     await webss.take2("http://localhost:8104","container")
     misc_manager.tasks.remove("ds_chat")
     await dsmd.finish(Message('[CQ:image,file=file:///'+path_manager.bf_path()+'webss/1.png]'))

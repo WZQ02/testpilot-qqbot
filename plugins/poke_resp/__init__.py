@@ -1,5 +1,5 @@
 from nonebot import on_notice, on_command
-from nonebot.adapters.onebot.v11 import NoticeEvent, PokeNotifyEvent, Message, Event
+from nonebot.adapters.onebot.v11 import NoticeEvent, PokeNotifyEvent, Message, Bot, Event
 import random, math, json
 from nonebot.exception import FinishedException
 import feature_manager
@@ -52,10 +52,17 @@ async def handle_function(event: NoticeEvent):
         raise FinishedException
 
 @emojiresp.handle()
-async def handle_function(event: NoticeEvent):
+async def handle_function(bot: Bot, event: NoticeEvent):
     if event.notice_type == 'group_msg_emoji_like':
+        # 有消息被添加敲击 emoji
         if event.likes and event.likes[0]["emoji_id"] == "38":
-            await achievement_manager.add2(15,event.user_id,event.group_id)
+            # 检查消息 id
+            msgid = event.message_id
+            # 获取该消息 info
+            msginfo = await bot.get_msg(message_id=int(msgid))
+            # 检查该消息是否来自 bot 自身
+            if msginfo.get("user_id") == event.self_id and event.is_add == True:
+                await achievement_manager.add2(15,event.user_id,event.group_id)
     raise FinishedException
 
 # 最近5次poke中，有user触发3次poke，授予该用户“戳你戳你戳戳你”成就
