@@ -17,6 +17,7 @@ json/*.json
 !json/fea_list.json
 !json/paths.json
 !json/achievement.json
+!json/fake_presets.json
 
 web/index.html
 web/templates/maimai_b50/df_data.json

@@ -21,6 +21,10 @@ faked = datar['data']
 hist = datar['history']
 data.close()
 
+fake_presets_data = open("json/fake_presets.json","r",encoding="utf-8")
+fake_presets = json.loads(fake_presets_data.read())['fake_presets']
+fake_presets_data.close()
+
 #specd = open("json/spec_qq_list.json","r",encoding="utf-8")
 #plugins.member_stuff.spec_list = json.loads(specd.read())
 
@@ -63,8 +67,14 @@ async def handle_function(args: Message = CommandArg(),event: Event = Event):
         # 第一个参数是群员QQ号
         elif len(args) > 0 and str.isdigit(args.extract_plain_text().split()[0]):
             qqnum = args.extract_plain_text().split()[0]
+        # 第一个参数是非数字、非at，查找是否存在于fake_presets
         else:
-            await fake.finish("参数错误。用法：/fake [要假扮的@群员或群员QQ号]")
+            for i in fake_presets:
+                if fake_presets[i]["name"] == args.extract_plain_text():
+                    qqnum = "-"+i
+                    break
+            if qqnum == 0:
+                await fake.finish("参数错误。用法：/fake [要假扮的@群员或群员QQ号]")
         # 如果提供的qq号就是bot自己
         if int(qqnum) == bot_qq_id:
             await achievement_manager.add(1,event)
@@ -98,10 +108,15 @@ async def handle_function(event: Event = Event):
 
 # 拆分一部分fake代码以复用
 async def do_fake(bot,event,qqnum,group_id):
-    # 获取该群员昵称
-    qqnam = dict(await bot.get_stranger_info(user_id=qqnum))["nick"]
-    # 获取该群员群昵称
-    grnam = dict(await bot.get_group_member_info(user_id=qqnum,group_id=group_id))["card"]
+    # 判断fake的是qq用户还是preset
+    if int(qqnum) >= 0:   
+        # 获取该群员昵称
+        qqnam = dict(await bot.get_stranger_info(user_id=qqnum))["nick"]
+        # 获取该群员群昵称
+        grnam = dict(await bot.get_group_member_info(user_id=qqnum,group_id=group_id))["card"]
+    else:
+        qqnam = fake_presets[str(-int(qqnum))]["name"]
+        grnam = qqnam
     # 获取bot先前群昵称
     btnam = dict(await bot.get_group_member_info(user_id=bot_qq_id,group_id=group_id))["card"]
     # 刷新部分json数据
@@ -133,7 +148,10 @@ async def do_fake(bot,event,qqnum,group_id):
     # 修改botQQ昵称和头像
     await bot.set_qq_profile(nickname=qqnam)
     if feature_manager.get("fake_headpic"):
-        await bot.set_qq_avatar(file="https://q1.qlogo.cn/g?b=qq&nk="+qqnum+"&s=640")
+        if int(qqnum) >= 0:
+            await bot.set_qq_avatar(file="https://q1.qlogo.cn/g?b=qq&nk="+qqnum+"&s=640")
+        else:
+            await bot.set_qq_avatar(file=path_manager.bf_path()+"images/fake_presets/"+fake_presets[str(-int(qqnum))]["hpic"])
     # 成就(除了“试图让bot假扮自己”以外的)
     try:
         # 让bot假扮fake发起人自己

@@ -83,7 +83,7 @@ a_poke_count = on_command("airapokecount", aliases={"艾拉捏捏次数"}, prior
 async def handle_function(event: Event = Event):
     group_id = event.get_session_id().split("_")[1]
     if int(group_id) == plugins.member_stuff.spec_list["special_groups"][1]:
-        await a_poke_count.finish(f"艾拉的雪糕被捏了 {misc_manager.misc_data["aira_poke_count"]} 次。")
+        await a_poke_count.finish(f"艾拉的雪糕被捏了 {misc_manager.misc_data['aira_poke_count']} 次。")
     else:
         raise FinishedException
     
@@ -91,4 +91,4 @@ group_poke_count = on_command("grouppokecount", aliases={"群戳戳次数","群�
 @group_poke_count.handle()
 async def handle_function(event: Event = Event):
     group_id = event.get_session_id().split("_")[1]
-    await group_poke_count.finish(f"这个群的戳戳次数为 {misc_manager.misc_data["group_poke_count"][group_id]} 次。")
+    await group_poke_count.finish(f"这个群的戳戳次数为 {misc_manager.misc_data['group_poke_count'][group_id]} 次。")

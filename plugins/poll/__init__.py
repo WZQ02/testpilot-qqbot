@@ -193,7 +193,7 @@ async def handle_function(args: Message = CommandArg(),event: Event = Event):
         # 符合条件，修改投票有效期
         await setpollexp(polnum,expt_sec)
         if (exptime > 0.001):
-            await setpollexpiry.finish(f"以下投票过期时间将设置为距现在 {params[1]} 小时后：\n{thepoll["title"]} [ID: {str(polnum)}]")
+            await setpollexpiry.finish(f"以下投票过期时间将设置为距现在 {params[1]} 小时后：\n{thepoll['title']} [ID: {str(polnum)}]")
         else:
-            await setpollexpiry.finish(f"以下投票将立即结束！\n{thepoll["title"]} [ID: {str(polnum)}]")
+            await setpollexpiry.finish(f"以下投票将立即结束！\n{thepoll['title']} [ID: {str(polnum)}]")
         
