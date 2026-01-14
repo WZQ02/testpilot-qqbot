@@ -8,6 +8,7 @@ from PIL import Image, ImageTk, ImageDraw
 import json
 import feature_manager
 import path_manager
+import misc_manager
 import asyncio
 
 from pixivpy3 import AppPixivAPI
@@ -81,6 +82,10 @@ def getrandomxkcdlink(num):
         
 def getpixivimg(pid):
     papi = AppPixivAPI()
+    papi.requests.proxies = {
+        "http": misc_manager.misc_data["http_proxy"],
+        "https": misc_manager.misc_data["http_proxy"]
+    }
     papi.auth(refresh_token=pix_rt)
     detail = papi.illust_detail(pid)
     # 没有获取到图片

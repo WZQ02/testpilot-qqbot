@@ -1,0 +1,6 @@
+# /bin/bash
+
+sed -i 's|"sys_env": "win"|"sys_env": "linux"|g' ./json/paths.json
+sed -i 's|"sys_env": "wsl"|"sys_env": "linux"|g' ./json/paths.json
+
+nohup nb run --reload &

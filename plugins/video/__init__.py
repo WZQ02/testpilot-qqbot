@@ -101,8 +101,12 @@ async def download_video(url,path="video/temp/video.mp4"):
         'outtmpl': path,
         # 强制转换为MP4格式
         'format': 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best',
+        # 优先h264/h265，播放兼容性
+        'format_sort': ['vcodec:hevc,h264'],
         'merge_output_format': 'mp4',  # 合并音视频时输出MP4
     }
+    if ("x.com" in url) or ("twitter.com" in url) or ("tumblr.com" in url) or ("youtube.com" in url) or ("tiktok.com" in url):
+        ydl_opts["proxy"] = misc_manager.misc_data["http_proxy"]
     try:
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             # 获取视频信息（可选）

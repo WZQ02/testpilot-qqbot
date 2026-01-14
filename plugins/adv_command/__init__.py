@@ -51,7 +51,12 @@ async def handle_function(args: Message = CommandArg(),event: Event = Event):
     # 限定超管可用
     if privilege_manager.checkuser(event.get_user_id()) == 2 and feature_manager.get("cmd"):
         # res = subprocess.run(['cmd', '/c', args.extract_plain_text()], capture_output=True, text=True)
-        proc = await asyncio.create_subprocess_exec('cmd', '/c', args.extract_plain_text(), stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE)
+        cmd_pa1 = "cmd"
+        cmd_pa2 = "/c"
+        if path_manager.pat_list["sys_env"] == "linux":
+            cmd_pa1 = "bash"
+            cmd_pa2 = "-c"
+        proc = await asyncio.create_subprocess_exec(cmd_pa1, cmd_pa2, args.extract_plain_text(), stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE)
         stdout, stderr = await proc.communicate()
         await proc.wait()
         out_e = chardet.detect(stdout)['encoding']

@@ -57,10 +57,12 @@ async def handle_function(args: Message = CommandArg()):
     if not feature_manager.get("qemu"):
         raise FinishedException
     if vm_powerstatus == 1:
-        await xpsendkey.finish("虚拟机已经在运行！")
+        await winxp.finish("虚拟机已经在运行！")
+    if path_manager.pat_list["sys_env"] == "linux":
+        await winxp.finish("bot现在运行在arm架构的机器上。\n跑不了x86虚拟机了哦！")
     await run_winxp()
     await asyncio.sleep(10)
-    await xpsendkey.finish(await xp_ss())
+    await winxp.finish(await xp_ss())
 
 sswinxp = on_command("sswinxp", aliases={"xp截图","vmss","虚拟机截图"}, priority=10, block=True)
 @sswinxp.handle()
