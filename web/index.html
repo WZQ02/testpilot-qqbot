@@ -1,46 +1,9 @@
-<!DOCTYPE HTML>
+<!doctype html>
 <html>
 <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="css/markdown/index.css" id="skin">
-</head>
+    <meta http-equiv="refresh" content="0.1;URL=https://testpilot.wzq02.top">
+    </head>
 <body>
-<div id="container">
-    <div id="mdcontent"></div>
-</div>
-<script src="https://d.wzq02.top/scripts/3rdparty/marked.min.js"></script>
-<script src="https://d.wzq02.top/scripts/3rdparty/purify.min.js"></script>
-<script>
-    let mdc_show = document.getElementById("mdcontent");
-    function rendermd(mdc) {
-        mdc_show.innerHTML = DOMPurify.sanitize(marked.parse(mdc));
-        for (i=0; i<127; i++) {
-            if (mdc_show.childNodes[i]) {
-                if (typeof(mdc_show.childNodes[i].childNodes[0]) == "object") {
-                    if (mdc_show.childNodes[i].childNodes[0].alt) {
-                        var alt_text = document.createElement("p");
-                        alt_text.innerText = mdc_show.childNodes[i].childNodes[0].alt;
-                        alt_text.style = "opacity: 0.75; text-align: center";
-                        mdc_show.childNodes[i].appendChild(alt_text);
-                    }
-                }
-            } else {
-                break;
-            }
-        }
-    }
-
-    (()=>{
-        let req = new XMLHttpRequest()
-        req.open("get", "/templates/markdown/md.md")
-        req.send(null)
-        req.onload = () => {
-            if (req.status == 200) {
-                rendermd(req.responseText)
-            }
-        }
-    })()
-</script>
 </body>
 </html>

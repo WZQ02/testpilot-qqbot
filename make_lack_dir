@@ -1,0 +1,12 @@
+# /bin/bash
+
+mkdir images/qrcode
+mkdir images/xkcd
+mkdir images/pix
+mkdir images/pix/temp
+mkdir images/img_ccb/temp
+mkdir images/upscale
+mkdir images/qemu
+mkdir images/analyze
+
+mkdir video/temp

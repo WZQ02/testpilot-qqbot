@@ -12,13 +12,29 @@ import web, webss
 import base64, mimetypes
 import plugins.test1, img_process
 import misc_manager
+import httpx
 
 config_f = open("json/oa_data.json","r",encoding="utf-8")
 config = json.loads(config_f.read())["configs"]
 config_f.close()
 
+http_client = httpx.AsyncClient(
+    proxies = misc_manager.misc_data["http_proxy"],
+    timeout = httpx.Timeout(connect=5.0, read=30.0, write=5.0, pool=5.0),
+)
+
+client = ""
+
+def reload_client(engine):
+    global client
+    if config[engine]["proxy"]:
+        client = AsyncOpenAI(api_key=config[engine]["key"], base_url=config[engine]["base_url"], http_client=http_client)
+    else:
+        client = AsyncOpenAI(api_key=config[engine]["key"], base_url=config[engine]["base_url"])
+
 from openai import AsyncOpenAI
-client = AsyncOpenAI(api_key=config[config["current_engine"]]["key"], base_url=config[config["current_engine"]]["base_url"])
+reload_client(config["current_engine"])
+# client = AsyncOpenAI(api_key=config[config["current_engine"]]["key"], base_url=config[config["current_engine"]]["base_url"])
 
 # chat 是否启用群聊模式
 group_mode = 1
@@ -35,7 +51,7 @@ msg_file = open("json/ds_quotes.json","r",encoding="utf-8")
 msj_list_raw = msg_file.read()
 msg_file.close()
 msg_list = json.loads(msj_list_raw)
-msg_count = math.floor(len(msg_list)/2)
+msg_count = len(msg_list)//2
 
 def ds_reinit():
     global msg_list,msg_count #操作全局变量msg_list、msg_count
@@ -73,8 +89,13 @@ async def chat(dialogue, username=None):
     global msg_count
     msg_count += 1
     if (msg_count > msg_limit):
+        """
         response = f"***对话轮数已超过上限（{msg_limit}轮）。这轮对话后，AI 的记忆将被清除。***\n"+response
         ds_reinit()
+        """
+        # 不直接清除对话，而是删去最早的一轮对话（要删两次，一次user一次assistant）
+        msg_list.remove(msg_list[1])
+        msg_list.remove(msg_list[1])
     writeback()
     return response
 
@@ -129,26 +150,35 @@ def encode_image(image_path):
   with open(image_path, "rb") as image_file:
     return base64.b64encode(image_file.read()).decode('utf-8')
 
-def reload_client(engine):
-    global client
-    client = AsyncOpenAI(api_key=config[engine]["key"], base_url=config[engine]["base_url"])
-
 ads = on_command("ds", aliases={"深度求索","AI","actualdeepseek","deepseek","dick"}, priority=10, block=True)
 @ads.handle()
-async def handle_function(args: Message = CommandArg(),event: Event = Event):
+async def handle_function(args: Message = CommandArg(),event: MessageEvent = Event):
     # 虽然没什么必要但有时发/dscount会同时触发ds，很奇怪，还是修补一下好了
     if (not feature_manager.get("deepseek")) or args.extract_plain_text() == "count" or args.extract_plain_text() == "md":
         raise FinishedException
     misc_manager.tasks.append("ds_chat")
+    bot = get_bot()
+    usrmsg = ""
+    qqnam = ""
+    # 当args存在时，优先获取args
+    if len(args) > 0:
+        usrmsg = args.extract_plain_text()
+        qqid = event.get_user_id()
+        qqnam = dict(await bot.get_stranger_info(user_id=qqid))["nick"]
+    # 尝试获取回复内容
+    else:
+        rep_data = await plugins.test1.get_reply_data(event.original_message,bot)
+        rep_con = rep_data.get("message")
+        for i in rep_con:
+            if i["type"] == "text":
+                usrmsg += i["data"]["text"]
+        qqnam = rep_data["sender"]["nickname"]
     # 可选获取用户名
     text = ""
     if group_mode:
-        bot = get_bot()
-        qqid = event.get_user_id()
-        qqnam = dict(await bot.get_stranger_info(user_id=qqid))["nick"]
-        text = await chat(args.extract_plain_text(),qqnam)
+        text = await chat(usrmsg,qqnam)
     else:
-        text = await chat(args.extract_plain_text())
+        text = await chat(usrmsg)
     # 输出内容每3000字分段，避免长消息发不出
     segs = split_str_by_length(text, 3000)
     for i in segs:
@@ -160,7 +190,11 @@ dscount = on_command("dscount", aliases={"AI对话轮数","deepseek对话轮数"
 @dscount.handle()
 async def handle_function(event: Event):
     if feature_manager.get("deepseek"):
-        await dscount.finish("已与 AI 进行了 "+str(msg_count)+" 轮对话。")
+        resp = "已与 AI 进行了 "+str(msg_count)+" 轮对话。"
+        actual_msg_count = len(msg_list)//2
+        if msg_count > actual_msg_count:
+            resp += f"（轮数已超过上限，前 {str(msg_count - actual_msg_count)} 轮对话已被清除）"
+        await dscount.finish(resp)
     else:
         raise FinishedException
 

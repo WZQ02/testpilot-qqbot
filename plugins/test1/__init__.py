@@ -343,7 +343,7 @@ async def handle_function(bot: Bot = Bot, event: MessageEvent = Event):
     else:
         raise FinishedException
 
-async def get_reply_content(message,bot,cq=0):
+async def get_reply_data(message,bot):
     reply_segment = None
     for segment in message:
         if segment.type == "reply":
@@ -352,6 +352,13 @@ async def get_reply_content(message,bot,cq=0):
     if reply_segment:
         reply_id = reply_segment.data.get("id")
         message_info = await bot.get_msg(message_id=int(reply_id))
+        return message_info
+    else:
+        return {}
+    
+async def get_reply_content(message,bot,cq=0):
+    message_info = await get_reply_data(message,bot)
+    if message_info:
         if cq:
             return message_info.get("raw_message")
         else:
