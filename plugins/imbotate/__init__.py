@@ -60,7 +60,10 @@ async def handle_function(args: Message = CommandArg(),event: Event = Event):
         bot = get_bot()
         qqnum = 0
         # 发起假扮指令人所在群聊
-        group_id = event.get_session_id().split("_")[1]
+        group_id = plugins.member_stuff.get_group_id(event)
+        # 如果指令不发起于群聊
+        if not int(group_id):
+            await fake.finish("请在群聊发起假扮！")
         # 第一个参数是@群员
         if len(args) > 0 and args[0].type == 'at':
             qqnum = args[0].data['qq']
@@ -89,7 +92,9 @@ randomfake = on_command("rdfake", aliases={"随机假扮","随机模仿","random
 async def handle_function(event: Event = Event):
     if feature_manager.get("fake"):
         bot = get_bot()
-        group_id = event.get_session_id().split("_")[1]
+        group_id = plugins.member_stuff.get_group_id(event)
+        if not int(group_id):
+            await randomfake.finish("请在群聊发起随机假扮！")
         mbl = await bot.get_group_member_list(group_id=group_id)
         mbllen = len(mbl)
         qqnum = 0
@@ -99,8 +104,6 @@ async def handle_function(event: Event = Event):
             qqnum = str(mbl[rd]['user_id'])
             if int(qqnum) != bot_qq_id:
                 break
-        # 发起假扮指令人所在群聊
-        group_id = event.get_session_id().split("_")[1]
         setnam = await do_fake(bot,event,qqnum,group_id)
         await randomfake.finish("大家好啊，我是"+setnam+"。")
     else:

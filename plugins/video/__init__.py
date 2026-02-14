@@ -14,6 +14,7 @@ import json
 import requests
 import re
 import misc_manager
+import plugins.member_stuff
 
 # 获取特殊qq号列表
 specd = open("json/spec_qq_list.json","r",encoding="utf-8")
@@ -107,28 +108,33 @@ async def download_video(url,path="video/temp/video.mp4"):
     }
     if ("x.com" in url) or ("twitter.com" in url) or ("tumblr.com" in url) or ("youtube.com" in url) or ("tiktok.com" in url):
         ydl_opts["proxy"] = misc_manager.misc_data["http_proxy"]
-    try:
-        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-            # 获取视频信息（可选）
-            info = ydl.extract_info(url, download=False)
-            # print(f"准备下载: {info.get('title', '未知标题')}")
-            # 检查视频文件体积
-            filesz = info.get('filesize', 0) or info.get('filesize_approx', 0)
-            file_mb = filesz / 1048576
-            # 控制台输出视频信息
-            print(f"视频标题：{info.get('title')}\n文件体积：{file_mb:.2f} MB")
-            global current_video_title
-            current_video_title = info.get('title')
-            if (file_mb > 100):
-                # 大于100m，拒绝下载
-                return 10
-            # 实际下载
-            ydl.download([url])
-            # print("下载完成！")
-            return 0
-    except Exception as e:
-        # print(f"下载失败: {e}")
-        return -1
+    
+    loop = asyncio.get_event_loop()
+    def download():
+        try:
+            with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+                # 获取视频信息（可选）
+                info = ydl.extract_info(url, download=False)
+                # print(f"准备下载: {info.get('title', '未知标题')}")
+                # 检查视频文件体积
+                filesz = info.get('filesize', 0) or info.get('filesize_approx', 0)
+                file_mb = filesz / 1048576
+                # 控制台输出视频信息
+                print(f"视频标题：{info.get('title')}\n文件体积：{file_mb:.2f} MB")
+                global current_video_title
+                current_video_title = info.get('title')
+                if (file_mb > 100):
+                    # 大于100m，拒绝下载
+                    return 10
+                # 实际下载
+                ydl.download([url])
+                # print("下载完成！")
+                return 0
+        except Exception as e:
+            # print(f"下载失败: {e}")
+            return -1
+    await loop.run_in_executor(None, download)
+    # return 0
 
 # b23解析
 async def resolve_b23(url):
@@ -160,7 +166,7 @@ bilixcx = on_message(priority=10, block=True)
 async def handle_function(event: MessageEvent):
     if feature_manager.get("bilixcx"):
         # 检查是否在黑名单群聊（存在其他解析b站小程序bot的群聊）
-        group_id = event.get_session_id().split("_")[1]
+        group_id = plugins.member_stuff.get_group_id(event)
         if int(group_id) in spec_list["bilixcx_blacklist_groups"]:
             raise FinishedException
         # 获取原始消息

@@ -43,7 +43,7 @@ async def handle_function(event: NoticeEvent):
             await pokeresp.send(msg)
         elif int(event.target_id) == plugins.member_stuff.spec_list["special_users"][1]:
             misc_manager.misc_data["aira_poke_count"] += 1
-        group_id = event.get_session_id().split("_")[1]
+        group_id = plugins.member_stuff.get_group_id(event)
         if (group_id in misc_manager.misc_data["group_poke_count"]):
             misc_manager.misc_data["group_poke_count"][group_id] += 1
         else:
@@ -81,7 +81,7 @@ async def poke_user_chk(event):
 a_poke_count = on_command("airapokecount", aliases={"艾拉捏捏次数"}, priority=10, block=True)
 @a_poke_count.handle()
 async def handle_function(event: Event = Event):
-    group_id = event.get_session_id().split("_")[1]
+    group_id = plugins.member_stuff.get_group_id(event)
     if int(group_id) == plugins.member_stuff.spec_list["special_groups"][1]:
         await a_poke_count.finish(f"艾拉的雪糕被捏了 {misc_manager.misc_data['aira_poke_count']} 次。")
     else:
@@ -90,5 +90,5 @@ async def handle_function(event: Event = Event):
 group_poke_count = on_command("grouppokecount", aliases={"群戳戳次数","群戳戳统计"}, priority=10, block=True)
 @group_poke_count.handle()
 async def handle_function(event: Event = Event):
-    group_id = event.get_session_id().split("_")[1]
+    group_id = plugins.member_stuff.get_group_id(event)
     await group_poke_count.finish(f"这个群的戳戳次数为 {misc_manager.misc_data['group_poke_count'][group_id]} 次。")

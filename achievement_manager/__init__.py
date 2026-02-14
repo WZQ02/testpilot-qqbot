@@ -1,5 +1,6 @@
 import json
 import feature_manager
+import plugins.member_stuff
 
 from nonebot_plugin_saa import MessageFactory, TargetQQGroup, Text, Mention
 from nonebot_plugin_saa import enable_auto_select_bot
@@ -13,7 +14,7 @@ user_list = json.loads(ach_list_raw)['users']
 
 async def add(acid,event):
     qqid = str(event.get_user_id())
-    groupid = str(event.get_session_id().split("_")[1])
+    groupid = str(plugins.member_stuff.get_group_id(event))
     await do_add(acid,qqid,groupid)
 
 async def add2(acid,qqid,groupid):
@@ -41,7 +42,7 @@ async def do_add(acid,qqid,groupid):
 
 async def list(event):
     qqid = str(event.get_user_id())
-    groupid = str(event.get_session_id().split("_")[1])
+    groupid = str(plugins.member_stuff.get_group_id(event))
     res = "\n"
     if qqid in user_list and len(user_list[qqid]) > 0:
         ac_list = user_list[qqid]

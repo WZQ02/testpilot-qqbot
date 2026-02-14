@@ -26,7 +26,7 @@ getmbl = on_command("gmbl", priority=10, block=True)
 async def handle_function(args: Message = CommandArg(),event: Event = Event):
     if privilege_manager.checkuser(event.get_user_id()) == 2:
         bot = get_bot()
-        group_id = event.get_session_id().split("_")[1]
+        group_id = get_group_id(event)
         print(await bot.get_group_member_list(group_id=group_id))
     raise FinishedException
 """
@@ -39,7 +39,7 @@ randomcs = on_command("rdcs", aliases={"随机赤石","randomchishi","randomcs",
 async def handle_function(event: Event = Event):
     if feature_manager.get("randomcs"):
         bot = get_bot()
-        group_id = event.get_session_id().split("_")[1]
+        group_id = get_group_id(event)
         if int(group_id) in spec_list["randomcs_whitelist_groups"]:
             mbl = await bot.get_group_member_list(group_id=group_id)
             mbllen = len(mbl)
@@ -64,7 +64,7 @@ randombb = on_command("rdbb", aliases={"randomlove","随机表白"}, priority=10
 async def handle_function(event: Event = Event):
     if feature_manager.get("randomcs"):
         bot = get_bot()
-        group_id = event.get_session_id().split("_")[1]
+        group_id = get_group_id(event)
         mbl = await bot.get_group_member_list(group_id=group_id)
         mbllen = len(mbl)
         rd = random.randint(0,mbllen-1)
@@ -93,7 +93,7 @@ randombb = on_command("rdcp", aliases={"随机凑CP","随机结婚证"}, priorit
 async def handle_function(args: Message = CommandArg(),event: Event = Event):
     if feature_manager.get("randomcs"):
         bot = get_bot()
-        group_id = event.get_session_id().split("_")[1]
+        group_id = get_group_id(event)
         mbl = await bot.get_group_member_list(group_id=group_id)
         mbllen = len(mbl)
         rd1 = random.randint(0,mbllen-1)
@@ -140,7 +140,7 @@ async def handle_function(event: Event = Event):
     if not feature_manager.get("meme_resp"):
         raise FinishedException
     bot = get_bot()
-    group_id = event.get_session_id().split("_")[1]
+    group_id = get_group_id(event)
     mbl = await bot.get_group_member_list(group_id=group_id)
     target_id = 0
     for i in mbl:
@@ -217,3 +217,10 @@ def truncate_text(text, max_width, ellipsis="…"):
         current_width += char_width
     
     return result
+
+def get_group_id(event):
+    session = event.get_session_id().split("_")
+    if session[0] == "group":
+        return session[1]
+    else:
+        return "0"

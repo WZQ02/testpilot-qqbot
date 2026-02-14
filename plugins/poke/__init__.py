@@ -7,6 +7,7 @@ import feature_manager
 import asyncio
 import random
 import privilege_manager
+import plugins.member_stuff
 
 bot_qq_id = 3978644480
 
@@ -18,7 +19,7 @@ async def handle_function(args: Message = CommandArg(),event: Event = Event):
         qqnum = 0
         times = 1
         # 发起指令所在群聊
-        groupid = event.get_session_id().split("_")[1]
+        groupid = plugins.member_stuff.get_group_id(event)
         splitex = args.extract_plain_text().split()
         # 第一个参数是@群员
         if len(args) > 0 and args[0].type == 'at':
@@ -50,7 +51,7 @@ rdpoke = on_command("rdpoke", aliases={"randompoke","随机戳戳","随机戳一
 async def handle_function(args: Message = CommandArg(),event: Event = Event):
     if feature_manager.get("randomcs") and feature_manager.get("poke"):
         bot = get_bot()
-        group_id = event.get_session_id().split("_")[1]
+        group_id = plugins.member_stuff.get_group_id(event)
         mbl = await bot.get_group_member_list(group_id=group_id)
         mbllen = len(mbl)
         # 存在arg且是数字（解析为次数，每次戳不同的群友）
