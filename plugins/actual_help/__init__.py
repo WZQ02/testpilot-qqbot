@@ -7,7 +7,7 @@ import feature_manager
 import random
 
 helptext = "https://testpilot.wzq02.top/guide/"
-wztext = "https://wzq02.top/ WZQ'02 的小站\nhttps://s.wzq02.top/1drive WZQ'02 的网盘\nhttps://s.wzq02.top/ask WZQ'02 的提问箱\nhttps://wzq02.top/otomader-sites/ 音 MADer 网站收集\nhttps://testpilot.wzq02.top/ Bot 介绍页"
+wztext = "https://wzq02.top/ WZQ'02 的小站\nhttps://s.wzq02.top/1drive WZQ'02 的网盘\nhttps://s.wzq02.top/ask WZQ'02 的提问箱\nhttps://testpilot.wzq02.top/ Bot 介绍页"
 wztext2 = "https://storage.aira.cafe/ 艾了个拉的软件库\nhttps://otomad.wiki/ OtomadWiki - 音MAD的百科全书 (｡･∀･)ﾉﾞ"
 wztext3 = "https://otm.ink/ 音之墨官网"
 wztext4 = "https://jazzwhom.top/ 帕斯镇"
@@ -26,7 +26,7 @@ async def handle_function(args: Message = CommandArg()):
     if not feature_manager.get("wzs"):
         raise FinishedException
     text = args.extract_plain_text()
-    table = {"": wztext, "aira": wztext2, "yzm": wztext3, "pt": wztext4, "otomad": wztext5}
+    table = {"": f"{wztext}\n\n{wztext2}\n\n{wztext3}\n\n{wztext4}\n\n{wztext5}", "wzq": wztext, "aira": wztext2, "yzm": wztext3, "pt": wztext4, "otomad": wztext5}
     await wzs.finish(table.get(text) or wztext)
 
 help = on_command("help", aliases={"帮助"}, priority=10, block=True)

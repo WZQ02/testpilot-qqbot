@@ -66,10 +66,14 @@ async def quedfdata(qqid,qtype,uname,iself):
     else:
         if qtype == "dxra":
             return callt+"有 "+str(data["rating"])+" 底分"
+        if qtype == "dxra_detailed":
+            dxdt = getdxdt(data)
+            return f"{callt}有 {dxdt[0]} ({dxdt[2]}+{dxdt[1]}) 底分"
         if qtype == "dxdv":
             calcd = dxdvcalc(data)
             #return callt+"有 "+str(data["rating"])+" 哥度。\n其中，在「抓小哥DX」新增猎场，"+callt+"抓到过最好的 15 个小哥平均为"+callt+"贡献了 "+str(calcd[0])+" 哥度，方差为 "+str(calcd[1])+"；在「抓小哥DX」旧有猎场，"+callt+"抓到过最好的 35 个小哥平均为"+callt+"贡献了 "+str(calcd[2])+" 哥度，方差为 "+str(calcd[3])+"。"
-            return callt+"的b35方差："+str(calcd[0])+"\n"+callt+"的b15方差："+str(calcd[1])+"\n歌曲平均达成率："+calcd[2]+"\n\n评价："+calcd[3].replace("你",callt)
+            #return callt+"的b35方差："+str(calcd[0])+"\n"+callt+"的b15方差："+str(calcd[1])+"\n歌曲平均达成率："+calcd[2]+"\n\n评价："+calcd[3].replace("你",callt)
+            return f'{callt}的b35方差：{str(calcd[0])}\n{callt}的b15方差：{str(calcd[1])}\n平均游玩等级：{calcd[4]}\n歌曲平均达成率：{calcd[2]}\n\n评价：{calcd[3].replace("你",callt)}'
         if qtype == "list":
             # 写入获取的json到文件
             file = open("web/templates/maimai_b50/df_data.json","w",encoding="utf-8")
@@ -85,48 +89,68 @@ def dxdvcalc(json):
     b35avg = 0
     b35dv = 0
     avgcomp = 0
+    avglevel = 0
     b15data = json["charts"]["dx"]
     b35data = json["charts"]["sd"]
     b50data = b15data+b35data
+    b15count = len(b15data)
+    b35count = len(b35data)
     for i in b15data:
-        b15avg += i["ra"]/15
+        b15avg += i["ra"]/b15count
     for i in b35data:
-        b35avg += i["ra"]/35
+        b35avg += i["ra"]/b35count
     for i in b15data:
-        b15dv += pow((i["ra"]-b15avg),2)/15
+        b15dv += pow((i["ra"]-b15avg),2)/b15count
     for i in b35data:
-        b35dv += pow((i["ra"]-b35avg),2)/15
+        b35dv += pow((i["ra"]-b35avg),2)/b35count
     for i in b50data:
         avgcomp += i["achievements"]/len(b50data)
+        avglevel += i["ds"]/len(b50data)
     comment = ""
     if (len(b35data) < 20):
-        comment = "你好像总共就没打几首歌啊？多打一些歌再来找我评价吧。。。"
+        comment = "你好像总共就没打几首歌啊？多打一些歌再来找我评价吧，，，"
     else:
-        if (b35dv < 50):
-            comment = "你的b35太平淡了，像一滩死水，每首歌的ra都差不多高，就跟大多数玩拍拍机的牢玩家一样，没意思！"
+        if (b35dv < 30):
+            comment = "你的b35太平淡了，每首歌的ra都差不多高，一看就是处于瓶颈期的拍拍机牢玩家了，真没意思呐~"
             if (len(b15data) < 2):
                 comment += "\n等等，你的b15怎么是空的？看来你比较怀旧，不喜欢打新歌哦？"
-            elif (b15dv < 80):
-                comment += "\n你的b15也差不多，每首歌都很均衡，无聊无聊无聊，下一位！"
+            elif (b15dv < 50):
+                comment += "\n你的b15也差不多，真让人提不起兴致呢。。。"
             else:
                 comment += "\n但你的b15分数波动有点大，看来你新歌打的不是很多？"
-        elif (b35dv < 150):
+        elif (b35dv < 120):
             comment = "你的b50高低分成绩相差不小，有一些波动，看起来像是一个处于稳步上升期的玩家，再接再励哦！"
-        elif (b35dv < 500):
+        elif (b35dv < 400):
             comment = "你的b50成绩波动的简直像过山车！高的很高低的很低，上升空间还很大哦！"
         else:
             comment = "你的b50高低分相差的就nm离谱！请问你是刚入坑的新人玩家吗？"
-        if (avgcomp > 100.25):
-            comment += "\n而且，你每首歌的达成率几乎都超过100，玩的太认真了吧！偶尔试着越点级也行的哦？"
-        elif (avgcomp < 97):
-            comment += "\n你的歌曲平均达成率不到97，可以！哥就喜欢你这样勇猛上前越大级的玩家，不要在意机厅里别人的目光！"
+        if (avgcomp > 100.6):
+            comment += "\n你每首歌的达成率几乎都超过100.5，鸟加遍地，玩得好认真哦！好厉害！"
+        elif (avgcomp > 99):
+            comment += ""
+        elif (avgcomp > 97):
+            comment += "\n你的歌曲平均达成率不到99，可以考虑提升一下准度哦！"
+        else:
+            comment += "\n你的歌曲平均达成率不到97，哦？是连拍拍机都不会打的za~ ko~ 呐，杂鱼~杂鱼~"
     #b15avg = round(b15avg,1)
     b15dv = round(b15dv,2)
     #b35avg = round(b35avg,1)
     b35dv = round(b35dv,2)
     avgcomp = str(round(avgcomp,4))+"%"
+    avglevel = round(avglevel,1)
     #return [b15avg,b15dv,b35avg,b35dv]
-    return [b35dv,b15dv,avgcomp,comment]
+    return [b35dv,b15dv,avgcomp,comment,avglevel]
+
+def getdxdt(json):
+    b15add = 0
+    b35add = 0
+    b15data = json["charts"]["dx"]
+    b35data = json["charts"]["sd"]
+    for i in b15data:
+        b15add += i["ra"]
+    for i in b35data:
+        b35add += i["ra"]
+    return [b15add+b35add,b15add,b35add]
 
 def fakeap50():
     file = open("web/templates/maimai_b50/df_data.json","r",encoding="utf-8")
@@ -195,7 +219,6 @@ def listoverlapquery(list1,list2):
                 overlap_list.append({"title": i["title"], "type": i["type"], "level_label": i["level_label"], "song_id": i["song_id"], "ds": i["ds"], "level_index": i["level_index"], "achievements_1": i["achievements"], "achievements_2": j["achievements"], "ra_1": i["ra"], "ra_2": j["ra"]})
     return overlap_list
 
-
 b50 = on_command("b50", priority=10, block=True)
 @b50.handle()
 async def handle_function(args: Message = CommandArg(),event: Event = Event):
@@ -225,7 +248,7 @@ async def handle_function(args: Message = CommandArg(),event: Event = Event):
     if not feature_manager.get("maimai"):
         raise FinishedException
     #await achievement_manager.add(2,event)
-    result = await qddata_pre(args,event,"dxra")
+    result = await qddata_pre(args,event,"dxra_detailed")
     await dxra.finish(result)
 
 dxdv = on_command("dxdv", aliases={"锐评b50","cb50","b50dv","b50方差"}, priority=10, block=True)

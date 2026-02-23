@@ -1,1 +1,0 @@
-{"paths": {"sys_env": "win", "win": {"backend_path": "X:/TEMP/testpilot_qqbot/", "botfile_path": "X:/TEMP/testpilot_qqbot/", "desc": "Windows"}, "wsl": {"backend_path": "X:/TEMP/testpilot_qqbot/", "botfile_path": "/mnt/x/temp/testpilot_qqbot/", "desc": "WSL (Linux)"}}}

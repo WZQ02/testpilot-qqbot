@@ -13,13 +13,15 @@ import base64, mimetypes
 import plugins.test1, img_process
 import misc_manager
 import httpx
+from httpx import AsyncHTTPTransport
 
 config_f = open("json/oa_data.json","r",encoding="utf-8")
 config = json.loads(config_f.read())["configs"]
 config_f.close()
 
 http_client = httpx.AsyncClient(
-    proxies = misc_manager.misc_data["http_proxy"],
+    # proxies = misc_manager.misc_data["http_proxy"],
+    mounts = {"http://": AsyncHTTPTransport(proxy=misc_manager.misc_data["http_proxy"]), "https://": AsyncHTTPTransport(proxy=misc_manager.misc_data["http_proxy"])},
     timeout = httpx.Timeout(connect=5.0, read=30.0, write=5.0, pool=5.0),
 )
 
