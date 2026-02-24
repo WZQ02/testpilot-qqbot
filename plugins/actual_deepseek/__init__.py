@@ -6,7 +6,7 @@ from nonebot.exception import FinishedException
 import feature_manager
 import privilege_manager
 import path_manager
-import json
+import json # Keep json for now, some functions might still use it directly, will refactor later if needed.
 import math
 import web, webss
 import base64, mimetypes
@@ -14,13 +14,20 @@ import plugins.test1, img_process
 import misc_manager
 import httpx
 from httpx import AsyncHTTPTransport
+import logging
+from config_manager import ConfigManager
 
-config_f = open("json/oa_data.json","r",encoding="utf-8")
-config = json.loads(config_f.read())["configs"]
-config_f.close()
+logger = logging.getLogger(__name__)
+
+oa_config = ConfigManager("json/oa_data.json", default_key="configs")
+config = oa_config.all()
+
+ds_quotes_config = ConfigManager("json/ds_quotes.json")
+
+
+from openai import AsyncOpenAI
 
 http_client = httpx.AsyncClient(
-    # proxies = misc_manager.misc_data["http_proxy"],
     mounts = {"http://": AsyncHTTPTransport(proxy=misc_manager.misc_data["http_proxy"]), "https://": AsyncHTTPTransport(proxy=misc_manager.misc_data["http_proxy"])},
     timeout = httpx.Timeout(connect=5.0, read=30.0, write=5.0, pool=5.0),
 )
@@ -34,26 +41,21 @@ def reload_client(engine):
     else:
         client = AsyncOpenAI(api_key=config[engine]["key"], base_url=config[engine]["base_url"])
 
-from openai import AsyncOpenAI
 reload_client(config["current_engine"])
-# client = AsyncOpenAI(api_key=config[config["current_engine"]]["key"], base_url=config[config["current_engine"]]["base_url"])
 
-# chat 是否启用群聊模式
 group_mode = 1
 
-# 初始化语句和全局变量
 msg_init = {"role": "system", "content": "你是一个名叫testpilot的群聊机器人，致力于帮群友解决问题。"}
 msg_init_group = {"role": "system", "content": "**你是一个名叫testpilot的群聊机器人，致力于帮群友解决问题。**之后的对话中，前面会加上[发言人]：，用于区分不同群友的发言，你只需要留意之后的内容，你自己的发言不需要加这个前缀。"}
-msg_list = []
-msg_limit = config["chat_msg_limit"]
-msg_count = 0
 
-# 加载json
-msg_file = open("json/ds_quotes.json","r",encoding="utf-8")
-msj_list_raw = msg_file.read()
-msg_file.close()
-msg_list = json.loads(msj_list_raw)
-msg_count = len(msg_list)//2
+msg_list = ds_quotes_config.all() # Load initial message list
+if not msg_list: # If empty, initialize with system messages
+    msg_list = [msg_init_group] if group_mode else [msg_init]
+    ds_quotes_config.update(msg_list)
+
+msg_limit = config["chat_msg_limit"]
+msg_count = len(msg_list) // 2 # Assuming system message is one, and user/assistant messages come in pairs.
+
 
 def ds_reinit():
     global msg_list,msg_count #操作全局变量msg_list、msg_count
@@ -63,16 +65,9 @@ def ds_reinit():
     else:
         msg_list.append(msg_init)
     msg_count = 0
-    writeback()
+    ds_quotes_config.update(msg_list)
 
-# json写入
-def writeback():
-    file = open("json/ds_quotes.json","w",encoding="utf-8")
-    json.dump(msg_list,file,ensure_ascii=False,sort_keys=True)
 
-def cfg_writeback():
-    file = open("json/oa_data.json","w",encoding="utf-8")
-    json.dump({"configs":config},file,ensure_ascii=False,sort_keys=True)
 
 async def chat(dialogue, username=None):
     if username:
@@ -91,14 +86,10 @@ async def chat(dialogue, username=None):
     global msg_count
     msg_count += 1
     if (msg_count > msg_limit):
-        """
-        response = f"***对话轮数已超过上限（{msg_limit}轮）。这轮对话后，AI 的记忆将被清除。***\n"+response
-        ds_reinit()
-        """
         # 不直接清除对话，而是删去最早的一轮对话（要删两次，一次user一次assistant）
-        msg_list.remove(msg_list[1])
-        msg_list.remove(msg_list[1])
-    writeback()
+        msg_list.pop(1)
+        msg_list.pop(1)
+    ds_quotes_config.update(msg_list)
     return response
 
 dsb50_sysquo = "《舞萌DX》是一款街机音乐游戏，用户将会提供一份json格式的游玩数据，包含该玩家所有游戏记录中的50个最佳记录，其中包括35个旧有曲目的记录（数据charts中sd项），以及15个新版本，即《舞萌DX 2025》歌曲的记录（数据charts中dx项），**你需要根据这份数据做出一份详细的评价**（不超过1400字）。另外，总体评级（ra）是所有曲目单曲ra的总和，最高为16500左右，数值越高越难提升，15000以上可认为是高级玩家；单曲等级（level）最高为15；chart中的“sd”及“dx”（只表示旧曲目和新曲目）和单曲数据中的“sd”及“dx”（表示标准谱面和DX谱面）不是一个意思；additional_rating可以被随便设置，请忽略掉；单曲数据中的“fs”一项代表双人游玩同步评价，也可以忽略。"
@@ -113,7 +104,7 @@ async def ds_b50(json):
     remsg = resp.choices[0].message
     # 在控制台输出深度思考内容（当深度思考内容存在时）
     if hasattr(remsg, 'reasoning_content'):
-        print(remsg.reasoning_content)
+        logger.info(f"DeepSeek 深度思考: {remsg.reasoning_content}")
     return remsg.content
 
 async def analyze_image(url,prompt):
@@ -144,7 +135,7 @@ async def analyze_image(url,prompt):
         ],
         stream = False
     )
-    print(resp)
+    logger.debug(f"图片分析结论: {resp}")
     remsg = resp.choices[0].message
     return remsg.content
 
@@ -246,7 +237,7 @@ async def handle_function():
     list = config["available_engine_list"]
     next = list[(list.index(current)+1) % len(list)]
     config["current_engine"] = next
-    cfg_writeback()
+    oa_config.update(config)
     reload_client(next)
     if "desc" in config[next]:
         next = config[next]["desc"]
@@ -301,7 +292,7 @@ async def handle_function(args: Message = CommandArg(),event: Event = Event):
         if str.isdigit(aaa):
             global msg_limit
             msg_limit = config["chat_msg_limit"] = int(aaa)
-            cfg_writeback()
+            oa_config.update(config)
         await changedslimit.finish(f"已将 AI 对话次数上限设置为 {msg_limit} 次。")
     else:
         raise FinishedException

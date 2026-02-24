@@ -1,9 +1,7 @@
-import json
+from config_manager import ConfigManager
 
-user_file = open("json/user_list.json","r",encoding="utf-8")
-user_list_raw = user_file.read()
-user_file.close()
-user_list = json.loads(user_list_raw)['user_list']
+user_config = ConfigManager("json/user_list.json", default_key="user_list")
+user_list = user_config.all()
 
 su_list = user_list["superadmin"]
 ad_list = user_list["admin"]
@@ -23,19 +21,16 @@ def add_admin(id):
     if checkuser(id):
         return "该用户已经是管理员！"
     ad_list.append(id)
-    writeback()
+    user_config.update(user_list)
     return "已添加 "+id+" 为管理员。"
 
 def rem_admin(id):
     if checkuser(id) == 0:
         return "该用户没有管理员权限！"
     ad_list.remove(id)
-    writeback()
+    user_config.update(user_list)
     return "已移除 "+id+" 的管理员权限。"
 
-def writeback():
-    file = open("json/user_list.json","w",encoding="utf-8")
-    json.dump({'user_list':user_list},file,ensure_ascii=False,sort_keys=True)
 
 def get_admin_list():
     astr = "管理员用户有："

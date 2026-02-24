@@ -1,3 +1,3 @@
-# testpilot-qqbot
+# testpilot
 
-A QQ bot I wrote for fun, based on the nonebot2 framework.
+A QQ bot I wrote for fun, built on the nonebot2 framework.

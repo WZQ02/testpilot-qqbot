@@ -1,10 +1,9 @@
-import json
+from config_manager import ConfigManager
 
-miscd = open("json/misc.json","r",encoding="utf-8")
-misc_data = json.loads(miscd.read())
+misc_config = ConfigManager("json/misc.json")
+misc_data = misc_config.all()
 
 def writeback():
-    file = open("json/misc.json","w",encoding="utf-8")
-    json.dump(misc_data,file,ensure_ascii=False,sort_keys=True)
+    misc_config.update(misc_data)
 
 tasks = []

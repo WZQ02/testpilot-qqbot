@@ -230,14 +230,6 @@ async def handle_function():
     if not feature_manager.get("meme_resp"):
         raise FinishedException
     rd = random.random()
-    """
-    if rd > 0.9:
-        await yyz.finish(Message('[CQ:video,file=file:///'+path_manager.bf_path()+'video/wyyyz/1.mp4]'))
-    elif rd > 0.8:
-        await yyz.finish(Message('[CQ:image,file=file:///'+path_manager.bf_path()+'images/wyyyz/1.webp,sub_type=1]'))
-    elif rd > 0.7:
-        await yyz.finish(Message('[CQ:image,file=file:///'+path_manager.bf_path()+'images/wyyyz/2.webp,sub_type=1]'))
-    """
     if rd > 0.8:
         await yyz.finish("qwq")
     elif rd > 0.6:
@@ -259,33 +251,11 @@ async def handle_function():
         raise FinishedException
     await haosharen2.finish("全杀！")
 
-"""
-test = on_message(priority=10, block=True)
-@test.handle()
-async def handle_function(args: Message = EventMessage()):
-    for i in args:
-        # if i.type == 'at':
-            # print("用户"+i.data['qq']+"被at了，他的qq号是"+i.data['name'])
-        print([i.type,i.data])
-"""
-
-"""
-fds = on_command("deepseek", priority=10, block=True)
-@fds.handle()
-async def handle_function():
-    if not feature_manager.get("fakedeepseek"):
-        raise FinishedException
-    await asyncio.sleep(3)
-    await fds.finish("服务器繁忙，请稍后再试。")
-"""
-
 flipof = on_keyword(["你是","机器人","人机","谁啊","没素质","傻逼","sb","妈","赤石","谁家","杂鱼","低能","吃屎","弱智","操","草你","滚","去死","一边去","idiot","douchebag","bitch","脑残","asshole"], rule=to_me(), priority=10, block=True)
 @flipof.handle()
 async def handle_function():
     if not feature_manager.get("flipoff"):
         raise FinishedException
-    # await flipof.finish(MessageSegment.image(await get_image_data("https://img.wzq02.top/upl/1c3c2250c945fc7430c0d3a02ff3174e.jpg")))
-    # await flipof.finish(Message('[CQ:at,qq=2975499623,name=test]'))
     await flipof.finish(Message('[CQ:image,file=file:///'+path_manager.bf_path()+'images/gbc_flip_off.webp,sub_type=1]'))
 
 flipof2 = on_command("flipoff", aliases={"竖中指","比中指"}, priority=10, block=True)
@@ -373,5 +343,5 @@ async def zoom_image(url):
 
 async def ccb_image(url):
     img_process.download_img(url,"images/img_ccb/temp/bcb.jpg")
-    img_process.gen_ccb_img()
+    await img_process.ccb_image(url)
     return Message('[CQ:image,file=file:///'+path_manager.bf_path()+'images/img_ccb/temp/result.png]')

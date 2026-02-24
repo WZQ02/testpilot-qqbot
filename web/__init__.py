@@ -1,40 +1,52 @@
+import logging
+
+logger = logging.getLogger(__name__)
+
 content = ""
 def content_init():
-    file = open("web/templates/wel/index.html","r",encoding="utf-8")
-    global content
-    content = file.read()
-    file.close()
-    writehtml()
+    try:
+        with open("web/templates/wel/index.html","r",encoding="utf-8") as file:
+            global content
+            content = file.read()
+        writehtml()
+        logger.info("已初始化网页截图初始页面。")
+    except IOError as e:
+        logger.error(f"网页截图初始页面初始化失败: {e}")
 
 def change_content(con):
     global content
     content = con
     writehtml()
+    logger.info("网页内容发生变更。")
 
 def writehtml():
-    file = open("web/index.html","w",encoding="utf-8")
-    file.write(content)
-    file.close()
+    try:
+        with open("web/index.html","w",encoding="utf-8") as file:
+            file.write(content)
+        logger.info("已将内容写入网页 web/index.html")
+    except IOError as e:
+        logger.error(f"写入内容到 web/index.html 失败: {e}")
 
-# markdown
 def content_md(md):
-    file = open("web/templates/markdown/index.html","r",encoding="utf-8")
-    page = file.read()
-    global content
-    # content = page.replace("<!-- Markdown Content -->",md)
-    content = page
-    # write md file
-    mdf = open("web/templates/markdown/md.md","w",encoding="utf-8")
-    mdf.write(md)
-    mdf.close()
-    file.close()
-    writehtml()
+    try:
+        with open("web/templates/markdown/index.html","r",encoding="utf-8") as file:
+            page = file.read()
+        global content
+        content = page
+        with open("web/templates/markdown/md.md","w",encoding="utf-8") as mdf:
+            mdf.write(md)
+        writehtml()
+        logger.info("已渲染 markdown 内容。")
+    except IOError as e:
+        logger.error(f"渲染 markdown 内容失败: {e}")
 
-# HTML / plain text screenshot
 def content_text(con):
-    file = open("web/templates/text/index.html","r",encoding="utf-8")
-    page = file.read()
-    global content
-    content = page.replace("<!-- Text Content -->",con)
-    file.close()
-    writehtml()
+    try:
+        with open("web/templates/text/index.html","r",encoding="utf-8") as file:
+            page = file.read()
+        global content
+        content = page.replace("<!-- Text Content -->",con)
+        writehtml()
+        logger.info("已渲染文本内容。")
+    except IOError as e:
+        logger.error(f"文本渲染失败: {e}")

@@ -1,9 +1,7 @@
-import json
+from config_manager import ConfigManager
 
-fea_file = open("json/fea_list.json","r",encoding="utf-8")
-fea_list_raw = fea_file.read()
-fea_file.close()
-fea_list = json.loads(fea_list_raw)['fea_list']
+feature_config = ConfigManager("json/fea_list.json", default_key="fea_list")
+fea_list = feature_config.all()
 
 def get_all_features():
     resp = ""
@@ -20,12 +18,12 @@ def get(fea_name):
 
 def enable(fea_name):
     fea_list[fea_name]["enable"] = True
-    writeback()
+    feature_config.update(fea_list)
     return "已启用功能："+fea_name+"（"+fea_list[fea_name]["desc"]+"）"
 
 def disable(fea_name):
     fea_list[fea_name]["enable"] = False
-    writeback()
+    feature_config.update(fea_list)
     return "已禁用功能："+fea_name+"（"+fea_list[fea_name]["desc"]+"）"
 
 def import_fea_list(lis):
@@ -37,13 +35,9 @@ def import_fea_list(lis):
             fl_copy[key]["enable"] = value and True or False
         if len(fl_copy) == len(fea_list):
             fea_list = fl_copy
-            writeback()
+            feature_config.update(fea_list)
             return "导入功能列表成功！"
         else:
             return "请提供有效的功能列表！"
     else:
         return "请提供有效的功能列表！"
-
-def writeback():
-    file = open("json/fea_list.json","w",encoding="utf-8")
-    json.dump({'fea_list':fea_list},file,ensure_ascii=False,sort_keys=True)
