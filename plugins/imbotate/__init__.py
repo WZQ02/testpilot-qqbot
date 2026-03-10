@@ -59,6 +59,7 @@ async def handle_function(args: Message = CommandArg(),event: Event = Event):
     if feature_manager.get("fake"):
         bot = get_bot()
         qqnum = 0
+        fake_quote = ""
         # 发起假扮指令人所在群聊
         group_id = plugins.member_stuff.get_group_id(event)
         # 如果指令不发起于群聊
@@ -75,6 +76,8 @@ async def handle_function(args: Message = CommandArg(),event: Event = Event):
             for i in fake_presets:
                 if fake_presets[i]["name"] == args.extract_plain_text():
                     qqnum = "-"+i
+                    if "quote" in fake_presets[i]:
+                        fake_quote = fake_presets[i]["quote"]
                     break
             if qqnum == 0:
                 await fake.finish("参数错误。用法：/fake [要假扮的@群员或群员QQ号]")
@@ -83,7 +86,9 @@ async def handle_function(args: Message = CommandArg(),event: Event = Event):
             await achievement_manager.add(1,event)
             await fake.finish("你不能让我假扮自己哦！")
         setnam = await do_fake(bot,event,qqnum,group_id)
-        await fake.finish("大家好啊，我是"+setnam+"。")
+        if not fake_quote:
+            fake_quote = "大家好啊，我是"+setnam+"。"
+        await fake.finish(fake_quote)
     else:
         raise FinishedException
     

@@ -1,6 +1,6 @@
 from nonebot import on_command, on_message
 from nonebot.params import CommandArg
-from nonebot.adapters.onebot.v11 import Message, Event, MessageEvent, MessageSegment
+from nonebot.adapters.onebot.v11 import Message, Event, MessageEvent, MessageSegment, Bot
 from nonebot.exception import FinishedException
 import asyncio
 import feature_manager
@@ -15,6 +15,7 @@ import requests
 import re
 import misc_manager
 import plugins.member_stuff
+import plugins.test1
 
 # vid_path = "W:/soft/web_svr/testpilot_qqbot/video/temp/video.mp4"
 vid_path1 = path_manager.bf_path()+"video/temp/video.mp4" # QQ看到的path
@@ -90,6 +91,22 @@ async def handle_function(args: Message = CommandArg(),event: Event = Event):
             await bill.finish(Message('[CQ:image,file=file:///'+path_manager.bf_path()+'images/bill/bill.jpg]'))
     else:
         raise FinishedException
+
+getb23 = on_command("getb23", aliases={"解析b23"}, priority=10, block=True)
+@getb23.handle()
+async def handle_function(args: Message = CommandArg(),bot: Bot = Bot,event: MessageEvent = Event):
+    str = ""
+    if len(args) > 0:
+        str = args.extract_plain_text()
+    else:
+        rep = await plugins.test1.get_reply_data(event.original_message,bot)
+        redata = rep.get("message")
+        for i in redata:
+            if i["type"] == "text":
+                str += i["data"]["text"]
+    link = str[str.index("http"):]
+    res = await resolve_b23(link)
+    await getb23.finish("https://www.bilibili.com/video/"+res)
     
 async def download_video(url,path="video/temp/video.mp4"):
     # 配置选项

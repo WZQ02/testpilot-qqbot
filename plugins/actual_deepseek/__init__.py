@@ -67,15 +67,13 @@ def ds_reinit():
     msg_count = 0
     ds_quotes_config.update(msg_list)
 
-
-
 async def chat(dialogue, username=None):
     if username:
         dialogue = f"{username}："+dialogue
     msg_list.append({"role": "user", "content": dialogue})
     # print(msg_list)
     resp = await client.chat.completions.create(
-        model = config[config["current_engine"]]["models"][0],
+        model = config[config["current_engine"]]["models"][config["model_index_prio"]],
         messages = msg_list,
         stream = False
     )
@@ -98,7 +96,7 @@ async def ds_b50(json):
     b50msglist = [{"role": "system", "content": dsb50_sysquo},{"role": "user", "content": str(json)}]
     resp = await client.chat.completions.create(
         # 不使用深度思考模型以节省时间（反正这功能也没多大卵用）
-        model = config[config["current_engine"]]["models"][0],
+        model = config[config["current_engine"]]["models"][config["model_index_prio"]],
         messages = b50msglist,
         stream = False
     )
@@ -108,15 +106,13 @@ async def ds_b50(json):
         logger.info(f"DeepSeek 深度思考: {remsg.reasoning_content}")
     return remsg.content
 
-async def analyze_image(url,prompt):
+async def analyze_image(url,prompt="图片里面有什么？"):
     path = "images/analyze/1.jpg"
     img_process.download_img(url, path)
     # 编码图片
     b64 = encode_image(path)
-    if not prompt:
-        prompt = "图片里面有什么？"
     resp = await client.chat.completions.create(
-        model = config[config["current_engine"]]["models"][1],
+        model = config[config["current_engine"]]["models"][config["model_index_prio"]],
         messages = [
             {
                 "role": "user",
@@ -143,6 +139,16 @@ async def analyze_image(url,prompt):
 def encode_image(image_path):
   with open(image_path, "rb") as image_file:
     return base64.b64encode(image_file.read()).decode('utf-8')
+  
+def get_available_engine_text_list():
+    list = config["available_engine_list"]
+    namelist = ""
+    for i in list:
+        if "desc" in config[i]:
+            namelist += f"\n{config[i]['desc']}（{i}）"
+        else:
+            namelist += "\n"+i
+    return namelist
 
 ads = on_command("ds", aliases={"深度求索","AI","actualdeepseek","deepseek","dick"}, priority=10, block=True)
 @ads.handle()
@@ -160,13 +166,16 @@ async def handle_function(args: Message = CommandArg(),event: MessageEvent = Eve
         qqid = event.get_user_id()
         qqnam = dict(await bot.get_stranger_info(user_id=qqid))["nick"]
     # 尝试获取回复内容
-    else:
-        rep_data = await plugins.test1.get_reply_data(event.original_message,bot)
-        rep_con = rep_data.get("message")
+    rep_data = await plugins.test1.get_reply_data(event.original_message,bot)
+    rep_con = rep_data.get("message")
+    if rep_con:
+        # 如果回复内容存在，则追加进usrmsg
         for i in rep_con:
             if i["type"] == "text":
                 usrmsg += i["data"]["text"]
-        qqnam = rep_data["sender"]["nickname"]
+        # 当qqnam仍未指定时，指定为被回复者的
+        if not qqnam:
+            qqnam = rep_data["sender"]["nickname"]
     # 可选获取用户名
     text = ""
     if group_mode:
@@ -231,12 +240,19 @@ async def handle_function(args: Message = CommandArg(),event: Event = Event):
 
 switchengine = on_command("switchai", aliases={"更换AI引擎","切换AI"}, priority=10, block=True)
 @switchengine.handle()
-async def handle_function():
+async def handle_function(args: Message = CommandArg()):
     if not feature_manager.get("deepseek"):
         raise FinishedException
     current = config["current_engine"]
     list = config["available_engine_list"]
     next = list[(list.index(current)+1) % len(list)]
+    if len(args) > 0:
+        text = args.extract_plain_text()
+        if text in list:
+            next = text
+        else:
+            eng_list = get_available_engine_text_list()
+            await switchengine.finish(f"未找到该引擎。当前可用的 AI 引擎有：{eng_list}")
     config["current_engine"] = next
     oa_config.update(config)
     reload_client(next)
@@ -249,7 +265,7 @@ anaimg = on_command("anaimg", aliases={"fxtp","分析图片","AI分析图片"}, 
 async def handle_function(args: Message = CommandArg(),bot: Bot = Bot, event: MessageEvent = Event):
     if not feature_manager.get("deepseek"):
         raise FinishedException
-    if config["current_engine"] != "gemini":
+    if not config[config["current_engine"]]["image"]:
         await anaimg.finish("当前 AI 引擎不支持图片分析！请用 /switchai 切换引擎再试哦！")
     misc_manager.tasks.append("ds_anaimg")
     rep_con = await plugins.test1.get_reply_content(event.original_message,bot)
@@ -280,6 +296,27 @@ async def handle_function():
     if "desc" in config[current]:
         current = config[current]["desc"]
     await checkengine.finish(f"当前 AI 引擎为 {current}。")
+
+listengine = on_command("listai", aliases={"列出可用AI引擎"}, priority=10, block=True)
+@listengine.handle()
+async def handle_function():
+    if not feature_manager.get("deepseek"):
+        raise FinishedException
+    list = get_available_engine_text_list()
+    await listengine.finish(f"当前可用的 AI 引擎有：{list}")
+
+# 指定模型index优先级
+set_model_index = on_command("modelindex", priority=10, block=True)
+@set_model_index.handle()
+async def handle_function(args: Message = CommandArg()):
+    if not feature_manager.get("deepseek"):
+        raise FinishedException
+    current_models = config[config["current_engine"]]["models"]
+    index = args.extract_plain_text()
+    if index.isdigit() and int(index) < len(current_models):
+        config["model_index_prio"] = int(index)
+        oa_config.update(config)
+        await switchengine.finish(f"已指定当前 AI 模型为 {config[config['current_engine']]['models'][int(index)]}。")
 
 # 按固定长度切分字符串
 def split_str_by_length(s, chunk_size):
