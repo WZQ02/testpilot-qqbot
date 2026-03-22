@@ -9,3 +9,5 @@ curl https://maimaidx.jp/maimai-mobile/img/rating_base_orange.png -o 4000.png
 curl https://maimaidx.jp/maimai-mobile/img/rating_base_normal.png -o 0.png
 curl https://maimaidx.jp/maimai-mobile/img/rating_base_green.png -o 2000.png
 curl https://maimaidx.jp/maimai-mobile/img/rating_base_blue.png -o 1000.png
+
+curl https://maimaidx.jp/maimai-mobile/img/rating_base_rainbow_kiwami.png -o 16000.png

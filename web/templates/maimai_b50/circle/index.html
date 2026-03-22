@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="/css/maimai_b50/prism.css">
+    <link rel="stylesheet" href="/css/maimai_b50/circle.css">
 </head>
 <body>
 <div id="container">
@@ -44,8 +44,7 @@
         ra_icon_id *= 1000
         document.getElementById("rating_box").style.backgroundImage = "url("+assets_dir+"rating/"+ra_icon_id+".png)"
         if (Number(dxra) >= 10000) {
-            cont.style.backgroundColor = "#fff"
-            cont.style.backgroundImage = "linear-gradient(0deg,#fff9 14%,#ffd5cf99 24%,#ffd5cf99 46%,#ffc5d599 56%,#eaabff99 67%,#72bcfe99 85%,#65f2df99 95%)"
+            cont.style.boxShadow = "inset 0px 0px 20px #f3fCb4"
         }
         let b35lst = df_data["charts"]["sd"]
         let b15lst = df_data["charts"]["dx"]

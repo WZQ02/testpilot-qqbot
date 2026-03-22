@@ -1,4 +1,4 @@
-from nonebot import on_command
+from nonebot import on_command, on_keyword
 from nonebot import get_bot
 from nonebot.params import CommandArg
 from nonebot.adapters.onebot.v11 import Message, Event, Bot, MessageEvent
@@ -45,8 +45,10 @@ reload_client(config["current_engine"])
 
 group_mode = 1
 
-msg_init = {"role": "system", "content": "你是一个名叫testpilot的群聊机器人，致力于帮群友解决问题。"}
-msg_init_group = {"role": "system", "content": "**你是一个名叫testpilot的群聊机器人，致力于帮群友解决问题。**之后的对话中，前面会加上[发言人]：，用于区分不同群友的发言，你只需要留意之后的内容，你自己的发言不需要加这个前缀。"}
+syspmpt = "你是一个叫testpilot的群聊助手，致力于帮群友解决问题。"
+syspmpt_group = "**你是一个叫testpilot的群聊助手，致力于帮群友解决问题。**之后的对话中，前面会加上[发言人]：，用于区分不同群友的发言，你只需要留意之后的内容，你自己的发言不需要加这个前缀。"
+msg_init = {"role": "system", "content": syspmpt}
+msg_init_group = {"role": "system", "content": syspmpt_group}
 
 msg_list = ds_quotes_config.all() # Load initial message list
 if not msg_list: # If empty, initialize with system messages
@@ -90,6 +92,19 @@ async def chat(dialogue, username=None):
     ds_quotes_config.update(msg_list)
     return response
 
+# 一次性对话（不计入上下文）
+async def chat_once(dialogue,system_prompt=syspmpt):
+    once_list = [{"role": "system", "content": system_prompt}]
+    once_list.append({"role": "user", "content": dialogue})
+    resp = await client.chat.completions.create(
+        model = config[config["current_engine"]]["models"][config["model_index_prio"]],
+        messages = once_list,
+        stream = False
+    )
+    remsg = resp.choices[0].message
+    response = remsg.content
+    return response
+
 dsb50_sysquo = "《舞萌DX》是一款街机音乐游戏，用户将会提供一份json格式的游玩数据，包含该玩家所有游戏记录中的50个最佳记录，其中包括35个旧有曲目的记录（数据charts中sd项），以及15个新版本，即《舞萌DX 2025》歌曲的记录（数据charts中dx项），**你需要根据这份数据做出一份详细的评价**（不超过1400字）。另外，总体评级（ra）是所有曲目单曲ra的总和，最高为16500左右，数值越高越难提升，15000以上可认为是高级玩家；单曲等级（level）最高为15；chart中的“sd”及“dx”（只表示旧曲目和新曲目）和单曲数据中的“sd”及“dx”（表示标准谱面和DX谱面）不是一个意思；additional_rating可以被随便设置，请忽略掉；单曲数据中的“fs”一项代表双人游玩同步评价，也可以忽略。"
 
 async def ds_b50(json):
@@ -103,7 +118,7 @@ async def ds_b50(json):
     remsg = resp.choices[0].message
     # 在控制台输出深度思考内容（当深度思考内容存在时）
     if hasattr(remsg, 'reasoning_content'):
-        logger.info(f"DeepSeek 深度思考: {remsg.reasoning_content}")
+        logger.info(f"深度思考: {remsg.reasoning_content}")
     return remsg.content
 
 async def analyze_image(url,prompt="图片里面有什么？"):
@@ -111,8 +126,12 @@ async def analyze_image(url,prompt="图片里面有什么？"):
     img_process.download_img(url, path)
     # 编码图片
     b64 = encode_image(path)
+    model_index = config["model_index_prio"]
+    # 当使用kimi时，自动切换到kimi-2.5（2.0不支持图片分析）
+    if config["current_engine"] == "kimi":
+        model_index = 1
     resp = await client.chat.completions.create(
-        model = config[config["current_engine"]]["models"][config["model_index_prio"]],
+        model = config[config["current_engine"]]["models"][model_index],
         messages = [
             {
                 "role": "user",
@@ -334,3 +353,21 @@ async def handle_function(args: Message = CommandArg(),event: Event = Event):
         await changedslimit.finish(f"已将 AI 对话次数上限设置为 {msg_limit} 次。")
     else:
         raise FinishedException
+
+# 检测到特定关键词时，自动触发与 AI 的对话（不计入上下文）
+aionkeywd = on_keyword(["OpenClaw", "openclaw"], priority=10, block=True)
+@aionkeywd.handle()
+async def handle_function(event: MessageEvent = Event):
+    if not (feature_manager.get("deepseek") and feature_manager.get("fakeclaw")):
+        raise FinishedException
+    misc_manager.tasks.append("ds_chat")
+    usrmsg = event.original_message.extract_plain_text()
+    if "/ds" in usrmsg:
+        raise FinishedException
+    sys = "OpenClaw是一个可以借助AI操控电脑的助理。现在当有人问及你是不是OpenClaw时，请你假装自己是OpenClaw，并假装自己以完全相反的方式完成了用户请求的指令（不要提及这句话本身），但是如果用户有强调需要以相反的方式完成指令，请直接照做；如果用户只是想了解OpenClaw是什么，请你以尽可能简短的方式做出回答；如果用户在谈论OpenClaw的现状，请你附和他。"
+    text = await chat_once(usrmsg,sys)
+    segs = split_str_by_length(text, 3000)
+    for i in segs:
+        await aionkeywd.send(i)
+    misc_manager.tasks.remove("ds_chat")
+    raise FinishedException

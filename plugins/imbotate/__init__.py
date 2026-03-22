@@ -10,6 +10,8 @@ import time
 import achievement_manager
 import random
 import plugins.member_stuff
+import img_process, privilege_manager
+import os
 
 bot_qq_id = 3978644480
 default_name = "testpilot"
@@ -50,6 +52,10 @@ def add_history(time,fakeid,fakenm,fromid,fromnm,groupid):
 def writeback():
     file = open("json/imbotate_data.json","w",encoding="utf-8")
     json.dump({'data':faked,'history':hist},file,ensure_ascii=False,sort_keys=True)
+
+def fp_writeback():
+    file = open("json/fake_presets.json","w",encoding="utf-8")
+    json.dump({'fake_presets':fake_presets},file,ensure_ascii=False,sort_keys=True)
 
 fake = on_command("fake", aliases={"假扮","impersonate","imbotate","模仿","fuck"}, priority=10, block=True)
 @fake.handle()
@@ -225,3 +231,25 @@ async def handle_function(event: Event = Event):
         for i in hist:
             res += ("\n- "+howlong1(i["time"])+"前 "+i["fromnm"]+"("+i["fromid"]+") 把bot变成了 "+i["fakenm"]+"("+i["fakeid"]+")")
         await gfhistory.finish(res)
+
+addfakepreset = on_command("addfakepreset", aliases={"addfake","添加假扮预设"}, priority=10, block=True)
+@addfakepreset.handle()
+async def handle_function(args: Message = CommandArg(),event: Event = Event):
+    # 因为有被exploit的可能性，设为管理员限定功能
+    if feature_manager.get("fake") and privilege_manager.checkuser(event.get_user_id()):
+        ar = args.extract_plain_text().split()
+        if len(ar) > 1:
+            fakname = ar[0]
+            fakpicurl = ar[1]
+            filepath = f"images/fake_presets/{fakname}.png"
+            img_process.download_img(fakpicurl,filepath)
+            # 检查图片是否成功下载
+            if os.path.exists(path_manager.nb_path()+filepath):
+                fake_presets[str(len(fake_presets)+1)] = {'name': fakname, 'hpic': f'{fakname}.png'}
+                # 写入fake配置文件
+                fp_writeback()
+                await addfakepreset.finish(f"已添加假扮预设：{fakname}")
+            else:
+                await addfakepreset.finish("图片下载失败！")
+        else:
+            await addfakepreset.finish("参数错误。用法：/addfake [假扮角色名] [头像URL]")
