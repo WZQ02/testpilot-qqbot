@@ -110,9 +110,9 @@ async def handle_function():
     elif rd < .15:
         await awmc.finish("你们wmc真的是")
     elif rd < .4:
-        await awmc.finish(Message('[CQ:image,file=file:///'+path_manager.bf_path()+'images/awmc.jpg,sub_type=1]'))
-    elif rd < .7:
         await awmc.finish("awmc")
+    elif rd < .5:
+        await awmc.finish("我再听到你们讨论打舞萌，我就扎聋我自己的耳朵！")
 
 mygo = on_keyword(["mygo","MyGO","春日影","crychic","Crychic","组一辈子乐队","你这个人，真是满脑子都","素世","长期素食","要乐奈","丰川祥子","椎名立希","千早爱音","为什么要演奏","高松灯"], priority=10, block=True)
 @mygo.handle()
@@ -251,7 +251,7 @@ async def handle_function():
         raise FinishedException
     await haosharen2.finish("全杀！")
 
-flipof = on_keyword(["你是","机器人","人机","谁啊","没素质","傻逼","sb","妈","赤石","谁家","杂鱼","低能","吃屎","弱智","操","草你","滚","去死","一边去","idiot","douchebag","bitch","脑残","asshole"], rule=to_me(), priority=10, block=True)
+flipof = on_keyword(["你是","机器人","人机","谁啊","没素质","傻逼","sb","你妈","赤石","谁家","杂鱼","低能","吃屎","弱智","操","草你","滚","去死","一边去","idiot","douchebag","bitch","脑残","asshole","牛魔","cnm"], rule=to_me(), priority=10, block=True)
 @flipof.handle()
 async def handle_function():
     if not feature_manager.get("flipoff"):

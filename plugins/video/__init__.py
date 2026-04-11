@@ -24,6 +24,8 @@ vid_ongoing_state = 0
 last_get_vid_time = 0
 current_video_title = ""
 
+cookiepath = path_manager.nb_path()+"video/cookies.txt"
+
 bilivid = on_command("bili", aliases={"bilibili","视频","b站视频","video","sp"}, priority=10, block=True)
 @bilivid.handle()
 async def handle_function(args: Message = CommandArg(),event: Event = Event):
@@ -67,7 +69,7 @@ async def handle_function(args: Message = CommandArg(),event: Event = Event):
         vid_ongoing_state = 0
         misc_manager.tasks.remove("video_download")
         if (result == 10):
-            await bilivid.finish("你要的视频太大太长了啊啊啊！请另请高明吧！")
+            await bilivid.finish("你要的视频太大太长了！请另请高明吧！")
         if os.path.exists(vid_path2):
             if current_video_title:
                 await bilivid.send(current_video_title)
@@ -117,9 +119,11 @@ async def download_video(url,path="video/temp/video.mp4"):
         'format': 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best',
         # 优先h264/h265，播放兼容性
         'format_sort': ['vcodec:hevc,h264'],
-        'merge_output_format': 'mp4',  # 合并音视频时输出MP4
+        'merge_output_format': 'mp4'  # 合并音视频时输出MP4
     }
-    if ("x.com" in url) or ("twitter.com" in url) or ("tumblr.com" in url) or ("youtube.com" in url) or ("tiktok.com" in url):
+    if os.path.exists(cookiepath):
+        ydl_opts["cookiesfile"] = cookiepath
+    if ("x.com" in url) or ("twitter.com" in url) or ("tumblr.com" in url) or ("youtube.com" in url) or ("tiktok.com" in url) or ("instagram.com" in url):
         ydl_opts["proxy"] = misc_manager.misc_data["http_proxy"]
     
     loop = asyncio.get_event_loop()

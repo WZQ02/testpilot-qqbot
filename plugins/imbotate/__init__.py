@@ -10,7 +10,7 @@ import time
 import achievement_manager
 import random
 import plugins.member_stuff
-import img_process, privilege_manager
+import img_process, privilege_manager, misc_manager
 import os
 
 bot_qq_id = 3978644480
@@ -81,6 +81,9 @@ async def handle_function(args: Message = CommandArg(),event: Event = Event):
         else:
             for i in fake_presets:
                 if fake_presets[i]["name"] == args.extract_plain_text():
+                    # hello我是关羽
+                    if i == "23" and random.random() < .6:
+                        i = "24"
                     qqnum = "-"+i
                     if "quote" in fake_presets[i]:
                         fake_quote = fake_presets[i]["quote"]
@@ -91,6 +94,8 @@ async def handle_function(args: Message = CommandArg(),event: Event = Event):
         if int(qqnum) == bot_qq_id:
             await achievement_manager.add(1,event)
             await fake.finish("你不能让我假扮自己哦！")
+        if misc_manager.april_fools_flag():
+            qqnum = await get_rdfake_qqnum(bot,group_id)
         setnam = await do_fake(bot,event,qqnum,group_id)
         if not fake_quote:
             fake_quote = "大家好啊，我是"+setnam+"。"
@@ -106,19 +111,24 @@ async def handle_function(event: Event = Event):
         group_id = plugins.member_stuff.get_group_id(event)
         if not int(group_id):
             await randomfake.finish("请在群聊发起随机假扮！")
-        mbl = await bot.get_group_member_list(group_id=group_id)
-        mbllen = len(mbl)
-        qqnum = 0
-        # 随机一个群员，并确保不随机到bot自己
-        while 1:
-            rd = random.randint(0,mbllen-1)
-            qqnum = str(mbl[rd]['user_id'])
-            if int(qqnum) != bot_qq_id:
-                break
+        qqnum = await get_rdfake_qqnum(bot,group_id)
         setnam = await do_fake(bot,event,qqnum,group_id)
         await randomfake.finish("大家好啊，我是"+setnam+"。")
     else:
         raise FinishedException
+
+# 拆分random fake
+async def get_rdfake_qqnum(bot,group_id):
+    mbl = await bot.get_group_member_list(group_id=group_id)
+    mbllen = len(mbl)
+    qqnum = 0
+    # 随机一个群员，并确保不随机到bot自己
+    while 1:
+        rd = random.randint(0,mbllen-1)
+        qqnum = str(mbl[rd]['user_id'])
+        if int(qqnum) != bot_qq_id:
+            break
+    return qqnum
 
 # 拆分一部分fake代码以复用
 async def do_fake(bot,event,qqnum,group_id):
@@ -240,12 +250,18 @@ async def handle_function(args: Message = CommandArg(),event: Event = Event):
         ar = args.extract_plain_text().split()
         if len(ar) > 1:
             fakname = ar[0]
-            fakpicurl = ar[1]
-            filepath = f"images/fake_presets/{fakname}.png"
-            img_process.download_img(fakpicurl,filepath)
+            picsrc = ar[1]
+            filepath = ""
+            # 判断是网络路径还是本地（相对于bot工作目录）
+            if picsrc[0:4] == 'http':
+                filepath = f"images/fake_presets/{fakname}.png"
+                img_process.download_img(picsrc,filepath)
+            else:
+                filepath = picsrc
             # 检查图片是否成功下载
             if os.path.exists(path_manager.nb_path()+filepath):
-                fake_presets[str(len(fake_presets)+1)] = {'name': fakname, 'hpic': f'{fakname}.png'}
+                filename = os.path.basename(filepath)
+                fake_presets[str(len(fake_presets)+1)] = {'name': fakname, 'hpic': filename}
                 # 写入fake配置文件
                 fp_writeback()
                 await addfakepreset.finish(f"已添加假扮预设：{fakname}")

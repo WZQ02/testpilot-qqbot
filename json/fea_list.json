@@ -86,7 +86,7 @@
         },
         "meme_resp_mai": {
             "desc": "关键词回应 - 舞萌",
-            "enable": false
+            "enable": true
         },
         "meme_resp_mygo": {
             "desc": "关键词回应 - MyGO!!!!!",

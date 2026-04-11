@@ -10,7 +10,10 @@ import feature_manager
 vm_powerstatus = 0
 
 async def run_winxp():
-    await asyncio.create_subprocess_exec("C:\\Program Files\\qemu\\qemu-system-x86_64.exe", "-accel", "whpx,kernel-irqchip=off", "-m", "96m", "-qmp", "tcp:0.0.0.0:4444,server,nowait", "-drive", "file=D:\\vms\\qemu\\nanoxp.vhd,if=ide", "-display", "vnc=:0")
+    if path_manager.pat_list["sys_env"] != "linux":
+        await asyncio.create_subprocess_exec("C:\\Program Files\\qemu\\qemu-system-x86_64.exe", "-accel", "whpx,kernel-irqchip=off", "-m", "96m", "-qmp", "tcp:0.0.0.0:4444,server,nowait", "-drive", "file=D:\\vms\\qemu\\nanoxp.vhd,if=ide", "-display", "vnc=:0")
+    else:
+        await asyncio.create_subprocess_exec("qemu-system-x86_64", "-accel", "tcg", "-m", "96m", "-qmp", "tcp:0.0.0.0:4444,server,nowait", "-drive", "file=/home/HwHiAiUser/qemu/nanoxp.vhd,if=ide", "-display", "vnc=:2")
     global vm_powerstatus
     vm_powerstatus = 1
     return
@@ -58,8 +61,8 @@ async def handle_function(args: Message = CommandArg()):
         raise FinishedException
     if vm_powerstatus == 1:
         await winxp.finish("虚拟机已经在运行！")
-    if path_manager.pat_list["sys_env"] == "linux":
-        await winxp.finish("bot现在运行在arm架构的机器上。\n跑不了x86虚拟机了哦！")
+    #if path_manager.pat_list["sys_env"] == "linux":
+        #await winxp.finish("bot现在运行在arm架构的机器上。\n跑不了x86虚拟机了哦！")
     await run_winxp()
     await asyncio.sleep(10)
     await winxp.finish(await xp_ss())

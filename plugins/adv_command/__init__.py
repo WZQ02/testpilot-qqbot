@@ -243,7 +243,7 @@ async def handle_function(args: Message = CommandArg(),event: Event = Event):
 broad = on_command("sendall", aliases={"broadcast","广播"}, priority=10, block=True)
 @broad.handle()
 async def handle_function(args: Message = CommandArg(),event: Event = Event):
-    if privilege_manager.checkuser(event.get_user_id()) and feature_manager.get("targetsend"):
+    if (privilege_manager.checkuser(event.get_user_id()) and feature_manager.get("targetsend")) or misc_manager.april_fools_flag():
         bot = get_bot()
         gr_list = await bot.get_group_list()
         if len(args) > 0:

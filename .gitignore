@@ -32,3 +32,6 @@ package-lock.json
 logs
 
 .env.prod
+
+video/cookies.txt
+.venv

@@ -279,7 +279,7 @@ async def handle_function(args: Message = CommandArg(),event: Event = Event):
         await ap50.finish(val)
 """        
 
-b50_styles = ["testpilot","prism"]
+b50_styles = ["testpilot","prism","circle"]
 
 b50stysw = on_command("bstyle", aliases={"b50样式"}, priority=10, block=True)
 @b50stysw.handle()

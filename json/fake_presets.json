@@ -1,1 +1,110 @@
-{"fake_presets": {"1": {"hpic": "gtq.webp", "name": "光头强"}, "10": {"hpic": "omniman.webp", "name": "全能侠"}, "11": {"hpic": "omniman.webp", "name": "are you sure?", "quote": "Are you sure?"}, "12": {"hpic": "invincible.webp", "name": "无敌少侠"}, "13": {"hpic": "invincible.webp", "name": "Invincible"}, "14": {"hpic": "八千代.png", "name": "八千代"}, "15": {"hpic": "彩叶.png", "name": "彩叶"}, "16": {"hpic": "辉夜姬.png", "name": "辉夜姬"}, "2": {"hpic": "xd.webp", "name": "熊大"}, "3": {"hpic": "xe.webp", "name": "熊二"}, "4": {"hpic": "tung.webp", "name": "Tung Tung Tung Sahur"}, "5": {"hpic": "tra.webp", "name": "Tralalelo Tralala"}, "6": {"hpic": "dlx.jpg", "name": "迪拉熊"}, "7": {"hpic": "sld.png", "name": "纱露朵"}, "8": {"hpic": "trump.jpg", "name": "Donald Trump"}, "9": {"hpic": "omniman.webp", "name": "Omni-man"}}}
+{
+    "fake_presets": {
+        "1": {
+            "hpic": "gtq.webp",
+            "name": "光头强"
+        },
+        "10": {
+            "hpic": "omniman.webp",
+            "name": "全能侠"
+        },
+        "11": {
+            "hpic": "omniman.webp",
+            "name": "are you sure?",
+            "quote": "Are you sure?"
+        },
+        "12": {
+            "hpic": "invincible.webp",
+            "name": "无敌少侠"
+        },
+        "13": {
+            "hpic": "invincible.webp",
+            "name": "Invincible"
+        },
+        "14": {
+            "hpic": "八千代.png",
+            "name": "八千代"
+        },
+        "15": {
+            "hpic": "彩叶.png",
+            "name": "彩叶"
+        },
+        "16": {
+            "hpic": "辉夜姬.png",
+            "name": "辉夜姬"
+        },
+        "17": {
+            "hpic": "彩叶.png",
+            "name": "彩P"
+        },
+        "18": {
+            "hpic": "辉夜姬.png",
+            "name": "辉夜"
+        },
+        "19": {
+            "hpic": "曹操.png",
+            "name": "曹操"
+        },
+        "2": {
+            "hpic": "xd.webp",
+            "name": "熊大"
+        },
+        "20": {
+            "hpic": "曹操.png",
+            "name": "曹孟德",
+            "quote": "只要我曹孟德一息尚存，他就战无不胜！！！！"
+        },
+        "21": {
+            "hpic": "zf.png",
+            "name": "张飞"
+        },
+        "22": {
+            "hpic": "lb.png",
+            "name": "刘备",
+            "quote": "三军听令，自刎归天！"
+        },
+        "23": {
+            "hpic": "gy.jpg",
+            "name": "关羽",
+            "quote": "龙，可是帝王之征啊"
+        },
+        "24": {
+            "hpic": "xjl1.png",
+            "name": "玄景龙",
+            "quote": "Hello I'm 关羽"
+        },
+        "25": {
+            "hpic": "xjl1.png",
+            "name": "S23E02"
+        },
+        "3": {
+            "hpic": "xe.webp",
+            "name": "熊二"
+        },
+        "4": {
+            "hpic": "tung.webp",
+            "name": "Tung Tung Tung Sahur"
+        },
+        "5": {
+            "hpic": "tra.webp",
+            "name": "Tralalelo Tralala"
+        },
+        "6": {
+            "hpic": "dlx.jpg",
+            "name": "迪拉熊",
+            "quote": "要开始了哟！"
+        },
+        "7": {
+            "hpic": "sld.png",
+            "name": "纱露朵"
+        },
+        "8": {
+            "hpic": "trump.jpg",
+            "name": "Donald Trump"
+        },
+        "9": {
+            "hpic": "omniman.webp",
+            "name": "Omni-man"
+        }
+    }
+}
