@@ -4,15 +4,13 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-
-
-async def take(url,sleep=3,filename="1"):
+async def take(url,sleep=3,filename="1",xres=1280,yres=1024):
     try:
         async with async_playwright() as p:
             browser = await p.chromium.launch()
             page = await browser.new_page()
             await page.goto(url)
-            await page.set_viewport_size({"width": 1280, "height": 1024})
+            await page.set_viewport_size({"width": xres, "height": yres})
             await page.screenshot(path=f"webss/{filename}.png")
             await asyncio.sleep(sleep)
             await browser.close()

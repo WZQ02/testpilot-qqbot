@@ -20,6 +20,9 @@ import plugins.test1
 # vid_path = "W:/soft/web_svr/testpilot_qqbot/video/temp/video.mp4"
 vid_path1 = path_manager.bf_path()+"video/temp/video.mp4" # QQ看到的path
 vid_path2 = path_manager.nb_path()+"video/temp/video.mp4" # nonebot看到的path
+thumb_path1 = path_manager.bf_path()+"video/temp/video.jpg"
+thumb_path2 = path_manager.nb_path()+"video/temp/video.jpg"
+
 vid_ongoing_state = 0
 last_get_vid_time = 0
 current_video_title = ""
@@ -36,6 +39,8 @@ async def handle_function(args: Message = CommandArg(),event: Event = Event):
             await bilivid.finish("且慢！正在为上一个人获取视频……")
         if os.path.exists(vid_path2):
             os.remove(vid_path2)
+        if os.path.exists(thumb_path2):
+            os.remove(thumb_path2)
         str = args.extract_plain_text()
         if str == "":
             await bilivid.finish("参数不够。用法 /bili [视频链接/BV号/av号]")
@@ -72,7 +77,10 @@ async def handle_function(args: Message = CommandArg(),event: Event = Event):
             await bilivid.finish("你要的视频太大太长了！请另请高明吧！")
         if os.path.exists(vid_path2):
             if current_video_title:
-                await bilivid.send(current_video_title)
+                if os.path.exists(thumb_path2):
+                    await bilivid.send(Message('[CQ:image,file='+thumb_path1+']'+current_video_title))
+                else:
+                    await bilivid.send(current_video_title)
             await bilivid.finish(Message('[CQ:video,file='+vid_path1+']'))
         else:
             if (last_get_itvl < 15*60):
@@ -119,7 +127,10 @@ async def download_video(url,path="video/temp/video.mp4"):
         'format': 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best',
         # 优先h264/h265，播放兼容性
         'format_sort': ['vcodec:hevc,h264'],
-        'merge_output_format': 'mp4'  # 合并音视频时输出MP4
+        'merge_output_format': 'mp4',  # 合并音视频时输出MP4
+        'noplaylist': True,      # 禁用播放列表，只下载当前视频
+        'writethumbnail': True,     # 必须先下载封面
+        'convertthumbnails': 'jpg'
     }
     if os.path.exists(cookiepath):
         ydl_opts["cookiesfile"] = cookiepath

@@ -56,7 +56,8 @@
         },
         "21": {
             "hpic": "zf.png",
-            "name": "张飞"
+            "name": "张飞",
+            "quote": "三姓家奴燕人张飞在此，曹贼还不快下马受死！"
         },
         "22": {
             "hpic": "lb.png",
@@ -69,7 +70,7 @@
             "quote": "龙，可是帝王之征啊"
         },
         "24": {
-            "hpic": "xjl1.png",
+            "hpic": "xjl2.jpg",
             "name": "玄景龙",
             "quote": "Hello I'm 关羽"
         },
@@ -83,7 +84,8 @@
         },
         "4": {
             "hpic": "tung.webp",
-            "name": "Tung Tung Tung Sahur"
+            "name": "Tung Tung Tung Sahur",
+            "quote": "大家好啊，我是Tung Tung Tung Tung Tung Tung Tung Tung Tung Sahur。"
         },
         "5": {
             "hpic": "tra.webp",
@@ -96,7 +98,8 @@
         },
         "7": {
             "hpic": "sld.png",
-            "name": "纱露朵"
+            "name": "纱露朵",
+            "quote": "喵喵~咕噜咕噜~"
         },
         "8": {
             "hpic": "trump.jpg",

@@ -15,6 +15,15 @@ import shutil
 import plugins.actual_deepseek
 import misc_manager
 
+import numpy as np
+import pandas as pd
+import plotly.graph_objects as go
+from typing import Union, Dict
+from config_manager import ConfigManager
+
+tokens_config = ConfigManager("json/tokens.json")
+dfdev_tk = tokens_config.get("divinfish_dev_token")
+
 async def getb50data(info):
     if ("qq" in info and info["qq"] == "3978644480") or ("username" in info and info["username"] == "testpilot"):
         with open("web/templates/maimai_b50/example/df_exa.json","r",encoding="utf-8") as f:
@@ -26,6 +35,32 @@ async def getb50data(info):
         if resp.status == 403:
             return 403
         data = await resp.json()
+        return data
+    
+async def getalldata(get_suffix):
+    async def fetch(session, url, headers):
+        async with session.get(url, headers=headers) as response:
+            return await response.json()
+    """
+    async with aiohttp.request("GET", f"https://www.diving-fish.com/api/maimaidxprober/dev/player/records{get_suffix}", headers={"Developer-Token": dfdev_tk}) as resp:
+        print(dfdev_tk)
+        print(await resp.json())
+        if resp.status == 400:
+            return 400
+        if resp.status == 403:
+            return 403
+        data = await resp.json()
+        return data
+    """
+    async with aiohttp.ClientSession() as session:
+        url = f"https://www.diving-fish.com/api/maimaidxprober/dev/player/records{get_suffix}"
+        headers = {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)',
+            'Accept': 'application/json',
+            'Developer-Token': dfdev_tk
+        }
+        data = await fetch(session, url, headers)
+        print(data)
         return data
 
 async def qddata_pre(args,event,type):
@@ -54,10 +89,16 @@ async def qddata_pre(args,event,type):
 async def quedfdata(qqid,qtype,uname,iself):
     # 发起查询
     data = ""
-    if qqid != 0:
-        data = await getb50data({"qq": qqid,"b50": True})
+    if qtype != "all":
+        if qqid != 0:
+            data = await getb50data({"qq": qqid,"b50": True})
+        else:
+            data = await getb50data({"username": uname,"b50": True})
     else:
-        data = await getb50data({"username": uname,"b50": True})
+        if qqid != 0:
+            data = await getalldata(f"?qq={qqid}")
+        else:
+            data = await getalldata(f"?username={uname}")
     callt = "此人"
     if iself:
         callt = "你"
@@ -71,8 +112,6 @@ async def quedfdata(qqid,qtype,uname,iself):
             return f"{callt}有 {dxdt[0]} ({dxdt[2]}+{dxdt[1]}) 底分"
         if qtype == "dxdv":
             calcd = dxdvcalc(data)
-            #return callt+"有 "+str(data["rating"])+" 哥度。\n其中，在「抓小哥DX」新增猎场，"+callt+"抓到过最好的 15 个小哥平均为"+callt+"贡献了 "+str(calcd[0])+" 哥度，方差为 "+str(calcd[1])+"；在「抓小哥DX」旧有猎场，"+callt+"抓到过最好的 35 个小哥平均为"+callt+"贡献了 "+str(calcd[2])+" 哥度，方差为 "+str(calcd[3])+"。"
-            #return callt+"的b35方差："+str(calcd[0])+"\n"+callt+"的b15方差："+str(calcd[1])+"\n歌曲平均达成率："+calcd[2]+"\n\n评价："+calcd[3].replace("你",callt)
             return f'{callt}的b35方差：{str(calcd[0])}\n{callt}的b15方差：{str(calcd[1])}\n平均游玩等级：{calcd[4]}\n歌曲平均达成率：{calcd[2]}\n\n评价：{calcd[3].replace("你",callt)}'
         if qtype == "list":
             # 写入获取的json到文件
@@ -81,6 +120,12 @@ async def quedfdata(qqid,qtype,uname,iself):
             return int(data["rating"])
         # 直接获取json原始数据，不做进一步解析（AI锐评b50用）
         if qtype == "json":
+            return data
+        # 获取全部游玩数据（写入文件并同时返回原始数据）
+        if qtype == "all":
+            # 写入获取的json到文件
+            file = open("web/templates/maimai_b50/df_all.json","w",encoding="utf-8")
+            json.dump(data,file,ensure_ascii=False)
             return data
         
 def dxdvcalc(json):
@@ -152,6 +197,7 @@ def getdxdt(json):
         b35add += i["ra"]
     return [b15add+b35add,b15add,b35add]
 
+"""
 def fakeap50():
     file = open("web/templates/maimai_b50/df_data.json","r",encoding="utf-8")
     list_raw = file.read()
@@ -177,6 +223,7 @@ def fakeap50():
     list["rating"] = newdxs
     file2 = open("web/templates/maimai_b50/df_data.json","w",encoding="utf-8")
     json.dump(list,file2,ensure_ascii=False,sort_keys=True)
+"""
 
 # 根据二人的 QQ 号查询b50重合度
 async def getb50overlaplist(qqid_1,qqid_2):
@@ -218,6 +265,140 @@ def listoverlapquery(list1,list2):
             if j["song_id"] == i["song_id"] and j["level_index"] == i["level_index"]:
                 overlap_list.append({"title": i["title"], "type": i["type"], "level_label": i["level_label"], "song_id": i["song_id"], "ds": i["ds"], "level_index": i["level_index"], "achievements_1": i["achievements"], "achievements_2": j["achievements"], "ra_1": i["ra"], "ra_2": j["ra"]})
     return overlap_list
+
+# 生成散点图（代码AI写的）
+class mai_sdt_gen:
+    """
+    全量程非线性缩放生成器。
+    特性：全轴满足“数值越大，刻度越稀疏”，且自动对齐指定的中心点。
+    """
+
+    def __init__(self, data: Union[str, Dict]):
+        # 基础参数设定
+        self.ds_min, self.ds_max, self.ds_mid = 1.0, 15.0, 12.0
+        self.ach_min, self.ach_max, self.ach_mid = 0.0, 101.0, 97.0
+        
+        # 自动计算指数 k，确保 mid 对应 0.5
+        self.k_ds = np.log(0.5) / np.log((self.ds_mid - self.ds_min) / (self.ds_max - self.ds_min))
+        self.k_ach = np.log(0.5) / np.log((self.ach_mid - self.ach_min) / (self.ach_max - self.ach_min))
+
+        if isinstance(data, str):
+            with open(data, 'r', encoding='utf-8') as f:
+                self.raw_data = json.load(f)
+        else:
+            self.raw_data = data
+            
+        self.df = self._prepare_dataframe()
+        self.nickname = self.raw_data.get('nickname', 'Unknown')
+
+    def _prepare_dataframe(self) -> pd.DataFrame:
+        df = pd.DataFrame(self.raw_data.get('records', []))
+        
+        # 颜色映射
+        df['color'] = df.apply(self._get_color, axis=1)
+        
+        # 坐标映射
+        df['plot_x'] = df['ds'].apply(
+            lambda x: pow((x - self.ds_min) / (self.ds_max - self.ds_min), self.k_ds)
+        )
+        df['plot_y'] = df['achievements'].apply(
+            lambda y: pow((y - self.ach_min) / (self.ach_max - self.ach_min), self.k_ach)
+        )
+        return df
+
+    def _get_color(self, row) -> str:
+        lv = row['level_index']
+        if lv == 0 and row['level_label'] != "Utage": return "#00FF40"
+        if lv == 1: return '#FFD700'
+        if lv == 2: return "#FF0000"
+        if lv == 3: return "#AE00FF"
+        if lv == 4: return "#E6B0FF"
+        return "#FF89B4"
+
+    def generate_html(self, output_path: str = "maimai_global_scale.html"):
+        fig = go.Figure()
+
+        # 绘制散点
+        fig.add_trace(go.Scatter(
+            x=self.df['plot_x'],
+            y=self.df['plot_y'],
+            mode='markers',
+            marker=dict(
+                size=10,
+                color=self.df['color'],
+                line=dict(width=1, color='white'),
+                opacity=0.8
+            ),
+            text=self.df.apply(lambda r: (
+                f"<b>{r['title']}</b><br>"
+                f"定数: {r['ds']} | 达成率: {r['achievements']:.4f}%<br>"
+                f"Rating: {r['ra']}"
+            ), axis=1),
+            hoverinfo='text'
+        ))
+
+        # 刻度设置 (增加高值区的刻度密度以体现放大效果)
+        ds_ticks = [1, 5, 7.6, 8, 8.6, 9, 9.6, 10, 10.6, 11, 11.6, 12, 12.6, 13, 13.6, 14, 14.6, 15]
+        ach_ticks = [0, 50, 80, 90, 94, 97, 98, 99, 99.5, 100, 100.5, 101]
+
+        def map_x(val): return pow((val - self.ds_min) / (self.ds_max - self.ds_min), self.k_ds)
+        def map_y(val): return pow((val - self.ach_min) / (self.ach_max - self.ach_min), self.k_ach)
+        
+        def text_lv(number):
+            if number%1 != 0:
+                return str(int(number))+"+"
+            else:
+                return str(number)
+            
+        def text_rk(number):
+            if number == 101:
+                return "101% (AP+)"
+            if number == 100.5:
+                return "100.5% (SSS+)"
+            if number == 100:
+                return "100% (SSS)"
+            if number == 99.5:
+                return "99.5% (SS+)"
+            if number == 99:
+                return "99% (SS)"
+            if number == 98:
+                return "98% (S+)"
+            if number == 97:
+                return "97% (S)"
+            else:
+                return f"{number}%"
+
+        fig.update_layout(
+            title=dict(text=f"{self.nickname} 的舞萌 DX 等级 / 达成率散点图", x=0.5),
+            xaxis=dict(
+                title="谱面定数",
+                tickvals=[map_x(t) for t in ds_ticks],
+                ticktext=[text_lv(t) for t in ds_ticks],
+                gridcolor='#F0F0F0',
+                range=[-0.02, 1.02],
+                zeroline=False
+            ),
+            yaxis=dict(
+                title="达成率 (%)",
+                tickvals=[map_y(t) for t in ach_ticks],
+                ticktext=[text_rk(t) for t in ach_ticks],
+                gridcolor='#F0F0F0',
+                range=[-0.02, 1.02],
+                zeroline=False
+            ),
+            plot_bgcolor='white',
+            width=1200,
+            height=850,
+            showlegend=False
+        )
+
+        # 97% 处的中心参考线
+        fig.add_shape(type="line", x0=0, y0=0.5, x1=1, y1=0.5, line=dict(color="#FF2A2A", width=1, dash="dot"))
+        # 100.5% 处的中心参考线
+        fig.add_shape(type="line", x0=0, y0=0.92, x1=1, y1=0.92, line=dict(color="#FF8A42", width=1, dash="dot"))
+
+        fig.write_html(output_path)
+        return output_path
 
 b50 = on_command("b50", priority=10, block=True)
 @b50.handle()
@@ -383,3 +564,21 @@ async def handle_function(args: Message = CommandArg(),event: Event = Event):
     await webss.take2("http://localhost:8104","container")
     misc_manager.tasks.remove("maimai_dsb50")
     await aib50.finish(Message('[CQ:image,file=file:///'+path_manager.bf_path()+'webss/1.png]'))
+
+maisdt = on_command("maisdt", aliases={"舞萌散点图","舞萌成绩散点图","maimai散点图"}, priority=10, block=True)
+@maisdt.handle()
+async def handle_function(args: Message = CommandArg(),event: Event = Event):
+    if not feature_manager.get("maimai"):
+        raise FinishedException
+    # 获取全曲成绩记录
+    misc_manager.tasks.append("maimai_b50_query")
+    # result = await qddata_pre(args,event,"json")
+    result = await qddata_pre(args,event,"all")
+    if type(result) != dict:
+        misc_manager.tasks.remove("maimai_b50_query")
+        await aib50.finish("没有查询到玩家数据！")
+    gen = mai_sdt_gen(result)
+    gen.generate_html(path_manager.nb_path()+"web/index.html")
+    await webss.take("http://localhost:8104",1,filename="1",xres=1210,yres=825)
+    misc_manager.tasks.remove("maimai_b50_query")
+    await maisdt.finish(Message('[CQ:image,file=file:///'+path_manager.bf_path()+'webss/1.png]'))
