@@ -41,17 +41,6 @@ async def getalldata(get_suffix):
     async def fetch(session, url, headers):
         async with session.get(url, headers=headers) as response:
             return await response.json()
-    """
-    async with aiohttp.request("GET", f"https://www.diving-fish.com/api/maimaidxprober/dev/player/records{get_suffix}", headers={"Developer-Token": dfdev_tk}) as resp:
-        print(dfdev_tk)
-        print(await resp.json())
-        if resp.status == 400:
-            return 400
-        if resp.status == 403:
-            return 403
-        data = await resp.json()
-        return data
-    """
     async with aiohttp.ClientSession() as session:
         url = f"https://www.diving-fish.com/api/maimaidxprober/dev/player/records{get_suffix}"
         headers = {
@@ -197,34 +186,6 @@ def getdxdt(json):
         b35add += i["ra"]
     return [b15add+b35add,b15add,b35add]
 
-"""
-def fakeap50():
-    file = open("web/templates/maimai_b50/df_data.json","r",encoding="utf-8")
-    list_raw = file.read()
-    file.close()
-    list = json.loads(list_raw)
-    charts = list["charts"]
-    newdxs = 0
-    for i in charts["dx"]:
-        i["achievements"] = 101.0000
-        i["fc"] = "app"
-        i["rate"] = "sssp"
-        i["ra"] = int(float(i["ds"])*22.5)
-        newdxs += i["ra"]
-    charts["dx"].sort(key=lambda x:x["ra"],reverse = True)
-    for i in charts["sd"]:
-        i["achievements"] = 101.0000
-        i["fc"] = "app"
-        i["rate"] = "sssp"
-        i["ra"] = int(float(i["ds"])*22.5)
-        newdxs += i["ra"]
-    charts["sd"].sort(key=lambda x:x["ra"],reverse = True)
-    list["charts"] = charts
-    list["rating"] = newdxs
-    file2 = open("web/templates/maimai_b50/df_data.json","w",encoding="utf-8")
-    json.dump(list,file2,ensure_ascii=False,sort_keys=True)
-"""
-
 # 根据二人的 QQ 号查询b50重合度
 async def getb50overlaplist(qqid_1,qqid_2):
     data1 = await getb50data({"qq": qqid_1,"b50": True})
@@ -245,7 +206,7 @@ async def getb50overlaplist(qqid_1,qqid_2):
     if (b35_ol_count > 0):
         for i in b35_overlap:
             b35_ol_rate_diff += i["achievements_1"] - i["achievements_2"]
-            b35_ol_song_list.append({"title": i["title"], "type": i["type"], "level_label": i["level_label"]})
+            b35_ol_song_list.append({"title": i["title"], "type": i["type"], "level_label": i["level_label"], "achievements": [i["achievements_1"],i["achievements_2"]]})
         b35_ol_rate_diff = round(b35_ol_rate_diff/b35_ol_count,2)
     b15_ol_count = len(b15_overlap)
     b15_ol_rate_diff = 0
@@ -253,10 +214,10 @@ async def getb50overlaplist(qqid_1,qqid_2):
     if (b15_ol_count > 0):
         for i in b15_overlap:
             b15_ol_rate_diff += i["achievements_1"] - i["achievements_2"]
-            b15_ol_song_list.append({"title": i["title"], "type": i["type"], "level_label": i["level_label"]})
+            b15_ol_song_list.append({"title": i["title"], "type": i["type"], "level_label": i["level_label"], "achievements": [i["achievements_1"],i["achievements_2"]]})
         b15_ol_rate_diff = round(b15_ol_rate_diff/b15_ol_count,2)
-    # 返回值：b35重合铺面数量，b35平均达成率差值，b15重合铺面数量，b15平均达成率差值，b35重合歌曲列表，b15重合歌曲列表
-    return [b35_ol_count,b35_ol_rate_diff,b15_ol_count,b15_ol_rate_diff,b35_ol_song_list,b15_ol_song_list]
+    # 返回值：b35重合铺面数量，b35平均达成率差值，b15重合铺面数量，b15平均达成率差值，b35重合歌曲列表，b15重合歌曲列表，玩家1数据，玩家2数据
+    return [b35_ol_count,b35_ol_rate_diff,b15_ol_count,b15_ol_rate_diff,b35_ol_song_list,b15_ol_song_list,{"name": data1["nickname"], "rating": data1["rating"]},{"name": data2["nickname"], "rating": data2["rating"]}]
 
 def listoverlapquery(list1,list2):
     overlap_list = []
@@ -438,27 +399,7 @@ async def handle_function(args: Message = CommandArg(),event: Event = Event):
     if not feature_manager.get("maimai"):
         raise FinishedException
     result = await qddata_pre(args,event,"dxdv")
-    await dxdv.finish(result)
-
-"""这个功能有点鸡肋，弃用掉
-ap50 = on_command("ap50", priority=10, block=True)
-@ap50.handle()
-async def handle_function(args: Message = CommandArg(),event: Event = Event):
-    if not feature_manager.get("maimai"):
-        raise FinishedException
-    val = await qddata_pre(args,event,"list")
-    if (isinstance(val,int)):
-        file = open("web/templates/maimai_b50/index.html","r",encoding="utf-8")
-        web.content = file.read()
-        file.close()
-        web.writehtml()
-        fakeap50()
-        await webss.take2("http://localhost:8104/","container")
-        await ap50.send(Message('[CQ:image,file=file:///'+path_manager.bf_path()+'webss/1.png]'))
-        await ap50.finish("*本bot生成的ap50与其他bot的不同，是由b50所有成绩换成ap+重新计算得到。")
-    else:
-        await ap50.finish(val)
-"""        
+    await dxdv.finish(result)    
 
 b50_styles = ["testpilot","prism","circle"]
 
@@ -514,9 +455,16 @@ async def handle_function(args: Message = CommandArg(),event: Event = Event):
             # else:
     if qqnum1 != 0 and qqnum2 != 0:
         bot = get_bot()
+        """
         # 获取两人QQ昵称
-        qqnam1 = dict(await bot.get_stranger_info(user_id=qqnum1))["nick"]
-        qqnam2 = dict(await bot.get_stranger_info(user_id=qqnum2))["nick"]
+        qqnam1 = ""
+        qqnam2 = ""
+        qqinfo1 = dict(await bot.get_stranger_info(user_id=qqnum1))
+        qqinfo2 = dict(await bot.get_stranger_info(user_id=qqnum2))
+        if "nick" in qqnam1:
+            qqnam1 = qqinfo1["nick"]
+        if "nick" in qqnam2:
+            qqnam2 = qqinfo2["nick"]
         result = await getb50overlaplist(qqnum1,qqnum2)
         comment = ""
         # 查询失败
@@ -546,7 +494,24 @@ async def handle_function(args: Message = CommandArg(),event: Event = Event):
                 comment += "\n"+i["title"]+" ["+i["type"]+"] "" ["+i["level_label"]+"]"
         else:
             comment += "\n"+qqnam1+" 和 "+qqnam2+" 的b15没有一张谱面重合！"
+        
         await boverlap.finish(comment)
+        """
+        result = await getb50overlaplist(qqnum1,qqnum2)
+        # 查询失败
+        if type(result) != list:
+            await boverlap.finish("查询失败！你提供的至少其中一个QQ号无法查询到游戏数据！")
+        # 写入json
+        file1 = open("web/templates/maimai_boverlap/boverlap.json","w",encoding="utf-8")
+        json.dump(result,file1,ensure_ascii=False)
+        file1.close()
+        # 写入html
+        file2 = open("web/templates/maimai_boverlap/index.html","r",encoding="utf-8")
+        web.content = file2.read()
+        file2.close()
+        web.writehtml()
+        await webss.take2("http://localhost:8104/","container")
+        await boverlap.finish(Message('[CQ:image,file=file:///'+path_manager.bf_path()+'webss/1.png]'))
     # 用户未给定参数或参数不正确（如果成功查询，则提前finish，不执行到这一步）。
     await boverlap.finish("参数错误。用法：/boverlap [要查询的QQ号/@群成员1] [要查询的QQ号/@群成员2]")
     

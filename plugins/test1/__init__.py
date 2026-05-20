@@ -276,6 +276,40 @@ async def handle_function():
     else:
         await flipof3.finish(Message('[CQ:image,file=file:///'+path_manager.bf_path()+'images/raincandy/cantflip.png]'))
 
+
+a67 = on_keyword(["67"], priority=10, block=True)
+@a67.handle()
+async def handle_function():
+    if not feature_manager.get("meme_resp"):
+        raise FinishedException
+    await a67.finish("67！？")
+    """
+    await asyncio.sleep(.67)
+    await laicai.send("67......")
+    await asyncio.sleep(6.7)
+    await a67.send("67?!?!?!")
+    await asyncio.sleep(.67)
+    rd = random.random()
+    if rd < .33:
+        await a67.send("sixseven")
+        await asyncio.sleep(.67)
+        await a67.send("sixseven")
+        await asyncio.sleep(.67)
+        await a67.send("sixseven")
+        await asyncio.sleep(.67)
+        await a67.send("sixseven")
+        await asyncio.sleep(.67)
+        await a67.send("sixseven")
+        await asyncio.sleep(.67)
+        await a67.send("sixseven")
+        await asyncio.sleep(.67)
+        await a67.finish("啊！！！！！！sixseven！！！！！！！")
+    elif rd < .67:
+        await a67.finish("67！67！67！67！67！67！67")
+    else:
+        raise FinishedException
+    """
+
 async def get_image_data(url):
     async with httpx.AsyncClient() as client:
         resp = await client.get(url)

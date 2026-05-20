@@ -1,0 +1,151 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="/css/maimai_boverlap/default.css">
+</head>
+<body>
+<div id="container">
+    <div id="content">
+        <h3 style="margin-top: 0px"><div id="username1"></div></h3>
+        <h3 style="margin-top: 0px"><div id="username2"></div></h3>
+        <h3 id="rating_box1"><span id="rating1"></span></h3>
+        <h3 id="rating_box2"><span id="rating2"></span></h3>
+        <br><br><br>
+        <div id="b35">
+            <div id="b35_conclusion"></div>
+            <hr> 
+        </div>
+        <div id="b15">
+            <div id="b15_conclusion"></div>
+            <hr>
+        </div>
+    </div>
+</div>
+<script>
+    let cont = document.getElementById("content")
+    let df_data
+    let assets_dir = "/templates/maimai_b50/assets/prism/";
+
+    (()=>{
+        let req = new XMLHttpRequest()
+        req.open("get", "/templates/maimai_boverlap/boverlap.json")
+        req.send(null)
+        req.onload = () => {
+            if (req.status == 200) {
+                df_data = JSON.parse(req.responseText)
+                makelist()
+            }
+        }
+    })()
+    function makelist() {
+        //提取两人的用户信息
+        userdata1 = df_data[6]
+        userdata2 = df_data[7]
+        document.getElementById("username1").innerText = userdata1["name"]
+        document.getElementById("username2").innerText = userdata2["name"]
+        document.getElementById("rating1").innerText = userdata1["rating"]
+        document.getElementById("rating2").innerText = userdata2["rating"]
+        document.getElementById("rating_box1").style.backgroundImage = get_ra_icon_id(userdata1["rating"])
+        document.getElementById("rating_box2").style.backgroundImage = get_ra_icon_id(userdata2["rating"])
+        //生成b35结论
+        let b35con
+        if (df_data[0] > 0) {
+            b35con = `${userdata1["name"]} 和 ${userdata2["name"]} 的 b35 中，有 ${df_data[0]} 张重合的谱面；<br>在这些谱面中，${userdata1["name"]} 的平均达成率比 ${userdata2["name"]} `
+            if (df_data[1] > 0) {
+                b35con += `高 ${df_data[1]} %。`
+            } else {
+                b35con += `低 ${-df_data[1]} %。`
+            }
+        } else {
+            b35con = `${userdata1["name"]} 和 ${userdata2["name"]} 的b35没有一张谱面重合！`
+        }
+        document.getElementById("b35_conclusion").innerHTML = b35con
+        //写入列表
+        df_data[4].forEach(element => {
+            makeitem(element,document.getElementById("b35"))
+        });
+        //生成b15结论
+        let b15con
+        if (df_data[2] > 0) {
+            b15con = `${userdata1["name"]} 和 ${userdata2["name"]} 的 b15 中，有 ${df_data[2]} 张重合的谱面；<br>在这些谱面中，${userdata1["name"]} 的平均达成率比 ${userdata2["name"]} `
+            if (df_data[3] > 0) {
+                b15con += `高 ${df_data[3]} %。`
+            } else {
+                b15con += `低 ${-df_data[3]} %。`
+            }
+        } else {
+            b15con = `${userdata1["name"]} 和 ${userdata2["name"]} 的b15没有一张谱面重合！`
+        }
+        document.getElementById("b15_conclusion").innerHTML = b15con
+        df_data[5].forEach(element => {
+            makeitem(element,document.getElementById("b15"))
+        });
+    }
+    function get_ra_icon_id(dxra) {
+        let ra_icon_id = Math.floor(Number(dxra)/1000)
+        if (ra_icon_id == 3){ra_icon_id = 2}
+        if (ra_icon_id > 4 && ra_icon_id < 7){ra_icon_id = 4}
+        if (ra_icon_id > 7 && ra_icon_id < 10){ra_icon_id = 7}
+        if (ra_icon_id == 11){ra_icon_id = 10}
+        if (dxra >= 14500 && dxra < 15000){ra_icon_id = 14.5}
+        ra_icon_id *= 1000
+        return "url("+assets_dir+"rating/"+ra_icon_id+".png)"
+    }
+    function makeitem(item,where) {
+        //root
+        let songitem = document.createElement("div")
+        songitem.className = "song_item"
+        //song title
+        let songtitle = document.createElement("div")
+        songtitle.className = "song_name_title"
+        songtitle.innerHTML = item["title"] + ` [${item["type"]}]`
+        songitem.appendChild(songtitle)
+        //left list
+        let list_a = document.createElement("div")
+        list_a.className = "b50_song_list left"
+        list_a.classList.add(item["level_label"])
+        //left list comp filter
+        let list_a_achfilter = document.createElement("div")
+        list_a_achfilter.className = "completion_filter left"
+        list_a_achfilter.style.width = Math.pow(item["achievements"][0]/101,8)*83+"%"
+        list_a.appendChild(list_a_achfilter)
+        //left list comp
+        let list_a_ach = document.createElement("span")
+        list_a_ach.className = "achievement"
+        list_a_ach.innerHTML = item["achievements"][0].toFixed(4) + "%"
+        list_a.appendChild(list_a_ach)
+        songitem.appendChild(list_a)
+        //right list
+        let list_b = document.createElement("div")
+        list_b.className = "b50_song_list right"
+        list_b.classList.add(item["level_label"])
+        songitem.appendChild(list_b)
+        //right list comp filter
+        let list_b_achfilter = document.createElement("div")
+        list_b_achfilter.className = "completion_filter right"
+        list_b_achfilter.style.width = Math.pow(item["achievements"][1]/101,8)*83+"%"
+        list_b.appendChild(list_b_achfilter)
+        //right list comp
+        let list_b_ach = document.createElement("span")
+        list_b_ach.className = "achievement right"
+        list_b_ach.innerHTML = item["achievements"][1].toFixed(4) + "%"
+        list_b.appendChild(list_b_ach)
+        //versus
+        let versus = document.createElement("div")
+        versus.className = "versus"
+        let lead = (item["achievements"][0] - item["achievements"][1]).toFixed(4)
+        if (lead >= 0) {
+            lead = "+"+lead
+            versus.classList.add("win")
+        } else {
+            versus.classList.add("lose")
+        }
+        versus.innerHTML = lead + "%"
+        songitem.appendChild(versus)
+        where.appendChild(songitem)
+    }
+</script>
+</body>
+</html>

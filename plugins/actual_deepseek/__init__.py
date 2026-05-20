@@ -16,6 +16,7 @@ import httpx
 from httpx import AsyncHTTPTransport
 import logging
 from config_manager import ConfigManager
+import json
 
 logger = logging.getLogger(__name__)
 
@@ -23,7 +24,6 @@ oa_config = ConfigManager("json/oa_data.json", default_key="configs")
 config = oa_config.all()
 
 ds_quotes_config = ConfigManager("json/ds_quotes.json")
-
 
 from openai import AsyncOpenAI
 
@@ -33,6 +33,7 @@ http_client = httpx.AsyncClient(
 )
 
 client = ""
+search_loop_limit = config["search_loop_limit"]
 
 def reload_client(engine):
     global client
@@ -40,6 +41,68 @@ def reload_client(engine):
         client = AsyncOpenAI(api_key=config[engine]["key"], base_url=config[engine]["base_url"], http_client=http_client)
     else:
         client = AsyncOpenAI(api_key=config[engine]["key"], base_url=config[engine]["base_url"])
+
+async def search_searxng(query: str):
+    # SearXNG 搜索api地址
+    url = config["search_api_url"]
+    
+    params = {
+        "q": query,           # 搜索关键词
+        "format": "json",     # 指定返回格式为 JSON
+        "lang": "zh-CN",      # 强制指定中文结果
+        "categories": "general" # 搜索类别：综合
+    }
+
+    async with httpx.AsyncClient() as client:
+        try:
+            response = await client.get(url, params=params, timeout=10.0)
+            response.raise_for_status() # 检查 HTTP 状态码
+            
+            data = response.json()
+            
+            # 提取搜索结果列表
+            results = data.get("results", [])
+            
+            # 格式化输出前 3-5 条结果给 AI
+            search_context = []
+            for item in results[:5]:
+                title = item.get("title")
+                content = item.get("content") # 摘要内容
+                link = item.get("url")
+                search_context.append(f"标题: {title}\n内容: {content}\n链接: {link}")
+            
+            return "\n\n".join(search_context)
+            
+        except Exception as e:
+            return f"搜索出错: {str(e)}"
+
+# 定义工具函数：联网搜索
+async def perform_web_search(query: str):
+    # print(f"正在进行联网搜索：{query}")
+    try:
+        search_results = await search_searxng(query=query)
+        return json.dumps(search_results)
+    except Exception as e:
+        return json.dumps({"error": str(e)})
+
+# 定义工具的 JSON Schema
+web_search_tool_schema = {
+    "type": "function",
+    "function": {
+        "name": "perform_web_search",
+        "description": "使用联网搜索功能获取实时信息或无法通过模型自身知识库回答的问题。",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "query": {
+                    "type": "string",
+                    "description": "搜索查询关键字",
+                }
+            },
+            "required": ["query"],
+        },
+    },
+}
 
 reload_client(config["current_engine"])
 
@@ -97,19 +160,86 @@ async def chat(dialogue, username=None):
     if username:
         dialogue = f"{username}："+dialogue
     msg_list.append({"role": "user", "content": dialogue})
-    actual_msg_list = msg_list
+    
+    actual_msg_list = msg_list.copy()
     # 替换system prompt
     if misc_manager.april_fools_flag():
         actual_msg_list[0] = {"role": "system", "content": april_fools_pmpt}
-    resp = await client.chat.completions.create(
-        model = config[config["current_engine"]]["models"][config["model_index_prio"]],
-        messages = actual_msg_list,
-        stream = False
-    )
-    remsg = resp.choices[0].message
-    # msg_list.append(remsg)
+
+    tools_to_use = []
+    if feature_manager.get("websearch") and config[config["current_engine"]]["search"]:
+        tools_to_use.append(web_search_tool_schema)
+    else:
+        print("已禁用搜索工具。")
+
+    search_use_flag = 0
+    search_count = 0
+    # 最多进行5次工具调用
+    for i in range(search_loop_limit):
+        current_tools = tools_to_use if tools_to_use else None
+        current_tool_choice = "auto"
+        # 如果是最后一次尝试，并且AI还在尝试调用工具，则禁用工具调用，直接获取AI回复
+        if i == (search_loop_limit -1) and remsg.tool_calls:
+            current_tools = None
+            current_tool_choice = None
+
+        resp = await client.chat.completions.create(
+            model = config[config["current_engine"]]["models"][config["model_index_prio"]],
+            messages = actual_msg_list,
+            tools = current_tools,
+            tool_choice = current_tool_choice,
+            stream = False
+        )
+        remsg = resp.choices[0].message
+
+        if remsg.tool_calls:
+            # 如果模型返回了工具调用请求
+            search_use_flag = 1
+            search_count += 1
+            tool_outputs = []
+            for tool_call in remsg.tool_calls:
+                function_name = tool_call.function.name
+                if function_name == "perform_web_search":
+                    function_args = json.loads(tool_call.function.arguments)
+                    query = function_args.get("query")
+                    if query:
+                        print(f"[联网搜索中：{query}]") # 给用户一个反馈
+                        tool_output = await perform_web_search(query)
+                        tool_outputs.append({
+                            "tool_call_id": tool_call.id,
+                            "role": "tool",
+                            "name": function_name,
+                            "content": tool_output,
+                        })
+                    else:
+                        logger.error(f"Web search tool call missing query: {function_args}")
+                        tool_outputs.append({
+                            "tool_call_id": tool_call.id,
+                            "role": "tool",
+                            "name": function_name,
+                            "content": "[联网搜索失败：缺少查询参数]",
+                        })
+                else:
+                    logger.warning(f"未知工具调用：{function_name}")
+                    tool_outputs.append({
+                        "tool_call_id": tool_call.id,
+                        "role": "tool",
+                        "name": function_name,
+                        "content": f"[未知工具：{function_name}]",
+                    })
+            actual_msg_list.append(remsg) # Add assistant's tool_call message
+            actual_msg_list.extend(tool_outputs)
+        else:
+            # 没有工具调用，跳出循环
+            break
+
     response = remsg.content
     msg_list.append({"role": "assistant", "content": response})
+    if search_use_flag:
+        if "<tool_call>" in response[:12] and search_count > 8:
+            response = "换个问题吧！我刚才忙了半天，什么都没搜到qwq"
+        elif search_count:
+            response = f"[已进行 {search_count} 次搜索]\n"+response
     global msg_count
     msg_count += 1
     if (msg_count > msg_limit):
@@ -125,13 +255,80 @@ async def chat_once(dialogue,system_prompt=syspmpt):
         system_prompt = april_fools_pmpt
     once_list = [{"role": "system", "content": system_prompt}]
     once_list.append({"role": "user", "content": dialogue})
-    resp = await client.chat.completions.create(
-        model = config[config["current_engine"]]["models"][config["model_index_prio"]],
-        messages = once_list,
-        stream = False
-    )
-    remsg = resp.choices[0].message
+
+    tools_to_use = []
+    if feature_manager.get("websearch") and config[config["current_engine"]]["search"]:
+        tools_to_use.append(web_search_tool_schema)
+    else:
+        print("已禁用搜索工具。")
+
+    search_use_flag = 0
+    search_count = 0
+    # 最多进行5次工具调用
+    for i in range(search_loop_limit):
+        current_tools = tools_to_use if tools_to_use else None
+        current_tool_choice = "auto"
+        # 如果是最后一次尝试，并且AI还在尝试调用工具，则禁用工具调用，直接获取AI回复
+        if i == (search_loop_limit - 1) and remsg.tool_calls:
+            current_tools = None
+            current_tool_choice = None
+
+        resp = await client.chat.completions.create(
+            model = config[config["current_engine"]]["models"][config["model_index_prio"]],
+            messages = once_list,
+            tools = current_tools,
+            tool_choice = current_tool_choice,
+            stream = False
+        )
+        remsg = resp.choices[0].message
+
+        if remsg.tool_calls:
+            # 如果模型返回了工具调用请求
+            search_use_flag = 1
+            search_count += 1
+            tool_outputs = []
+            for tool_call in remsg.tool_calls:
+                function_name = tool_call.function.name
+                if function_name == "perform_web_search":
+                    function_args = json.loads(tool_call.function.arguments)
+                    query = function_args.get("query")
+                    if query:
+                        print(f"[联网搜索中：{query}]")
+                        tool_output = await perform_web_search(query)
+                        tool_outputs.append({
+                            "tool_call_id": tool_call.id,
+                            "role": "tool",
+                            "name": function_name,
+                            "content": tool_output,
+                        })
+                    else:
+                        logger.error(f"Web search tool call missing query: {function_args}")
+                        tool_outputs.append({
+                            "tool_call_id": tool_call.id,
+                            "role": "tool",
+                            "name": function_name,
+                            "content": "[联网搜索失败：缺少查询参数]",
+                        })
+                else:
+                    logger.warning(f"未知工具调用：{function_name}")
+                    tool_outputs.append({
+                        "tool_call_id": tool_call.id,
+                        "role": "tool",
+                        "name": function_name,
+                        "content": f"[未知工具：{function_name}]",
+                    })
+            once_list.append(remsg) # Add assistant's tool_call message
+            once_list.extend(tool_outputs)
+        else:
+            # 没有工具调用，跳出循环
+            break
+
     response = remsg.content
+    if search_use_flag:
+        if "<tool_call>" in response[:12] or "<｜｜DSML" in response[:10] and search_count > 8:
+            response = "换个问题吧！我刚才忙了半天，什么都没搜到qwq"
+        elif search_count:
+            response = f"[已进行 {search_count} 次搜索]\n"+response
     return response
 
 dsb50_sysquo = "《舞萌DX》是一款街机音乐游戏，用户将会提供一份json格式的游玩数据，包含该玩家所有游戏记录中的50个最佳记录，其中包括35个旧有曲目的记录（数据charts中sd项），以及15个新版本，即《舞萌DX 2025》歌曲的记录（数据charts中dx项），**你需要根据这份数据做出一份详细的评价**（不超过1400字）。另外，总体评级（ra）是所有曲目单曲ra的总和，最高为16500左右，数值越高越难提升，15000以上可认为是高级玩家；单曲等级（level）最高为15；chart中的“sd”及“dx”（只表示旧曲目和新曲目）和单曲数据中的“sd”及“dx”（表示标准谱面和DX谱面）不是一个意思；additional_rating可以被随便设置，请忽略掉；单曲数据中的“fs”一项代表双人游玩同步评价，也可以忽略。"
@@ -217,7 +414,9 @@ async def handle_function(args: Message = CommandArg(),event: MessageEvent = Eve
     if len(args) > 0:
         usrmsg = args.extract_plain_text()
         qqid = event.get_user_id()
-        qqnam = dict(await bot.get_stranger_info(user_id=qqid))["nick"]
+        qqinfo = dict(await bot.get_stranger_info(user_id=qqid))
+        if "nick" in qqinfo:
+            qqnam = qqinfo["nick"]
     # 尝试获取回复内容
     rep_data = await plugins.test1.get_reply_data(event.original_message,bot)
     rep_con = rep_data.get("message")
@@ -312,7 +511,9 @@ async def handle_function(args: Message = CommandArg(),event: Event = Event):
     if group_mode:
         bot = get_bot()
         qqid = event.get_user_id()
-        qqnam = dict(await bot.get_stranger_info(user_id=qqid))["nick"]
+        qqinfo = dict(await bot.get_stranger_info(user_id=qqid))
+        if "nick" in qqinfo:
+            qqnam = qqinfo["nick"]
         web.content_md(await chat(args.extract_plain_text(),qqnam))
     else:
         web.content_md(await chat(args.extract_plain_text()))

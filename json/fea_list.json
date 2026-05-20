@@ -40,6 +40,10 @@
             "desc": "AI相关功能",
             "enable": true
         },
+        "websearch": {
+            "desc": "联网搜索 - 用于AI对话 - 实验性功能",
+            "enable": true
+        },
         "echo": {
             "desc": "复读发言",
             "enable": true
@@ -82,7 +86,7 @@
         },
         "meme_resp_laicai": {
             "desc": "关键词回应 - 来财",
-            "enable": true
+            "enable": false
         },
         "meme_resp_mai": {
             "desc": "关键词回应 - 舞萌",
@@ -90,11 +94,11 @@
         },
         "meme_resp_mygo": {
             "desc": "关键词回应 - MyGO!!!!!",
-            "enable": true
+            "enable": false
         },
         "meme_resp_sex": {
             "desc": "关键词回应 - sex",
-            "enable": true
+            "enable": false
         },
         "ping": {
             "desc": "检查bot在线状态",

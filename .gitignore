@@ -23,6 +23,7 @@ json/*.json
 web/index.html
 web/templates/maimai_b50/df_data.json
 web/templates/maimai_b50/df_all.json
+web/templates/maimai_boverlap/boverlap.json
 web/templates/markdown/md.md
 
 nohup.out
