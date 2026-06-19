@@ -1,5 +1,5 @@
 import asyncio
-from playwright.async_api import async_playwright
+from playwright.async_api import async_playwright, TimeoutError
 import logging
 
 logger = logging.getLogger(__name__)
@@ -9,10 +9,10 @@ async def take(url,sleep=3,filename="1",xres=1280,yres=1024):
         async with async_playwright() as p:
             browser = await p.chromium.launch()
             page = await browser.new_page()
-            await page.goto(url)
+            await page.goto(url, timeout=15000, wait_until="domcontentloaded")
             await page.set_viewport_size({"width": xres, "height": yres})
-            await page.screenshot(path=f"webss/{filename}.png")
-            await asyncio.sleep(sleep)
+            await page.wait_for_timeout(sleep*1000)
+            await page.screenshot(path=f"webss/{filename}.png", full_page=True)
             await browser.close()
             logger.info(f"已将网页 {url} 截取为 webss/{filename}.png")
             return 0
@@ -26,8 +26,8 @@ async def take2(url,dom_id,sleep=.5,filename="1"):
             browser = await p.chromium.launch()
             page = await browser.new_page()
             await page.goto(url)
+            await page.wait_for_timeout(sleep*1000)
             await page.locator("#"+dom_id).screenshot(path=f"webss/{filename}.png")
-            await asyncio.sleep(sleep)
             await browser.close()
             logger.info(f"已将 {url} 的网页元素 #{dom_id} 截取为 webss/{filename}.png")
             return 0

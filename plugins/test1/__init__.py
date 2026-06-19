@@ -282,7 +282,7 @@ a67 = on_keyword(["67"], priority=10, block=True)
 async def handle_function():
     if not feature_manager.get("meme_resp"):
         raise FinishedException
-    await a67.finish("67！？")
+    await a67.finish("🫳🫴")
     """
     await asyncio.sleep(.67)
     await laicai.send("67......")

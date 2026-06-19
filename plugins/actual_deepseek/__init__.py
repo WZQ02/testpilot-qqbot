@@ -521,6 +521,18 @@ async def handle_function(args: Message = CommandArg(),event: Event = Event):
     misc_manager.tasks.remove("ds_chat")
     await dsmd.finish(Message('[CQ:image,file=file:///'+path_manager.bf_path()+'webss/1.png]'))
 
+# 单次对话并以md格式呈现
+dsncmd = on_command("dsncmd", aliases={"ncdsmd","ncdsmd","deepseeknocontextmarkdown"}, priority=10, block=True)
+@dsncmd.handle()
+async def handle_function(args: Message = CommandArg(),event: Event = Event):
+    if not (feature_manager.get("deepseek") and feature_manager.get("rendermd")):
+        raise FinishedException
+    misc_manager.tasks.append("ds_chat")
+    web.content_md(await chat_once(args.extract_plain_text()))
+    await webss.take2("http://localhost:8104","container")
+    misc_manager.tasks.remove("ds_chat")
+    await dsncmd.finish(Message('[CQ:image,file=file:///'+path_manager.bf_path()+'webss/1.png]'))
+
 switchengine = on_command("switchai", aliases={"更换AI引擎","切换AI"}, priority=10, block=True)
 @switchengine.handle()
 async def handle_function(args: Message = CommandArg()):
