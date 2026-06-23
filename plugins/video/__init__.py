@@ -133,7 +133,7 @@ async def download_video(url,path="video/temp/video.mp4"):
         'convertthumbnails': 'jpg'
     }
     if os.path.exists(cookiepath):
-        ydl_opts["cookiesfile"] = cookiepath
+        ydl_opts["cookiefile"] = cookiepath
     if ("x.com" in url) or ("twitter.com" in url) or ("tumblr.com" in url) or ("youtube.com" in url) or ("tiktok.com" in url) or ("instagram.com" in url):
         ydl_opts["proxy"] = misc_manager.misc_data["http_proxy"]
     
