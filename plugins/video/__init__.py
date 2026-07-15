@@ -136,7 +136,9 @@ async def download_video(url,path="video/temp/video.mp4"):
         ydl_opts["cookiefile"] = cookiepath
     if ("x.com" in url) or ("twitter.com" in url) or ("tumblr.com" in url) or ("youtube.com" in url) or ("tiktok.com" in url) or ("instagram.com" in url):
         ydl_opts["proxy"] = misc_manager.misc_data["http_proxy"]
-    
+    if ("youtube.com" in url):
+        ydl_opts["js_runtimes"] = {"node": {}}
+        ydl_opts["remote_components"] = ["ejs:github"]
     loop = asyncio.get_event_loop()
     def download():
         try:

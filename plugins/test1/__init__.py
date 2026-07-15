@@ -150,7 +150,7 @@ async def handle_function():
         raise FinishedException
     await zlkj.finish("😭😭😭😭😭")
 
-aywdm = on_keyword(["哎呦我滴妈","哈基米","胖宝宝"], priority=10, block=True)
+aywdm = on_keyword(["哎呦我滴妈","哈基米","胖宝宝","叮咚鸡","大狗叫"], priority=10, block=True)
 @aywdm.handle()
 async def handle_function():
     if not feature_manager.get("meme_resp"):
@@ -277,38 +277,20 @@ async def handle_function():
         await flipof3.finish(Message('[CQ:image,file=file:///'+path_manager.bf_path()+'images/raincandy/cantflip.png]'))
 
 
-a67 = on_keyword(["67"], priority=10, block=True)
+a67 = on_keyword(["67","sixseven","six seven","六七","刘琦","刘夫妻"], priority=10, block=True)
 @a67.handle()
 async def handle_function():
     if not feature_manager.get("meme_resp"):
         raise FinishedException
-    await a67.finish("🫳🫴")
-    """
-    await asyncio.sleep(.67)
-    await laicai.send("67......")
-    await asyncio.sleep(6.7)
-    await a67.send("67?!?!?!")
-    await asyncio.sleep(.67)
     rd = random.random()
-    if rd < .33:
-        await a67.send("sixseven")
-        await asyncio.sleep(.67)
-        await a67.send("sixseven")
-        await asyncio.sleep(.67)
-        await a67.send("sixseven")
-        await asyncio.sleep(.67)
-        await a67.send("sixseven")
-        await asyncio.sleep(.67)
-        await a67.send("sixseven")
-        await asyncio.sleep(.67)
-        await a67.send("sixseven")
-        await asyncio.sleep(.67)
-        await a67.finish("啊！！！！！！sixseven！！！！！！！")
-    elif rd < .67:
-        await a67.finish("67！67！67！67！67！67！67")
+    if rd < .67:
+        await a67.finish("🫳🫴")
+    elif rd < .78:
+        await a67.finish(Message('[CQ:image,file=file:///'+path_manager.bf_path()+'images/67/1.gif,sub_type=1,summary=🫳🫴]'))
+    elif rd < .91:
+        await a67.finish(Message('[CQ:image,file=file:///'+path_manager.bf_path()+'images/67/2.gif,sub_type=1,summary=🫳🫴]'))
     else:
-        raise FinishedException
-    """
+        await a67.finish(Message('[CQ:image,file=file:///'+path_manager.bf_path()+'images/67/3.gif,sub_type=1,summary=🫳🫴]'))
 
 async def get_image_data(url):
     async with httpx.AsyncClient() as client:
