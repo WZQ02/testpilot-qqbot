@@ -52,10 +52,12 @@ def add_history(time,fakeid,fakenm,fromid,fromnm,groupid):
 def writeback():
     file = open("json/imbotate_data.json","w",encoding="utf-8")
     json.dump({'data':faked,'history':hist},file,ensure_ascii=False,sort_keys=True)
+    file.close()
 
 def fp_writeback():
     file = open("json/fake_presets.json","w",encoding="utf-8")
     json.dump({'fake_presets':fake_presets},file,ensure_ascii=False,sort_keys=True)
+    file.close()
 
 fake = on_command("fake", aliases={"假扮","impersonate","imbotate","模仿","fuck"}, priority=10, block=True)
 @fake.handle()

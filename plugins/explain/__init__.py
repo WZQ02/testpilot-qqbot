@@ -51,3 +51,4 @@ def add_explain(word,meaning,override):
 def writeback():
     file = open("json/expl_list.json","w",encoding="utf-8")
     json.dump({'expl_list':expl_list},file,ensure_ascii=False,sort_keys=True)
+    file.close()

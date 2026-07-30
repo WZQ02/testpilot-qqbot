@@ -57,6 +57,7 @@ async def list(event):
 def writeback():
     file = open("json/achievement.json","w",encoding="utf-8")
     json.dump({'achievements':ach_list,'users':user_list},file,ensure_ascii=False,sort_keys=True)
+    file.close()
 
 def getachicountlist():
     ach_list_copy = ach_list
