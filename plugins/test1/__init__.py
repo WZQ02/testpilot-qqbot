@@ -251,7 +251,7 @@ async def handle_function():
         raise FinishedException
     await haosharen2.finish("全杀！")
 
-flipof = on_keyword(["你是","机器人","人机","谁啊","没素质","傻逼","sb","你妈","赤石","谁家","杂鱼","低能","吃屎","弱智","操","草你","滚","去死","一边去","idiot","douchebag","bitch","脑残","asshole","牛魔","cnm"], rule=to_me(), priority=10, block=True)
+flipof = on_keyword(["你是","机器人","人机","谁啊","没素质","傻逼","sb","你妈","赤石","谁家","杂鱼","低能","吃屎","弱智","操","草你","滚","去死","一边去","idiot","douchebag","bitch","脑残","asshole","牛魔","cnm","废物","飞舞"], rule=to_me(), priority=10, block=True)
 @flipof.handle()
 async def handle_function():
     if not feature_manager.get("flipoff"):

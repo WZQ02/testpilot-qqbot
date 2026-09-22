@@ -39,12 +39,12 @@ async def handle_function(event: MessageEvent):
                 json_data = segment.data["data"]
                 # print(json_data)
                 data = json.loads(json_data)
+                # 检查是否在黑名单群聊（存在其他解析b站小程序bot的群聊）
+                group_id = plugins.member_stuff.get_group_id(event)
+                if int(group_id) in spec_list["bilixcx_blacklist_groups"]:
+                    raise FinishedException
                 # 检查json格式（是否存在特定项目）
                 if ("meta" in data and "detail_1" in data["meta"] and "qqdocurl" in data["meta"]["detail_1"] and data["meta"]["detail_1"]["title"] == "哔哩哔哩"):
-                    # 检查是否在黑名单群聊（存在其他解析b站小程序bot的群聊）
-                    group_id = plugins.member_stuff.get_group_id(event)
-                    if int(group_id) in spec_list["bilixcx_blacklist_groups"]:
-                        raise FinishedException
                     # 解析b23
                     url = data["meta"]["detail_1"]["qqdocurl"]
                     bvid = await plugins.video.resolve_b23(url)

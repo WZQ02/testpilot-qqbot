@@ -46,7 +46,7 @@ async def handle_function(event: MessageEvent):
     pp_count = 0
     for i in encoded:
         pp_count += 1
-        if abs(len(i) - len(message)) <= 2 and Levenshtein.distance(i, message) < 4:
+        if abs(len(i) - len(message)) <= 2 and Levenshtein.distance(i, message) < 10:
             passphrase = i
             break
     # if len(message) > 10 and message in encoded:

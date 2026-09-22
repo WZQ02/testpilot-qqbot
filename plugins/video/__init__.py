@@ -153,8 +153,8 @@ async def download_video(url,path="video/temp/video.mp4"):
                 print(f"视频标题：{info.get('title')}\n文件体积：{file_mb:.2f} MB")
                 global current_video_title
                 current_video_title = info.get('title')
-                if (file_mb > 100):
-                    # 大于100m，拒绝下载
+                if (file_mb > 300):
+                    # 大于300m，拒绝下载
                     return 10
                 # 实际下载
                 ydl.download([url])

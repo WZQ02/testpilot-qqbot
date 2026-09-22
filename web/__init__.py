@@ -1,5 +1,6 @@
 import logging
-
+import requests
+import os
 logger = logging.getLogger(__name__)
 
 content = ""
@@ -50,3 +51,18 @@ def content_text(con):
         logger.info("已渲染文本内容。")
     except IOError as e:
         logger.error(f"文本渲染失败: {e}")
+
+snapshot_server = "https://api.wzq02.top/testpilot_snapshot/upload"
+snapshot_view_site = "https://testpilot.wzq02.top/snapshots/"
+
+def upload_snapshot(path,new_name):
+    if not os.path.exists(path):
+        return
+    with open(path, 'rb') as f:
+        name = os.path.basename(path)
+        if new_name:
+            name = new_name+".html"
+        files = {'htmlFile': (name, f, 'text/html')}
+        response = requests.post(snapshot_server, files=files)
+        print(response)
+        return snapshot_view_site+name

@@ -14,6 +14,7 @@ import os
 import path_manager
 import achievement_manager
 import misc_manager
+import re
 
 from nonebot_plugin_saa import MessageFactory, TargetQQGroup
 from nonebot_plugin_saa import enable_auto_select_bot
@@ -286,5 +287,24 @@ async def handle_function(event: Event = Event):
         for i in list:
             resp += "\n"+list[i]["name"]+" - 触发次数："+str(list[i]["usecount"])
         await achi_ask.finish(resp)
+    else:
+        raise FinishedException
+
+# 查看bot运行日志（markdown，linux only）
+viewlog = on_command("viewlog", aliases={"日志","查看日志"}, priority=10, block=True)
+@viewlog.handle()
+async def handle_function(event: Event = Event):
+    if privilege_manager.checkuser(event.get_user_id()) and feature_manager.get("rendermd"):
+        if os.path.exists('nohup.out'):
+            with open('nohup.out', 'r', encoding='utf-8') as f:
+                lines = f.readlines()
+                last_lines = lines[-100:]
+                log = (''.join(last_lines))
+                log = re.sub(r'\r\n|\r|\n', '<br>', log)
+            web.content_md(log)
+            await webss.take2("http://localhost:8104","container")
+            await viewlog.finish(Message('[CQ:image,file=file:///'+path_manager.bf_path()+'webss/1.png]'))
+        else:
+            await viewlog.finish("没有找到nohup输出！（此命令仅在bot以nohup方式运行时适用）")
     else:
         raise FinishedException

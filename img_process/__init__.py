@@ -8,6 +8,7 @@ import feature_manager
 import path_manager
 import misc_manager
 import asyncio
+import bridge
 
 from pixivpy3 import AppPixivAPI
 
@@ -130,7 +131,9 @@ def getpixivimg(pid):
 
 # 图片放大（调用realesrgan）
 async def img4x():
-    # cmd = "W:/soft/av_tools/realesrgan-ncnn-vulkan-20220424-windows/realesrgan-ncnn-vulkan.exe -i "+path_manager.nb_path()+"images/upscale/source.jpg -o "+path_manager.nb_path()+"images/upscale/result.png"
-    proc = await asyncio.create_subprocess_exec("W:/soft/av_tools/realesrgan-ncnn-vulkan-20220424-windows/realesrgan-ncnn-vulkan.exe", "-i", path_manager.nb_path()+"images/upscale/source.jpg", "-o", path_manager.nb_path()+"images/upscale/result.png")
-    await proc.wait()
+    if path_manager.pat_list["sys_env"] == "win":
+        proc = await asyncio.create_subprocess_exec("W:/soft/av_tools/realesrgan-ncnn-vulkan-20220424-windows/realesrgan-ncnn-vulkan.exe", "-i", path_manager.nb_path()+"images/upscale/source.jpg", "-o", path_manager.nb_path()+"images/upscale/result.png")
+        await proc.wait()
+    else:
+        bridge.upscale_image()
     return

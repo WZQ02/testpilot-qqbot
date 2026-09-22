@@ -1,4 +1,4 @@
-from nonebot import on_notice, on_command
+from nonebot import on_notice, on_command, get_bot
 from nonebot.adapters.onebot.v11 import NoticeEvent, PokeNotifyEvent, Message, Bot, Event
 import random, math, json
 from nonebot.exception import FinishedException
@@ -25,7 +25,7 @@ async def handle_function(event: NoticeEvent):
         if event.target_id == event.self_id:
             # group_id = event.group_id
             # user_id = event.user_id
-            rd = math.ceil(random.random()*(13+4*2))
+            rd = math.ceil(random.random()*(13+4*2+6))
             msg = ""
             if rd <= 10:
                 msg = Message('[CQ:image,file=file:///'+path_manager.bf_path()+'images/poke/poke_'+str(rd)+'.jpg,sub_type=1]')
@@ -39,8 +39,18 @@ async def handle_function(event: NoticeEvent):
                 msg = "诶呦！"
             elif 19 < rd < 22:
                 msg = "喵"
+            else:
+                msg = ""
             await poke_user_chk(event)
-            await pokeresp.send(msg)
+            if msg:
+                await pokeresp.send(msg)
+            else:
+                bot = get_bot()
+                group_id = plugins.member_stuff.get_group_id(event)
+                if group_id:
+                    await bot.group_poke(group_id=group_id, user_id=event.get_user_id())
+                else:
+                    await pokeresp.send("哼！")
         elif int(event.target_id) == plugins.member_stuff.spec_list["special_users"][1]:
             misc_manager.misc_data["aira_poke_count"] += 1
         group_id = plugins.member_stuff.get_group_id(event)

@@ -6,27 +6,42 @@ from nonebot.exception import FinishedException
 import path_manager
 from qemu.qmp import QMPClient
 import feature_manager
+import bridge
 
 vm_powerstatus = 0
+vm_address = ""
 
 async def run_winxp():
+    global vm_address
     if path_manager.pat_list["sys_env"] != "linux":
         await asyncio.create_subprocess_exec("C:\\Program Files\\qemu\\qemu-system-x86_64.exe", "-accel", "whpx,kernel-irqchip=off", "-m", "96m", "-qmp", "tcp:0.0.0.0:4444,server,nowait", "-drive", "file=D:\\vms\\qemu\\nanoxp.vhd,if=ide", "-display", "vnc=:0")
+        vm_address = 'localhost'
     else:
-        await asyncio.create_subprocess_exec("qemu-system-x86_64", "-accel", "tcg", "-m", "96m", "-qmp", "tcp:0.0.0.0:4444,server,nowait", "-drive", "file=/home/HwHiAiUser/qemu/nanoxp.vhd,if=ide", "-display", "vnc=:2")
+        #await asyncio.create_subprocess_exec("qemu-system-x86_64", "-accel", "tcg", "-m", "96m", "-qmp", "tcp:0.0.0.0:4444,server,nowait", "-drive", "file=/home/HwHiAiUser/qemu/nanoxp.vhd,if=ide", "-display", "vnc=:2")
+        result = bridge.start_vm("winxp")
+        if not result:
+            return
+        else:
+            vm_address = bridge.bridge_host_ip
     global vm_powerstatus
     vm_powerstatus = 1
     return
 
 async def connect_qemu():
     client = QMPClient('my-vm')
-    await client.connect(('localhost', 4444))
+    await client.connect((vm_address, 4444))
     return client
 
 async def xp_ss():
     client = await connect_qemu()
-    await client.execute('screendump',{"filename": path_manager.nb_path()+"images/qemu/xp.png", "format": "png"})
-    await client.disconnect()
+    if vm_address == "localhost":
+        await client.execute('screendump',{"filename": path_manager.nb_path()+"images/qemu/xp.png", "format": "png"})
+        await client.disconnect()
+    else:
+        await client.execute('screendump',{"filename": "x:/TEMP/xp.png", "format": "png"})
+        await client.disconnect()
+        bridge.move_qmss()
+        bridge.get_file("xp.png", path_manager.nb_path()+"images/qemu/")
     return (Message('[CQ:image,file=file:///'+path_manager.bf_path()+'images/qemu/xp.png]'))
 
 async def xp_sendkey(key):

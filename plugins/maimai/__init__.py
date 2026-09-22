@@ -14,6 +14,7 @@ import achievement_manager
 import shutil
 import plugins.actual_deepseek
 import misc_manager
+import time
 
 import numpy as np
 import pandas as pd
@@ -51,6 +52,15 @@ async def getalldata(get_suffix):
         data = await fetch(session, url, headers)
         print(data)
         return data
+
+# 获取第一个arg的QQ号（需确保参数存在）
+def getqq(args):
+    if args[0].type == 'at':
+        return args[0].data['qq']
+    elif str.isdigit(args.extract_plain_text().split()[0]):
+        return args.extract_plain_text().split()[0]
+    else:
+        return 0
 
 async def qddata_pre(args,event,type):
     qqnum = 0
@@ -401,7 +411,7 @@ async def handle_function(args: Message = CommandArg(),event: Event = Event):
     result = await qddata_pre(args,event,"dxdv")
     await dxdv.finish(result)    
 
-b50_styles = ["testpilot","prism","circle"]
+b50_styles = ["testpilot","prism","circle","random"]
 
 b50stysw = on_command("bstyle", aliases={"b50样式"}, priority=10, block=True)
 @b50stysw.handle()
@@ -543,7 +553,14 @@ async def handle_function(args: Message = CommandArg(),event: Event = Event):
         misc_manager.tasks.remove("maimai_b50_query")
         await aib50.finish("没有查询到玩家数据！")
     gen = mai_sdt_gen(result)
-    gen.generate_html(path_manager.nb_path()+"web/index.html")
+    sdt_path = path_manager.nb_path()+"web/index.html"
+    gen.generate_html(sdt_path)
+    qqnum = 0
+    if len(args) > 0:
+        qqnum = getqq(args)
+    else:
+        qqnum = event.get_user_id()
+    site = web.upload_snapshot(sdt_path,f"maimaidots_{str(qqnum)}_{str(int(time.time()))}")
     await webss.take("http://localhost:8104",1,filename="1",xres=1210,yres=825)
     misc_manager.tasks.remove("maimai_b50_query")
-    await maisdt.finish(Message('[CQ:image,file=file:///'+path_manager.bf_path()+'webss/1.png]'))
+    await maisdt.finish(Message('[CQ:image,file=file:///'+path_manager.bf_path()+'webss/1.png]详见：'+site))
