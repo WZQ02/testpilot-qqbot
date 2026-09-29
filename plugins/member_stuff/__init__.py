@@ -14,6 +14,8 @@ import plugins.member_stuff
 import path_manager
 import asyncio, math
 import unicodedata
+import web
+import webss
 
 # 获取特殊qq号列表
 specd = open("json/spec_qq_list.json","r",encoding="utf-8")
@@ -31,7 +33,7 @@ async def handle_function(args: Message = CommandArg(),event: Event = Event):
     raise FinishedException
 """
 bot_qq_id = 3978644480
-lvstr_list = ["我喜欢你","我！爱！你！","！suki！拉布！嗨嗨！","齁哦哦哦哦哦哦哦","约吗？"]
+lvstr_list = ["我喜欢你","我！爱！你！","！suki！拉布！嗨嗨！","齁哦哦哦哦哦哦哦","约吗？","妈妈","麻麻"]
 lvstr_list2 = ["我喜欢你","爱你喵","我爱你","贴贴","你是一个小蛋糕","亲","宝宝","宝贝","宝宝你是一个甜甜糯糯的小蛋糕","揉你小肚肚~","摸摸头","摸摸","么么"]
 
 randomcs = on_command("rdcs", aliases={"随机赤石","randomchishi","randomcs","随机吃屎","随机扔粑粑"}, priority=10, block=True)
@@ -160,19 +162,85 @@ group_poke_rank = on_command("grouppokerank", aliases={"戳戳排行榜","群戳
 @group_poke_rank.handle()
 async def handle_function():
     bot = get_bot()
-    resp = "===== 群戳戳排行榜 ====="
     thesorted = dict(sorted(misc_manager.misc_data["group_poke_count"].items(), key=lambda x: x[1], reverse=True))
     first_10 = dict(tuple(thesorted.items())[:10])
-    for i in first_10:
-        info = await bot.get_group_info(group_id=i)
-        name = info.get("group_name")
-        """
-        if get_display_width(name) > 12:
-            name = name[0:11]+"..."
-        """
+    if not first_10:
+        await group_poke_rank.finish("还没有戳戳数据呢！")
+    # 收集群信息（名称 + 头像 URL）
+    rank_data = []
+    for gid, cnt in first_10.items():
+        try:
+            info = await bot.get_group_info(group_id=int(gid))
+            name = info.get("group_name") or str(gid)
+        except Exception:
+            name = str(gid)
         name = truncate_text(name, 24, ellipsis="…")
-        resp += f"\n{name}      {str(first_10[i])}"
-    await group_poke_rank.finish(resp)
+        avatar_url = f"http://p.qlogo.cn/gh/{gid}/{gid}/100/"
+        rank_data.append({"name": name, "count": cnt, "avatar": avatar_url})
+    # 渲染图片
+    await render_group_poke_rank(rank_data)
+    await group_poke_rank.finish(Message(f'[CQ:image,file=file:///{path_manager.bf_path()}webss/1.png]'))
+
+
+def _escape_html(text: str) -> str:
+    if not text:
+        return ""
+    return (text.replace("&", "&amp;")
+                .replace("<", "&lt;")
+                .replace(">", "&gt;")
+                .replace('"', "&quot;"))
+
+
+async def render_group_poke_rank(rank_data: list):
+    """渲染群戳戳排行榜为图片。"""
+    import os
+    template_path = "web/templates/group_poke_rank/index.html"
+    if not os.path.exists(template_path):
+        raise FileNotFoundError(f"模板文件不存在：{template_path}")
+    with open(template_path, "r", encoding="utf-8") as f:
+        template = f.read()
+
+    # 前三名：按 2-1-3 顺序排列（第1名居中且最大）
+    top3_order = [1, 0, 2]  # 对应 rank_data 索引：第2、第1、第3
+    top3_html = ""
+    for idx_in_top3, data_idx in enumerate(top3_order):
+        if data_idx >= len(rank_data):
+            continue
+        item = rank_data[data_idx]
+        rank = data_idx + 1
+        name = _escape_html(item["name"])
+        count = item["count"]
+        avatar = item["avatar"]
+        top3_html += (
+            f'<div class="podium-item">'
+            f'<div class="avatar-wrap">'
+            f'<span class="rank-badge">{rank}</span>'
+            f'<img class="avatar avatar-{rank}" src="{avatar}" alt="" />'
+            f'</div>'
+            f'<div class="podium-name">{name}</div>'
+            f'<div class="podium-count">{count}</div>'
+            f'</div>'
+        )
+
+    # 第4名及以下：白色圆角卡片
+    list_html = ""
+    for i, item in enumerate(rank_data[3:], start=4):
+        name = _escape_html(item["name"])
+        count = item["count"]
+        list_html += (
+            f'<div class="row">'
+            f'<div class="row-rank">{i}</div>'
+            f'<div class="row-name">{name}</div>'
+            f'<div class="row-count">{count}</div>'
+            f'</div>'
+        )
+
+    html = template.replace(
+        '<!-- TOP2 -->\n    <!-- TOP1 -->\n    <!-- TOP3 -->',
+        top3_html
+    ).replace("<!-- LIST_ROWS -->", list_html)
+    web.change_content(html)
+    await webss.take2("http://localhost:8104", "container")
 
 # 文字截断代码（DeepSeek生成）
 def get_display_width(text):

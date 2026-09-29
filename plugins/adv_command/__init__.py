@@ -308,3 +308,205 @@ async def handle_function(event: Event = Event):
             await viewlog.finish("没有找到nohup输出！（此命令仅在bot以nohup方式运行时适用）")
     else:
         raise FinishedException
+
+# ==================== 录播姬管理（仅超管） ====================
+import httpx
+
+RECORDER_BASE = "http://192.168.2.5:2356"
+RECORDER_TIMEOUT = 10.0
+
+async def rec_api(method: str, path: str, json_body=None):
+    """调用录播姬 REST API。
+    返回 (status_code, data)：成功时 data 为解析后的 JSON（或 None），
+    失败时 data 为错误文本。
+    """
+    url = RECORDER_BASE + path
+    try:
+        async with httpx.AsyncClient(timeout=RECORDER_TIMEOUT) as client:
+            resp = await client.request(method, url, json=json_body)
+            if resp.status_code == 200:
+                try:
+                    return resp.status_code, resp.json()
+                except Exception:
+                    return resp.status_code, None
+            return resp.status_code, resp.text
+    except httpx.RequestError as e:
+        return -1, str(e)
+    except Exception as e:
+        return -2, str(e)
+
+async def get_room_name(room_id: int) -> str:
+    """操作完成后重新获取房间信息，返回播主名称（取不到则返回"未知"）。"""
+    status, data = await rec_api("GET", f"/api/room/{room_id}")
+    if status == 200 and isinstance(data, dict):
+        return data.get("name") or "未知"
+    return "未知"
+
+def _escape_html(text: str) -> str:
+    """转义 HTML 特殊字符，防止注入破坏模板结构。"""
+    if not text:
+        return ""
+    return (text.replace("&", "&amp;")
+                .replace("<", "&lt;")
+                .replace(">", "&gt;")
+                .replace('"', "&quot;"))
+
+async def render_room_list(rooms: list, mode: str = "all"):
+    """渲染房间列表为图片并写入 webss/1.png。
+    mode='all' 渲染全部房间；mode='live' 只渲染正在直播的房间。
+    """
+    import os
+    template_path = "web/templates/room_list/index.html"
+    if not os.path.exists(template_path):
+        raise FileNotFoundError(f"模板文件不存在：{template_path}")
+    with open(template_path, "r", encoding="utf-8") as f:
+        template = f.read()
+
+    total_all = len(rooms)
+    streaming_all = sum(1 for r in rooms if r.get("streaming"))
+    recording_all = sum(1 for r in rooms if r.get("recording"))
+
+    if mode == "live":
+        display_rooms = [r for r in rooms if r.get("streaming")]
+    else:
+        display_rooms = rooms
+
+    # 生成 header 文本
+    if mode == "all":
+        header_text = f"当前已添加 {total_all} 个直播间，{streaming_all} 个正在直播，{recording_all} 个正在录制："
+    else:
+        recording_live = sum(1 for r in display_rooms if r.get("recording"))
+        header_text = f"当前有 {len(display_rooms)} 人正在直播，{recording_live} 个正在录制："
+
+    # 生成卡片 HTML
+    cards_html = ""
+    for r in display_rooms:
+        connected = r.get("danmakuConnected")
+        dot_color = "#7CB342" if connected else "#E53935"
+        name = _escape_html(r.get("name") or "未知")
+        room_id = r.get("roomId") or r.get("shortId") or 0
+        badges_html = ""
+        if r.get("streaming"):
+            title = _escape_html(r.get("title") or "")
+            badges_html += f'<span class="badge badge-live">正在直播：{title}</span>'
+        if r.get("recording"):
+            badges_html += '<span class="badge badge-rec">正在录制</span>'
+        cards_html += (
+            f'<div class="card">'
+            f'<span class="dot" style="background:{dot_color}"></span>'
+            f'<span class="name">{name}</span>'
+            f'<span class="sep">·</span>'
+            f'<span class="roomid">{room_id}</span>'
+            f'<div class="badges">{badges_html}</div>'
+            f'</div>'
+        )
+
+    html = template.replace("<!-- HEADER -->", header_text).replace("<!-- ROOM_CARDS -->", cards_html)
+    web.change_content(html)
+    await webss.take2("http://localhost:8104", "container")
+
+# 房间列表
+room_list = on_command("房间列表", aliases={"roomlist","rooms"}, priority=10, block=True)
+@room_list.handle()
+async def handle_function(event: Event = Event):
+    if privilege_manager.checkuser(event.get_user_id()) != 2:
+        raise FinishedException
+    status, data = await rec_api("GET", "/api/room")
+    if status != 200 or not isinstance(data, list):
+        await room_list.finish(f"获取房间列表失败：{data}")
+    if not data:
+        await room_list.finish("当前没有添加任何直播间。")
+    await render_room_list(data, mode="all")
+    await room_list.finish(Message(f'[CQ:image,file=file:///{path_manager.bf_path()}webss/1.png]'))
+
+# 正在直播
+living_list = on_command("正在直播", aliases={"living","live"}, priority=10, block=True)
+@living_list.handle()
+async def handle_function(event: Event = Event):
+    if privilege_manager.checkuser(event.get_user_id()) != 2:
+        raise FinishedException
+    status, data = await rec_api("GET", "/api/room")
+    if status != 200 or not isinstance(data, list):
+        await living_list.finish(f"获取房间列表失败：{data}")
+    living = [r for r in data if r.get("streaming")]
+    if not living:
+        await living_list.finish("当前没有人在直播哦。")
+    await render_room_list(data, mode="live")
+    await living_list.finish(Message(f'[CQ:image,file=file:///{path_manager.bf_path()}webss/1.png]'))
+
+# 添加房间
+add_room = on_command("添加房间", aliases={"addroom","addroomid"}, priority=10, block=True)
+@add_room.handle()
+async def handle_function(args: Message = CommandArg(), event: Event = Event):
+    if privilege_manager.checkuser(event.get_user_id()) != 2:
+        raise FinishedException
+    room_id_str = args.extract_plain_text().strip()
+    if not room_id_str.isdigit():
+        await add_room.finish("请提供有效的房间号，例如：/添加房间 4947891")
+    room_id = int(room_id_str)
+    status, data = await rec_api("POST", "/api/room", json_body={"roomId": room_id, "autoRecord": True})
+    if status == 200:
+        name = await get_room_name(room_id)
+        await add_room.finish(f"已添加房间 {room_id}（{name}）并开启自动录制。")
+    elif status == 400:
+        await add_room.finish(f"添加失败，房间号 {room_id} 可能无效或已存在。")
+    else:
+        await add_room.finish(f"添加失败：{data}")
+
+# 停止录制
+stop_rec = on_command("停止录制", aliases={"stoprec","stoprecord"}, priority=10, block=True)
+@stop_rec.handle()
+async def handle_function(args: Message = CommandArg(), event: Event = Event):
+    if privilege_manager.checkuser(event.get_user_id()) != 2:
+        raise FinishedException
+    room_id_str = args.extract_plain_text().strip()
+    if not room_id_str.isdigit():
+        await stop_rec.finish("请提供有效的房间号，例如：/停止录制 4947891")
+    room_id = int(room_id_str)
+    status, data = await rec_api("POST", f"/api/room/{room_id}/stop")
+    if status == 200:
+        name = await get_room_name(room_id)
+        await stop_rec.finish(f"已停止录制房间 {room_id}（{name}）。")
+    elif status == 404:
+        await stop_rec.finish(f"未找到房间 {room_id}，请检查房间号是否正确。")
+    else:
+        await stop_rec.finish(f"停止录制失败：{data}")
+
+# 开始录制
+start_rec = on_command("开始录制", aliases={"startrec","startrecord"}, priority=10, block=True)
+@start_rec.handle()
+async def handle_function(args: Message = CommandArg(), event: Event = Event):
+    if privilege_manager.checkuser(event.get_user_id()) != 2:
+        raise FinishedException
+    room_id_str = args.extract_plain_text().strip()
+    if not room_id_str.isdigit():
+        await start_rec.finish("请提供有效的房间号，例如：/开始录制 4947891")
+    room_id = int(room_id_str)
+    status, data = await rec_api("POST", f"/api/room/{room_id}/start")
+    if status == 200:
+        name = await get_room_name(room_id)
+        await start_rec.finish(f"已开始录制房间 {room_id}（{name}）。")
+    elif status == 404:
+        await start_rec.finish(f"未找到房间 {room_id}，请检查房间号是否正确。")
+    else:
+        await start_rec.finish(f"开始录制失败：{data}")
+
+# 删除房间
+del_room = on_command("删除房间", aliases={"delroom","delroomid","removeroom"}, priority=10, block=True)
+@del_room.handle()
+async def handle_function(args: Message = CommandArg(), event: Event = Event):
+    if privilege_manager.checkuser(event.get_user_id()) != 2:
+        raise FinishedException
+    room_id_str = args.extract_plain_text().strip()
+    if not room_id_str.isdigit():
+        await del_room.finish("请提供有效的房间号，例如：/删除房间 4947891")
+    room_id = int(room_id_str)
+    # 先取播主名称用于回复（删除后就取不到了）
+    name = await get_room_name(room_id)
+    status, data = await rec_api("DELETE", f"/api/room/{room_id}")
+    if status == 200:
+        await del_room.finish(f"已删除房间 {room_id}（{name}）。")
+    elif status == 404:
+        await del_room.finish(f"未找到房间 {room_id}，请检查房间号是否正确。")
+    else:
+        await del_room.finish(f"删除失败：{data}")

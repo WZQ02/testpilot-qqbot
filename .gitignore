@@ -8,6 +8,10 @@ images/img_ccb/temp/*
 images/upscale/*
 images/qemu/*
 images/analyze/*
+images/saucenao/*
+images/convert/*
+json/chat_history/*
+json/summary_quota.json
 webss/1.png
 
 video/temp/*

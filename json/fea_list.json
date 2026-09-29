@@ -195,6 +195,18 @@
         "fakeclaw": {
             "desc": "假扮ClawdBot",
             "enable": true
+        },
+        "saucenao": {
+            "desc": "图片溯源",
+            "enable": true
+        },
+        "convert": {
+            "desc": "转换媒体",
+            "enable": true
+        },
+        "group_summary": {
+            "desc": "群省流",
+            "enable": true
         }
     }
 }

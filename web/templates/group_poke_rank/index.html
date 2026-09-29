@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: "HarmonyOS Sans SC", "Microsoft YaHei", "Helvetica Neue", Arial, sans-serif;
+    background: #ffffff;
+    display: inline-block;
+  }
+  #container {
+    background: #F5E6C8;
+    border-radius: 20px;
+    padding: 24px 28px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    width: max-content;
+    min-width: 520px;
+    max-width: 720px;
+  }
+  .header {
+    text-align: center;
+    color: #E65100;
+    font-size: 28px;
+    font-weight: 700;
+    padding: 4px 0 8px;
+  }
+  .top3 {
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    gap: 24px;
+    padding: 12px 0 8px;
+  }
+  .podium-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    position: relative;
+  }
+  .avatar-wrap {
+    position: relative;
+    display: inline-block;
+  }
+  .avatar {
+    border-radius: 50%;
+    border: 4px solid #ffffff;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    object-fit: cover;
+    display: block;
+    background: #cccccc;
+  }
+  .avatar-1 { width: 120px; height: 120px; }
+  .avatar-2 { width: 90px;  height: 90px;  }
+  .avatar-3 { width: 90px;  height: 90px;  }
+  .rank-badge {
+    position: absolute;
+    top: -8px;
+    left: -8px;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background: #FFD700;
+    color: #ffffff;
+    font-size: 16px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 3px solid #ffffff;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+    z-index: 2;
+  }
+  .podium-name {
+    color: #1A1A1A;
+    font-size: 14px;
+    font-weight: 600;
+    text-align: center;
+    max-width: 140px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .podium-count {
+    color: #E65100;
+    font-size: 13px;
+    font-weight: 600;
+  }
+  .list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .row {
+    background: #ffffff;
+    border-radius: 999px;
+    padding: 10px 20px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+  }
+  .row-rank {
+    color: #E65100;
+    font-size: 16px;
+    font-weight: 700;
+    min-width: 24px;
+    text-align: center;
+    flex-shrink: 0;
+  }
+  .row-name {
+    color: #1A1A1A;
+    font-size: 14px;
+    font-weight: 500;
+    flex: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .row-count {
+    color: #6B7280;
+    font-size: 14px;
+    font-weight: 600;
+    flex-shrink: 0;
+  }
+</style>
+</head>
+<body>
+<div id="container">
+  <div class="header">群戳戳排行榜</div>
+  <div class="top3">
+    <!-- TOP2 -->
+    <!-- TOP1 -->
+    <!-- TOP3 -->
+  </div>
+  <div class="list">
+    <!-- LIST_ROWS -->
+  </div>
+</div>
+</body>
+</html>

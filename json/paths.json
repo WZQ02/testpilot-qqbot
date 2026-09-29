@@ -5,7 +5,7 @@
             "botfile_path": "/home/HwHiAiUser/testpilot-qqbot/",
             "desc": "Linux"
         },
-        "sys_env": "linux",
+        "sys_env": "win",
         "win": {
             "backend_path": "W:/soft/web_svr/testpilot_qqbot/",
             "botfile_path": "W:/soft/web_svr/testpilot_qqbot/",
