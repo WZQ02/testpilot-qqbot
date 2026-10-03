@@ -1,3 +1,4 @@
+import json
 from config_manager import ConfigManager
 
 feature_config = ConfigManager("json/fea_list.json", default_key="fea_list")
@@ -28,16 +29,18 @@ def disable(fea_name):
 
 def import_fea_list(lis):
     global fea_list
-    lis = eval(lis)
-    if isinstance(lis,dict):
-        fl_copy = fea_list
-        for key, value in lis.items():
-            fl_copy[key]["enable"] = value and True or False
-        if len(fl_copy) == len(fea_list):
-            fea_list = fl_copy
-            feature_config.update(fea_list)
-            return "导入功能列表成功！"
-        else:
-            return "请提供有效的功能列表！"
-    else:
+    # 仅接受 JSON 格式，禁止执行任意代码
+    try:
+        parsed = json.loads(lis)
+    except (json.JSONDecodeError, TypeError, ValueError):
         return "请提供有效的功能列表！"
+    if not isinstance(parsed, dict):
+        return "请提供有效的功能列表！"
+    # 先完整校验（键必须存在、值必须为布尔/整数），再应用变更
+    for key, value in parsed.items():
+        if key not in fea_list or not isinstance(value, (bool, int)):
+            return "请提供有效的功能列表！"
+    for key, value in parsed.items():
+        fea_list[key]["enable"] = bool(value)
+    feature_config.update(fea_list)
+    return "导入功能列表成功！"

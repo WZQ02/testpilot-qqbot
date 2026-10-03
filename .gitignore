@@ -12,12 +12,15 @@ images/saucenao/*
 images/convert/*
 json/chat_history/*
 json/summary_quota.json
+json/web_agent_auth.json
 webss/1.png
+webss/browse_result.png
 
 video/temp/*
 music/temp/*
 
 json/*.json
+json/chat_history/*
 !json/expl_list.json
 !json/fea_list.json
 !json/paths.json

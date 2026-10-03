@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: "HarmonyOS Sans SC", "Microsoft YaHei", "Helvetica Neue", Arial, sans-serif;
+    background: #ffffff;
+    display: inline-block;
+  }
+  #container {
+    background: #ffffff;
+    border-radius: 20px;
+    padding: 28px 32px 32px;
+    width: 1000px;
+  }
+  .header {
+    color: #3A5A8C;
+    font-size: 36px;
+    font-weight: 800;
+    padding: 4px 8px 20px;
+  }
+  .panel {
+    background: #C9C9C9;
+    border-radius: 20px;
+    padding: 20px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+  .card {
+    background: #ffffff;
+    border-radius: 16px;
+    padding: 16px 20px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+  }
+  .card-text {
+    flex: 1;
+    min-width: 0;
+  }
+  .card-name {
+    color: #333333;
+    font-size: 20px;
+    font-weight: 700;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .card-desc {
+    color: #9B9B9B;
+    font-size: 14px;
+    margin-top: 4px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .status {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .status-on {
+    background: #5CB85C;
+  }
+  .status-off {
+    background: #E53935;
+  }
+  .status svg {
+    width: 22px;
+    height: 22px;
+  }
+</style>
+</head>
+<body>
+<div id="container">
+  <div class="header">功能列表</div>
+  <div class="panel">
+    <!-- FEATURE_CARDS -->
+  </div>
+</div>
+</body>
+</html>

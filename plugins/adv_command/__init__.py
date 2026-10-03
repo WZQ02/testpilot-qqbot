@@ -84,14 +84,39 @@ async def handle_function(args: Message = CommandArg(),event: Event = Event):
     else:
         raise FinishedException
 
+CHECK_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>'
+MINUS_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="3.5" stroke-linecap="round"><line x1="5" y1="12" x2="19" y2="12"/></svg>'
+
+async def render_fea_list():
+    """将功能列表渲染为图片（webss/1.png）。"""
+    template_path = "web/templates/fea_list/index.html"
+    with open(template_path, "r", encoding="utf-8") as f:
+        template = f.read()
+    cards_html = ""
+    for name, info in feature_manager.fea_list.items():
+        desc = _escape_html(info.get("desc", ""))
+        enabled = info.get("enable", False)
+        status_cls = "status-on" if enabled else "status-off"
+        status_svg = CHECK_SVG if enabled else MINUS_SVG
+        cards_html += (
+            f'<div class="card">'
+            f'<div class="card-text">'
+            f'<div class="card-name">{_escape_html(name)}</div>'
+            f'<div class="card-desc">{desc}</div>'
+            f'</div>'
+            f'<div class="status {status_cls}">{status_svg}</div>'
+            f'</div>'
+        )
+    html = template.replace("<!-- FEATURE_CARDS -->", cards_html)
+    web.change_content(html)
+    await webss.take2("http://localhost:8104", "container")
+
 fea1 = on_command("fealist", aliases={"功能列表","features"}, priority=10, block=True)
 @fea1.handle()
 async def handle_function(event: Event):
     if privilege_manager.checkuser(event.get_user_id()):
-        await fea1.finish(feature_manager.get_all_features())
-        #web.content_text(feature_manager.get_all_features())
-        #await webss.take2("http://localhost:8104","container")
-        #await fea1.finish(Message('[CQ:image,file=file:///'+path_manager.bf_path()+'webss/1.png]'))
+        await render_fea_list()
+        await fea1.finish(Message(f'[CQ:image,file=file:///{path_manager.bf_path()}webss/1.png]'))
     else:
         raise FinishedException
     
@@ -510,3 +535,22 @@ async def handle_function(args: Message = CommandArg(), event: Event = Event):
         await del_room.finish(f"未找到房间 {room_id}，请检查房间号是否正确。")
     else:
         await del_room.finish(f"删除失败：{data}")
+
+# 修改浏览器引擎（webss / web_agent 共用的 playwright 引擎）
+setwebengine = on_command("切换浏览器引擎", aliases={"修改浏览器引擎","setwebengine","setplaywright"}, priority=10, block=True)
+@setwebengine.handle()
+async def handle_function(event: Event = Event, args: Message = CommandArg()):
+    if privilege_manager.checkuser(event.get_user_id()) < 1:
+        raise FinishedException
+    import webss
+    arg = args.extract_plain_text().strip().lower()
+    if arg in ("chromium", "firefox"):
+        old = webss.set_engine(arg)
+        await setwebengine.finish(f"浏览器引擎已从 {old} 切换为 {webss.current_engine}。")
+    elif arg == "":
+        old = webss.current_engine
+        new = "firefox" if old == "chromium" else "chromium"
+        webss.set_engine(new)
+        await setwebengine.finish(f"浏览器引擎已从 {old} 切换为 {new}。")
+    else:
+        await setwebengine.finish(f"不支持的引擎「{arg}」，可选值：chromium、firefox。不带参数则在两个引擎间切换。")

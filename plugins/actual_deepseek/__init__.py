@@ -1,8 +1,9 @@
 from nonebot import on_command, on_keyword
 from nonebot import get_bot
 from nonebot.params import CommandArg
-from nonebot.adapters.onebot.v11 import Message, Event, Bot, MessageEvent
+from nonebot.adapters.onebot.v11 import Message, Event, Bot, MessageEvent, GroupMessageEvent
 from nonebot.exception import FinishedException
+import asyncio
 import feature_manager
 import privilege_manager
 import path_manager
@@ -110,8 +111,6 @@ group_mode = 1
 
 syspmpt = "你是一个叫testpilot的群聊助手，致力于帮群友解决问题。"
 syspmpt_group = "**你是一个叫testpilot的群聊助手，致力于帮群友解决问题。**之后的对话中，前面会加上[发言人]：，用于区分不同群友的发言，你只需要留意之后的内容，你自己的发言不需要加这个前缀。"
-msg_init = {"role": "system", "content": syspmpt}
-msg_init_group = {"role": "system", "content": syspmpt_group}
 
 april_fools_pmpt = "# 电波系宅女 · 星野铃（愚人节特调版） \
 \
@@ -138,116 +137,173 @@ april_fools_pmpt = "# 电波系宅女 · 星野铃（愚人节特调版） \
 （背景音：键盘轻响+8-bit风格BGM）\
 “警告：检测到愚人节特殊频段…嗡…这里是星野铃。今日‘信息海’信噪比下降73%，所有对话可能被随机加密。需要我启动‘胡言乱语过滤协议’吗？…开玩笑的，今天不用过滤。”"
 
-msg_list = ds_quotes_config.all() # Load initial message list
-if not msg_list: # If empty, initialize with system messages
-    msg_list = [msg_init_group] if group_mode else [msg_init]
-    ds_quotes_config.update(msg_list)
+# ===== 多会话存储 =====
+# sessions 结构：{sid(str): {"messages": [...], "count": int, "system_prompt": str}}
+# session_map 结构：{上下文key: sid(int)}，上下文key 为 group_<群号> / private_<QQ号>
+session_map_config = ConfigManager("json/ds_session_map.json")
+session_map = session_map_config.all()
+
+def default_system_prompt():
+    return syspmpt_group if group_mode else syspmpt
+
+def new_session_data():
+    sp = default_system_prompt()
+    return {"messages": [{"role": "system", "content": sp}], "count": 0, "system_prompt": sp}
+
+sessions = ds_quotes_config.all()
+# 兼容旧版裸 list 结构：首次启动一次性迁移为按会话分组的 dict
+if isinstance(sessions, list):
+    sessions = {"1": {"messages": sessions, "count": len(sessions) // 2, "system_prompt": default_system_prompt()}}
+    ds_quotes_config.update(sessions)
+elif not sessions:
+    sessions = {"1": new_session_data()}
+    ds_quotes_config.update(sessions)
+
+# 按会话 ID 加锁，防止同一会话被多个上下文并发使用时轮次交错
+session_locks = {}
 
 msg_limit = config["chat_msg_limit"]
-msg_count = len(msg_list) // 2 # Assuming system message is one, and user/assistant messages come in pairs.
 
-def ds_reinit():
-    global msg_list,msg_count #操作全局变量msg_list、msg_count
-    msg_list = []
-    if group_mode:
-        msg_list.append(msg_init_group)
-    else:
-        msg_list.append(msg_init)
-    msg_count = 0
-    ds_quotes_config.update(msg_list)
+def save_sessions():
+    ds_quotes_config.update(sessions)
 
-async def chat(dialogue, username=None):
-    if username:
-        dialogue = f"{username}："+dialogue
-    msg_list.append({"role": "user", "content": dialogue})
-    
-    actual_msg_list = msg_list.copy()
-    # 替换system prompt
-    if misc_manager.april_fools_flag():
-        actual_msg_list[0] = {"role": "system", "content": april_fools_pmpt}
+def save_session_map():
+    session_map_config.update(session_map)
 
-    tools_to_use = []
-    if feature_manager.get("websearch") and config[config["current_engine"]]["search"]:
-        tools_to_use.append(web_search_tool_schema)
-    else:
-        print("已禁用搜索工具。")
+def get_context_key(event):
+    if isinstance(event, GroupMessageEvent):
+        return f"group_{event.group_id}"
+    return f"private_{event.get_user_id()}"
 
-    search_use_flag = 0
-    search_count = 0
-    # 最多进行5次工具调用
-    for i in range(search_loop_limit):
-        current_tools = tools_to_use if tools_to_use else None
-        current_tool_choice = "auto"
-        # 如果是最后一次尝试，并且AI还在尝试调用工具，则禁用工具调用，直接获取AI回复
-        if i == (search_loop_limit -1) and remsg.tool_calls:
-            current_tools = None
-            current_tool_choice = None
+def get_active_sid(event):
+    return int(session_map.get(get_context_key(event), 1))
 
-        resp = await client.chat.completions.create(
-            model = config[config["current_engine"]]["models"][config["model_index_prio"]],
-            messages = actual_msg_list,
-            tools = current_tools,
-            tool_choice = current_tool_choice,
-            stream = False
-        )
-        remsg = resp.choices[0].message
+def get_session(sid):
+    """取会话数据，不存在则自动创建（即激活）。"""
+    key = str(sid)
+    if key not in sessions:
+        sessions[key] = new_session_data()
+        save_sessions()
+    return sessions[key]
 
-        if remsg.tool_calls:
-            # 如果模型返回了工具调用请求
-            search_use_flag = 1
-            search_count += 1
-            tool_outputs = []
-            for tool_call in remsg.tool_calls:
-                function_name = tool_call.function.name
-                if function_name == "perform_web_search":
-                    function_args = json.loads(tool_call.function.arguments)
-                    query = function_args.get("query")
-                    if query:
-                        print(f"[联网搜索中：{query}]") # 给用户一个反馈
-                        tool_output = await perform_web_search(query)
-                        tool_outputs.append({
-                            "tool_call_id": tool_call.id,
-                            "role": "tool",
-                            "name": function_name,
-                            "content": tool_output,
-                        })
-                    else:
-                        logger.error(f"Web search tool call missing query: {function_args}")
-                        tool_outputs.append({
-                            "tool_call_id": tool_call.id,
-                            "role": "tool",
-                            "name": function_name,
-                            "content": "[联网搜索失败：缺少查询参数]",
-                        })
-                else:
-                    logger.warning(f"未知工具调用：{function_name}")
-                    tool_outputs.append({
-                        "tool_call_id": tool_call.id,
-                        "role": "tool",
-                        "name": function_name,
-                        "content": f"[未知工具：{function_name}]",
-                    })
-            actual_msg_list.append(remsg) # Add assistant's tool_call message
-            actual_msg_list.extend(tool_outputs)
+def get_session_lock(sid):
+    if sid not in session_locks:
+        session_locks[sid] = asyncio.Lock()
+    return session_locks[sid]
+
+def validate_sid(raw):
+    """校验会话ID参数，返回正整数 int；无效返回 None。"""
+    raw = raw.strip()
+    if raw.isdigit() and int(raw) >= 1:
+        return int(raw)
+    return None
+
+async def reset_or_delete_session(sid):
+    """会话1：清空记录并以其自有 system_prompt 重置；其他会话：整条删除（取消激活）。"""
+    async with get_session_lock(sid):
+        if sid == 1:
+            sp = sessions.get("1", {}).get("system_prompt", default_system_prompt())
+            sessions["1"] = {"messages": [{"role": "system", "content": sp}], "count": 0, "system_prompt": sp}
         else:
-            # 没有工具调用，跳出循环
-            break
+            sessions.pop(str(sid), None)
+        save_sessions()
 
-    response = remsg.content
-    msg_list.append({"role": "assistant", "content": response})
-    if search_use_flag:
-        if "<tool_call>" in response[:12] and search_count > 8:
-            response = "换个问题吧！我刚才忙了半天，什么都没搜到qwq"
-        elif search_count:
-            response = f"[已进行 {search_count} 次搜索]\n"+response
-    global msg_count
-    msg_count += 1
-    if (msg_count > msg_limit):
-        # 不直接清除对话，而是删去最早的一轮对话（要删两次，一次user一次assistant，保留system prompt）
-        msg_list.pop(1)
-        msg_list.pop(1)
-    ds_quotes_config.update(msg_list)
-    return response
+async def chat(dialogue, username=None, sid=1):
+    # 同一会话串行处理，避免多个上下文并发使用时轮次交错
+    async with get_session_lock(sid):
+        session = get_session(sid)
+        msg_list = session["messages"]
+        if username:
+            dialogue = f"{username}："+dialogue
+        msg_list.append({"role": "user", "content": dialogue})
+
+        actual_msg_list = msg_list.copy()
+        # 替换system prompt（仅替换请求副本，不改动会话中存储的system消息）
+        if misc_manager.april_fools_flag():
+            actual_msg_list[0] = {"role": "system", "content": april_fools_pmpt}
+
+        tools_to_use = []
+        if feature_manager.get("websearch") and config[config["current_engine"]]["search"]:
+            tools_to_use.append(web_search_tool_schema)
+        else:
+            print("已禁用搜索工具。")
+
+        search_use_flag = 0
+        search_count = 0
+        remsg = None
+        # 最多进行5次工具调用
+        for i in range(search_loop_limit):
+            current_tools = tools_to_use if tools_to_use else None
+            current_tool_choice = "auto"
+            # 如果是最后一次尝试，并且AI还在尝试调用工具，则禁用工具调用，直接获取AI回复
+            if i == (search_loop_limit -1) and remsg is not None and remsg.tool_calls:
+                current_tools = None
+                current_tool_choice = None
+
+            resp = await client.chat.completions.create(
+                model = config[config["current_engine"]]["models"][config["model_index_prio"]],
+                messages = actual_msg_list,
+                tools = current_tools,
+                tool_choice = current_tool_choice,
+                stream = False
+            )
+            remsg = resp.choices[0].message
+
+            if remsg.tool_calls:
+                # 如果模型返回了工具调用请求
+                search_use_flag = 1
+                search_count += 1
+                tool_outputs = []
+                for tool_call in remsg.tool_calls:
+                    function_name = tool_call.function.name
+                    if function_name == "perform_web_search":
+                        function_args = json.loads(tool_call.function.arguments)
+                        query = function_args.get("query")
+                        if query:
+                            print(f"[联网搜索中：{query}]") # 给用户一个反馈
+                            tool_output = await perform_web_search(query)
+                            tool_outputs.append({
+                                "tool_call_id": tool_call.id,
+                                "role": "tool",
+                                "name": function_name,
+                                "content": tool_output,
+                            })
+                        else:
+                            logger.error(f"Web search tool call missing query: {function_args}")
+                            tool_outputs.append({
+                                "tool_call_id": tool_call.id,
+                                "role": "tool",
+                                "name": function_name,
+                                "content": "[联网搜索失败：缺少查询参数]",
+                            })
+                    else:
+                        logger.warning(f"未知工具调用：{function_name}")
+                        tool_outputs.append({
+                            "tool_call_id": tool_call.id,
+                            "role": "tool",
+                            "name": function_name,
+                            "content": f"[未知工具：{function_name}]",
+                        })
+                actual_msg_list.append(remsg) # Add assistant's tool_call message
+                actual_msg_list.extend(tool_outputs)
+            else:
+                # 没有工具调用，跳出循环
+                break
+
+        response = remsg.content
+        msg_list.append({"role": "assistant", "content": response})
+        if search_use_flag:
+            if "<tool_call>" in response[:12] and search_count > 8:
+                response = "换个问题吧！我刚才忙了半天，什么都没搜到qwq"
+            elif search_count:
+                response = f"[已进行 {search_count} 次搜索]\n"+response
+        session["count"] += 1
+        if (session["count"] > msg_limit):
+            # 不直接清除对话，而是删去最早的一轮对话（要删两次，一次user一次assistant，保留system prompt）
+            msg_list.pop(1)
+            msg_list.pop(1)
+        save_sessions()
+        return response
 
 # 一次性对话（不计入上下文）
 async def chat_once(dialogue,system_prompt=syspmpt):
@@ -429,11 +485,12 @@ async def handle_function(args: Message = CommandArg(),event: MessageEvent = Eve
         if not qqnam:
             qqnam = rep_data["sender"]["nickname"]
     # 可选获取用户名
+    sid = get_active_sid(event)
     text = ""
     if group_mode:
-        text = await chat(usrmsg,qqnam)
+        text = await chat(usrmsg,qqnam,sid)
     else:
-        text = await chat(usrmsg)
+        text = await chat(usrmsg,None,sid)
     # 输出内容每3000字分段，避免长消息发不出
     segs = split_str_by_length(text, 3000)
     for i in segs:
@@ -473,11 +530,44 @@ dscount = on_command("dscount", aliases={"AI对话轮数","deepseek对话轮数"
 @dscount.handle()
 async def handle_function(event: Event):
     if feature_manager.get("deepseek"):
-        resp = "已与 AI 进行了 "+str(msg_count)+" 轮对话。"
-        actual_msg_count = len(msg_list)//2
+        sid = get_active_sid(event)
+        session = get_session(sid)
+        msg_count = session["count"]
+        actual_msg_count = len(session["messages"])//2
+        prefix = f"【会话 {sid}】" if sid != 1 else ""
+        resp = prefix+"已与 AI 进行了 "+str(msg_count)+" 轮对话。"
         if msg_count > actual_msg_count:
             resp += f"（轮数已超过上限，前 {str(msg_count - actual_msg_count)} 轮对话已被清除）"
         await dscount.finish(resp)
+    else:
+        raise FinishedException
+
+# 切换当前群聊/私聊使用的会话
+dsses = on_command("dsses", aliases={"切换会话"}, priority=10, block=True)
+@dsses.handle()
+async def handle_function(args: Message = CommandArg(),event: Event = Event):
+    if privilege_manager.checkuser(event.get_user_id()) and feature_manager.get("deepseek"):
+        sid = validate_sid(args.extract_plain_text())
+        if sid is None:
+            await dsses.finish("会话ID应为正整数！")
+        session_map[get_context_key(event)] = sid
+        save_session_map()
+        get_session(sid) # 对应会话不存在则自动创建
+        await dsses.finish(f"已切换到会话 {sid}。")
+    else:
+        raise FinishedException
+
+# 查询所有已激活的会话ID
+chkses = on_command("chkses", aliases={"检查会话", "seslist", "会话列表"}, priority=10, block=True)
+@chkses.handle()
+async def handle_function():
+    if feature_manager.get("deepseek"):
+        ids = sorted(int(k) for k in sessions.keys())
+        if ids == [1]:
+            resp = "当前已激活的会话：1（默认会话）。"
+        else:
+            resp = "当前已激活的会话："+"、".join(str(i) for i in ids)+"。"
+        await chkses.finish(resp)
     else:
         raise FinishedException
 
@@ -485,19 +575,34 @@ dssetup = on_command("dssetup", aliases={"deepseek初始化"}, priority=10, bloc
 @dssetup.handle()
 async def handle_function(args: Message = CommandArg(),event: Event = Event):
     if privilege_manager.checkuser(event.get_user_id()) and feature_manager.get("deepseek"):
-        global msg_init, msg_init_group
+        # 只对当前会话生效，/reds 后使用新设定
+        sid = get_active_sid(event)
+        session = get_session(sid)
         rid = args.extract_plain_text()
-        msg_init = msg_init_group = {"role": "system", "content": rid}
+        session["system_prompt"] = rid
+        save_sessions()
         await dssetup.finish("已将 AI 初始化设定调整为：“"+rid+"”。请清除对话记忆以使更改生效。")
     else:
         raise FinishedException
 
 reds = on_command("reds", aliases={"重置deepseek","重置AI","resetdeepseek"}, priority=10, block=True)
 @reds.handle()
-async def handle_function(event: Event):
+async def handle_function(args: Message = CommandArg(),event: Event = Event):
     if privilege_manager.checkuser(event.get_user_id()) and feature_manager.get("deepseek"):
-        ds_reinit()
-        await reds.finish("已清除 AI 的对话记忆。")
+        raw = args.extract_plain_text()
+        if raw.strip():
+            sid = validate_sid(raw)
+            if sid is None:
+                await reds.finish("会话ID应为正整数！")
+        else:
+            sid = get_active_sid(event)
+        if str(sid) not in sessions:
+            await reds.finish(f"会话 {sid} 不存在或尚未激活。")
+        await reset_or_delete_session(sid)
+        if sid == 1:
+            await reds.finish("已清除 AI 的对话记忆。")
+        else:
+            await reds.finish(f"已清除会话 {sid} 的对话记忆。")
     else:
         raise FinishedException
 
@@ -508,15 +613,16 @@ async def handle_function(args: Message = CommandArg(),event: Event = Event):
     if not (feature_manager.get("deepseek") and feature_manager.get("rendermd")):
         raise FinishedException
     misc_manager.tasks.append("ds_chat")
+    sid = get_active_sid(event)
     if group_mode:
         bot = get_bot()
         qqid = event.get_user_id()
         qqinfo = dict(await bot.get_stranger_info(user_id=qqid))
         if "nick" in qqinfo:
             qqnam = qqinfo["nick"]
-        web.content_md(await chat(args.extract_plain_text(),qqnam))
+        web.content_md(await chat(args.extract_plain_text(),qqnam,sid))
     else:
-        web.content_md(await chat(args.extract_plain_text()))
+        web.content_md(await chat(args.extract_plain_text(),None,sid))
     await webss.take2("http://localhost:8104","container")
     misc_manager.tasks.remove("ds_chat")
     await dsmd.finish(Message('[CQ:image,file=file:///'+path_manager.bf_path()+'webss/1.png]'))
@@ -584,13 +690,18 @@ async def handle_function(args: Message = CommandArg(),bot: Bot = Bot, event: Me
 
 checkengine = on_command("checkai", aliases={"查看AI引擎","当前AI引擎"}, priority=10, block=True)
 @checkengine.handle()
-async def handle_function():
+async def handle_function(event: Event = Event):
     if not feature_manager.get("deepseek"):
         raise FinishedException
     current = config["current_engine"]
     if "desc" in config[current]:
         current = config[current]["desc"]
-    await checkengine.finish(f"当前 AI 引擎为 {current}。")
+    sid = get_active_sid(event)
+    if sid == 1:
+        resp = f"当前 AI 引擎为 {current}。"
+    else:
+        resp = f"当前 AI 引擎为 {current}，会话 ID 为 {sid}。"
+    await checkengine.finish(resp)
 
 listengine = on_command("listai", aliases={"列出可用AI引擎"}, priority=10, block=True)
 @listengine.handle()

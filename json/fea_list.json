@@ -207,6 +207,10 @@
         "group_summary": {
             "desc": "群省流",
             "enable": true
+        },
+        "web_agent": {
+            "desc": "AI上网",
+            "enable": true
         }
     }
 }
