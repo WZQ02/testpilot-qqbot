@@ -71,8 +71,8 @@ async def xp_poweroff():
 
 winxp = on_command("winxp", aliases={"启动xp","启动winxp","启动qemu"}, priority=10, block=True)
 @winxp.handle()
-async def handle_function(args: Message = CommandArg()):
-    if not feature_manager.get("qemu"):
+async def handle_function(args: Message = CommandArg(), event: Event = Event):
+    if not feature_manager.can_use("qemu", event.get_user_id()):
         raise FinishedException
     if vm_powerstatus == 1:
         await winxp.finish("虚拟机已经在运行！")
@@ -84,8 +84,8 @@ async def handle_function(args: Message = CommandArg()):
 
 sswinxp = on_command("sswinxp", aliases={"xp截图","vmss","虚拟机截图"}, priority=10, block=True)
 @sswinxp.handle()
-async def handle_function(args: Message = CommandArg()):
-    if not feature_manager.get("qemu"):
+async def handle_function(args: Message = CommandArg(), event: Event = Event):
+    if not feature_manager.can_use("qemu", event.get_user_id()):
         raise FinishedException
     if not vm_powerstatus:
         await sswinxp.finish("虚拟机未启动！")
@@ -93,8 +93,8 @@ async def handle_function(args: Message = CommandArg()):
 
 xpsendkey = on_command("xpsendkey", aliases={"xp发送按键","vmsendkey","虚拟机发送按键"}, priority=10, block=True)
 @xpsendkey.handle()
-async def handle_function(args: Message = CommandArg()):
-    if not feature_manager.get("qemu"):
+async def handle_function(args: Message = CommandArg(), event: Event = Event):
+    if not feature_manager.can_use("qemu", event.get_user_id()):
         raise FinishedException
     if not vm_powerstatus:
         await xpsendkey.finish("虚拟机未启动！")
@@ -106,8 +106,8 @@ async def handle_function(args: Message = CommandArg()):
 
 xptype = on_command("xptype", aliases={"xp发送文本","vmtype","虚拟机发送文本"}, priority=10, block=True)
 @xptype.handle()
-async def handle_function(args: Message = CommandArg()):
-    if not feature_manager.get("qemu"):
+async def handle_function(args: Message = CommandArg(), event: Event = Event):
+    if not feature_manager.can_use("qemu", event.get_user_id()):
         raise FinishedException
     if not vm_powerstatus:
         await xptype.finish("虚拟机未启动！")
@@ -118,8 +118,8 @@ async def handle_function(args: Message = CommandArg()):
 
 xpshut = on_command("xpshut", aliases={"xp关机","vmshut","虚拟机关机","poweroff"}, priority=10, block=True)
 @xpshut.handle()
-async def handle_function(args: Message = CommandArg()):
-    if not feature_manager.get("qemu"):
+async def handle_function(args: Message = CommandArg(), event: Event = Event):
+    if not feature_manager.can_use("qemu", event.get_user_id()):
         raise FinishedException
     if not vm_powerstatus:
         await xpshut.finish("虚拟机已经关机或未启动！")

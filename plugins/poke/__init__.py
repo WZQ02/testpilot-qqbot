@@ -14,7 +14,7 @@ bot_qq_id = 3978644480
 poke = on_command("poke", aliases={"戳","戳一戳"}, priority=10, block=True)
 @poke.handle()
 async def handle_function(args: Message = CommandArg(),event: Event = Event):
-    if feature_manager.get("poke"):
+    if feature_manager.can_use("poke", event.get_user_id()):
         bot = get_bot()
         qqnum = 0
         times = 1
@@ -49,7 +49,7 @@ async def handle_function(args: Message = CommandArg(),event: Event = Event):
 rdpoke = on_command("rdpoke", aliases={"randompoke","随机戳戳","随机戳一戳"}, priority=10, block=True)
 @rdpoke.handle()
 async def handle_function(args: Message = CommandArg(),event: Event = Event):
-    if feature_manager.get("randomcs") and feature_manager.get("poke"):
+    if feature_manager.can_use("randomcs", event.get_user_id()) and feature_manager.can_use("poke", event.get_user_id()):
         bot = get_bot()
         group_id = plugins.member_stuff.get_group_id(event)
         mbl = await bot.get_group_member_list(group_id=group_id)

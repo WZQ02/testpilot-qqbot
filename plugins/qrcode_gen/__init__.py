@@ -30,7 +30,7 @@ def recqr(url):
 gqrc = on_command("qr", aliases={"qrcode","二维码","生成二维码","识别二维码"}, priority=10, block=True)
 @gqrc.handle()
 async def handle_function(args: Message = CommandArg(),bot: Bot = Bot, event: MessageEvent = Event):
-    if not feature_manager.get("qrcode"):
+    if not feature_manager.can_use("qrcode", event.get_user_id()):
         raise FinishedException
     # 二维码识别
     if len(args) == 0:

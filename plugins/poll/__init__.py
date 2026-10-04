@@ -18,7 +18,7 @@ def writeback():
 poll = on_command("poll", aliases={"发起投票","createpoll"}, priority=10, block=True)
 @poll.handle()
 async def handle_function(args: Message = CommandArg(),event: Event = Event):
-    if not feature_manager.get("poll"):
+    if not feature_manager.can_use("poll", event.get_user_id()):
         raise FinishedException
     params = args.extract_plain_text().split()
     if (len(params) < 1):
@@ -71,7 +71,7 @@ def getpolldata(pollid_or_title):
 viewpoll = on_command("viewpoll", aliases={"查看投票"}, priority=10, block=True)
 @viewpoll.handle()
 async def handle_function(args: Message = CommandArg(),event: Event = Event):
-    if not feature_manager.get("poll"):
+    if not feature_manager.can_use("poll", event.get_user_id()):
         raise FinishedException
     params = args.extract_plain_text().split()
     if (len(params) < 1):
@@ -126,7 +126,7 @@ async def setpollexp(polnum,expt_sec):
 vote = on_command("vote", aliases={"投票","参与投票"}, priority=10, block=True)
 @vote.handle()
 async def handle_function(args: Message = CommandArg(),event: Event = Event):
-    if not feature_manager.get("poll"):
+    if not feature_manager.can_use("poll", event.get_user_id()):
         raise FinishedException
     params = args.extract_plain_text().split()
     if (len(params) < 2):
@@ -163,7 +163,7 @@ async def handle_function(args: Message = CommandArg(),event: Event = Event):
 setpollexpiry = on_command("voteexp", aliases={"setpollexpiry","设置投票有效期"}, priority=10, block=True)
 @setpollexpiry.handle()
 async def handle_function(args: Message = CommandArg(),event: Event = Event):
-    if not feature_manager.get("poll"):
+    if not feature_manager.can_use("poll", event.get_user_id()):
         raise FinishedException
     params = args.extract_plain_text().split()
     if (len(params) < 2):

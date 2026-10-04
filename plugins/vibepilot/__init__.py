@@ -129,7 +129,7 @@ addfeature = on_command("addfeature", aliases={"editfeature","添加功能","修
 @addfeature.handle()
 async def handle_function(args: Message = CommandArg(),event: MessageEvent = Event):
     #if not (feature_manager.get("deepseek") and privilege_manager.checkuser(event.get_user_id())):
-    if not feature_manager.get("deepseek"):
+    if not feature_manager.can_use("deepseek", event.get_user_id()):
         raise FinishedException
     misc_manager.tasks.append("vibepilot")
     # 获取args

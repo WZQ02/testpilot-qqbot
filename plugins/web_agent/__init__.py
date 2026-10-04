@@ -219,10 +219,14 @@ web_browse = on_command("上网", aliases={"browse", "www"}, priority=10, block=
 
 @web_browse.handle()
 async def handle_function(event: Event = Event, args: Message = CommandArg()):
-    if not feature_manager.get("web_agent"):
+    if not feature_manager.is_on("web_agent"):
         raise FinishedException
     uid = event.get_user_id()
-    if not await is_authorized(uid):
+    # 三级权限与授权名单 AND 叠加：perm=1 仅管理员；perm=2 管理员放行，普通用户仍须在授权名单内
+    if feature_manager.get_perm("web_agent") == 1:
+        if privilege_manager.checkuser(uid) < 1:
+            await web_browse.finish("当前 AI 上网仅管理员可用。")
+    elif not await is_authorized(uid):
         await web_browse.finish("你无权使用bot /上网！请联系wzq授权。")
 
     prompt = args.extract_plain_text().strip()

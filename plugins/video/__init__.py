@@ -32,7 +32,7 @@ cookiepath = path_manager.nb_path()+"video/cookies.txt"
 bilivid = on_command("bili", aliases={"bilibili","视频","b站视频","video","sp"}, priority=10, block=True)
 @bilivid.handle()
 async def handle_function(args: Message = CommandArg(),event: Event = Event):
-    if feature_manager.get("video_web"):
+    if feature_manager.can_use("video_web", event.get_user_id()):
         global vid_ongoing_state,last_get_vid_time, current_video_title
         current_video_title = ""
         if vid_ongoing_state != 0:
@@ -93,7 +93,7 @@ async def handle_function(args: Message = CommandArg(),event: Event = Event):
 bill = on_command("bill", priority=10, block=True)
 @bill.handle()
 async def handle_function(args: Message = CommandArg(),event: Event = Event):
-    if feature_manager.get("video_web"):
+    if feature_manager.can_use("video_web", event.get_user_id()):
         rd = random.random()
         if rd < .6:
             await bill.finish("请问你刚才发的是“bill”（比尔）吗？")

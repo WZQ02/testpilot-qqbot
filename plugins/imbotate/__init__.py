@@ -64,7 +64,7 @@ fake = on_command("fake", aliases={"假扮","impersonate","imbotate","模仿","f
 async def handle_function(args: Message = CommandArg(),event: Event = Event):
     if event.get_plaintext().startswith("/fuck"):
         await achievement_manager.add(14,event)
-    if feature_manager.get("fake"):
+    if feature_manager.can_use("fake", event.get_user_id()):
         bot = get_bot()
         qqnum = 0
         fake_quote = ""
@@ -108,7 +108,7 @@ async def handle_function(args: Message = CommandArg(),event: Event = Event):
 randomfake = on_command("rdfake", aliases={"随机假扮","随机模仿","randomfake","randomimbotate"}, priority=10, block=True)
 @randomfake.handle()
 async def handle_function(event: Event = Event):
-    if feature_manager.get("fake"):
+    if feature_manager.can_use("fake", event.get_user_id()):
         bot = get_bot()
         group_id = plugins.member_stuff.get_group_id(event)
         if not int(group_id):
@@ -238,7 +238,7 @@ async def handle_function(args: Message = CommandArg(),event: Event = Event):
 gfhistory = on_command("fakehistory", aliases={"getfakehistory","假扮记录","假扮历史记录"}, priority=10, block=True)
 @gfhistory.handle()
 async def handle_function(event: Event = Event):
-    if feature_manager.get("fake"):
+    if feature_manager.can_use("fake", event.get_user_id()):
         res = "变身记录："
         for i in hist:
             res += ("\n- "+howlong1(i["time"])+"前 "+i["fromnm"]+"("+i["fromid"]+") 把bot变成了 "+i["fakenm"]+"("+i["fakeid"]+")")
@@ -248,7 +248,7 @@ addfakepreset = on_command("addfakepreset", aliases={"addfake","添加假扮预�
 @addfakepreset.handle()
 async def handle_function(args: Message = CommandArg(),event: Event = Event):
     # 因为有被exploit的可能性，设为管理员限定功能
-    if feature_manager.get("fake") and privilege_manager.checkuser(event.get_user_id()):
+    if feature_manager.is_on("fake") and privilege_manager.checkuser(event.get_user_id()):
         ar = args.extract_plain_text().split()
         if len(ar) > 1:
             fakname = ar[0]

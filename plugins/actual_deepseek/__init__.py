@@ -460,7 +460,7 @@ ads = on_command("ds", aliases={"深度求索","AI","actualdeepseek","deepseek",
 @ads.handle()
 async def handle_function(args: Message = CommandArg(),event: MessageEvent = Event):
     # 虽然没什么必要但有时发/dscount会同时触发ds，很奇怪，还是修补一下好了
-    if (not feature_manager.get("deepseek")) or args.extract_plain_text() == "count" or args.extract_plain_text() == "md":
+    if (not feature_manager.can_use("deepseek", event.get_user_id())) or args.extract_plain_text() == "count" or args.extract_plain_text() == "md":
         raise FinishedException
     misc_manager.tasks.append("ds_chat")
     bot = get_bot()
@@ -502,7 +502,7 @@ async def handle_function(args: Message = CommandArg(),event: MessageEvent = Eve
 ncds = on_command("ncds", aliases={"dsnc","nocontextdeepseek"}, priority=10, block=True)
 @ncds.handle()
 async def handle_function(args: Message = CommandArg(),event: MessageEvent = Event):
-    if not feature_manager.get("deepseek"):
+    if not feature_manager.can_use("deepseek", event.get_user_id()):
         raise FinishedException
     misc_manager.tasks.append("ds_chat")
     bot = get_bot()
@@ -529,7 +529,7 @@ async def handle_function(args: Message = CommandArg(),event: MessageEvent = Eve
 dscount = on_command("dscount", aliases={"AI对话轮数","deepseek对话轮数","对话轮数"}, priority=10, block=True)
 @dscount.handle()
 async def handle_function(event: Event):
-    if feature_manager.get("deepseek"):
+    if feature_manager.can_use("deepseek", event.get_user_id()):
         sid = get_active_sid(event)
         session = get_session(sid)
         msg_count = session["count"]
@@ -546,7 +546,7 @@ async def handle_function(event: Event):
 dsses = on_command("dsses", aliases={"切换会话"}, priority=10, block=True)
 @dsses.handle()
 async def handle_function(args: Message = CommandArg(),event: Event = Event):
-    if privilege_manager.checkuser(event.get_user_id()) and feature_manager.get("deepseek"):
+    if privilege_manager.checkuser(event.get_user_id()) and feature_manager.is_on("deepseek"):
         sid = validate_sid(args.extract_plain_text())
         if sid is None:
             await dsses.finish("会话ID应为正整数！")
@@ -560,8 +560,8 @@ async def handle_function(args: Message = CommandArg(),event: Event = Event):
 # 查询所有已激活的会话ID
 chkses = on_command("chkses", aliases={"检查会话", "seslist", "会话列表"}, priority=10, block=True)
 @chkses.handle()
-async def handle_function():
-    if feature_manager.get("deepseek"):
+async def handle_function(event: Event = Event):
+    if feature_manager.can_use("deepseek", event.get_user_id()):
         ids = sorted(int(k) for k in sessions.keys())
         if ids == [1]:
             resp = "当前已激活的会话：1（默认会话）。"
@@ -574,7 +574,7 @@ async def handle_function():
 dssetup = on_command("dssetup", aliases={"deepseek初始化"}, priority=10, block=True)
 @dssetup.handle()
 async def handle_function(args: Message = CommandArg(),event: Event = Event):
-    if privilege_manager.checkuser(event.get_user_id()) and feature_manager.get("deepseek"):
+    if privilege_manager.checkuser(event.get_user_id()) and feature_manager.is_on("deepseek"):
         # 只对当前会话生效，/reds 后使用新设定
         sid = get_active_sid(event)
         session = get_session(sid)
@@ -588,7 +588,7 @@ async def handle_function(args: Message = CommandArg(),event: Event = Event):
 reds = on_command("reds", aliases={"重置deepseek","重置AI","resetdeepseek"}, priority=10, block=True)
 @reds.handle()
 async def handle_function(args: Message = CommandArg(),event: Event = Event):
-    if privilege_manager.checkuser(event.get_user_id()) and feature_manager.get("deepseek"):
+    if privilege_manager.checkuser(event.get_user_id()) and feature_manager.is_on("deepseek"):
         raw = args.extract_plain_text()
         if raw.strip():
             sid = validate_sid(raw)
@@ -610,7 +610,7 @@ async def handle_function(args: Message = CommandArg(),event: Event = Event):
 dsmd = on_command("dsmd", aliases={"deepseekmarkdown"}, priority=10, block=True)
 @dsmd.handle()
 async def handle_function(args: Message = CommandArg(),event: Event = Event):
-    if not (feature_manager.get("deepseek") and feature_manager.get("rendermd")):
+    if not (feature_manager.can_use("deepseek", event.get_user_id()) and feature_manager.can_use("rendermd", event.get_user_id())):
         raise FinishedException
     misc_manager.tasks.append("ds_chat")
     sid = get_active_sid(event)
@@ -631,7 +631,7 @@ async def handle_function(args: Message = CommandArg(),event: Event = Event):
 dsncmd = on_command("dsncmd", aliases={"ncdsmd","ncdsmd","deepseeknocontextmarkdown"}, priority=10, block=True)
 @dsncmd.handle()
 async def handle_function(args: Message = CommandArg(),event: Event = Event):
-    if not (feature_manager.get("deepseek") and feature_manager.get("rendermd")):
+    if not (feature_manager.can_use("deepseek", event.get_user_id()) and feature_manager.can_use("rendermd", event.get_user_id())):
         raise FinishedException
     misc_manager.tasks.append("ds_chat")
     web.content_md(await chat_once(args.extract_plain_text()))
@@ -641,8 +641,8 @@ async def handle_function(args: Message = CommandArg(),event: Event = Event):
 
 switchengine = on_command("switchai", aliases={"更换AI引擎","切换AI"}, priority=10, block=True)
 @switchengine.handle()
-async def handle_function(args: Message = CommandArg()):
-    if not feature_manager.get("deepseek"):
+async def handle_function(args: Message = CommandArg(), event: Event = Event):
+    if not feature_manager.can_use("deepseek", event.get_user_id()):
         raise FinishedException
     current = config["current_engine"]
     list = config["available_engine_list"]
@@ -664,7 +664,7 @@ async def handle_function(args: Message = CommandArg()):
 anaimg = on_command("anaimg", aliases={"fxtp","分析图片","AI分析图片"}, priority=10, block=True)
 @anaimg.handle()
 async def handle_function(args: Message = CommandArg(),bot: Bot = Bot, event: MessageEvent = Event):
-    if not feature_manager.get("deepseek"):
+    if not feature_manager.can_use("deepseek", event.get_user_id()):
         raise FinishedException
     if not config[config["current_engine"]]["image"]:
         await anaimg.finish("当前 AI 引擎不支持图片分析！请用 /switchai 切换引擎再试哦！")
@@ -691,7 +691,7 @@ async def handle_function(args: Message = CommandArg(),bot: Bot = Bot, event: Me
 checkengine = on_command("checkai", aliases={"查看AI引擎","当前AI引擎"}, priority=10, block=True)
 @checkengine.handle()
 async def handle_function(event: Event = Event):
-    if not feature_manager.get("deepseek"):
+    if not feature_manager.can_use("deepseek", event.get_user_id()):
         raise FinishedException
     current = config["current_engine"]
     if "desc" in config[current]:
@@ -705,8 +705,8 @@ async def handle_function(event: Event = Event):
 
 listengine = on_command("listai", aliases={"列出可用AI引擎"}, priority=10, block=True)
 @listengine.handle()
-async def handle_function():
-    if not feature_manager.get("deepseek"):
+async def handle_function(event: Event = Event):
+    if not feature_manager.can_use("deepseek", event.get_user_id()):
         raise FinishedException
     list = get_available_engine_text_list()
     await listengine.finish(f"当前可用的 AI 引擎有：{list}")
@@ -714,8 +714,8 @@ async def handle_function():
 # 指定模型index优先级
 set_model_index = on_command("modelindex", priority=10, block=True)
 @set_model_index.handle()
-async def handle_function(args: Message = CommandArg()):
-    if not feature_manager.get("deepseek"):
+async def handle_function(args: Message = CommandArg(), event: Event = Event):
+    if not feature_manager.can_use("deepseek", event.get_user_id()):
         raise FinishedException
     current_models = config[config["current_engine"]]["models"]
     index = args.extract_plain_text()
@@ -731,7 +731,7 @@ def split_str_by_length(s, chunk_size):
 changedslimit = on_command("setdscount", priority=10, block=True)
 @changedslimit.handle()
 async def handle_function(args: Message = CommandArg(),event: Event = Event):
-    if privilege_manager.checkuser(event.get_user_id()) and feature_manager.get("deepseek"):
+    if privilege_manager.checkuser(event.get_user_id()) and feature_manager.is_on("deepseek"):
         aaa = args.extract_plain_text()
         if str.isdigit(aaa):
             global msg_limit
@@ -745,7 +745,7 @@ async def handle_function(args: Message = CommandArg(),event: Event = Event):
 aionkeywd = on_keyword(["OpenClaw", "openclaw"], priority=10, block=True)
 @aionkeywd.handle()
 async def handle_function(event: MessageEvent = Event):
-    if not (feature_manager.get("deepseek") and feature_manager.get("fakeclaw")):
+    if not (feature_manager.can_use("deepseek", event.get_user_id()) and feature_manager.get("fakeclaw")):
         raise FinishedException
     misc_manager.tasks.append("ds_chat")
     usrmsg = event.original_message.extract_plain_text()

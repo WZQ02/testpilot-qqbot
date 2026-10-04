@@ -8,15 +8,15 @@ import achievement_manager
 
 expl = on_command("expl", aliases={"名词解释","explain","meaning","什么意思"}, priority=10, block=True)
 @expl.handle()
-async def handle_function(args: Message = CommandArg()):
-    if not feature_manager.get("explain"):
+async def handle_function(args: Message = CommandArg(), event: Event = Event):
+    if not feature_manager.can_use("explain", event.get_user_id()):
         raise FinishedException
     await expl.finish(explain_word(args.extract_plain_text()))
 
 admn = on_command("admn", aliases={"添加名词解释","添加含义","addmean"}, priority=10, block=True)
 @admn.handle()
 async def handle_function(args: Message = CommandArg(),event: Event = Event):
-    if feature_manager.get("explain"):
+    if feature_manager.can_use("explain", event.get_user_id()):
         tg_cm = args.extract_plain_text().split()
         if len(tg_cm) > 1:
             if tg_cm[-1] == '/override':

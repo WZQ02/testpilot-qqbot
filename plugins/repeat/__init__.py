@@ -14,7 +14,7 @@ enable_auto_select_bot()
 rep = on_command("repeat", aliases={"重复","复读上一句"}, priority=10, block=True)
 @rep.handle()
 async def handle_function(event: Event):
-    if not feature_manager.get("repeat"):
+    if not feature_manager.can_use("repeat", event.get_user_id()):
         raise FinishedException
     else:
         sid = event.get_session_id().split("_")
@@ -38,7 +38,7 @@ async def handle_function(event: Event):
             # msglis[groupid] = msg
             msg_cache.cache_msg(groupid,msg)
         # 如果最近三条消息重复，则复读
-        if feature_manager.get("autorepeat") and check_3rep(groupid):
+        if feature_manager.can_use("autorepeat", event.get_user_id()) and check_3rep(groupid):
             await asyncio.sleep(2+random.randint(0,5))
             if check_3rep(groupid):
                 await rep_record.send(msg_cache.get_cached_msg(groupid,0))

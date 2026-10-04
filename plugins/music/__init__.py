@@ -107,7 +107,7 @@ def escape_cq_value(value):
 wyy = on_command("wyy", aliases={"wyyyl","网易云","网易云预览"}, priority=10, block=True)
 @wyy.handle()
 async def handle_function(args: Message = CommandArg(),event: Event = Event):
-    if feature_manager.get("music_web"):
+    if feature_manager.can_use("music_web", event.get_user_id()):
         str = args.extract_plain_text()
         id = parse_music_id(str)
         if id == -1:
@@ -125,7 +125,7 @@ async def handle_function(args: Message = CommandArg(),event: Event = Event):
 wyydl = on_command("wyydl", aliases={"网易云下载","下歌","下载歌曲"}, priority=10, block=True)
 @wyydl.handle()
 async def handle_function(args: Message = CommandArg(),event: Event = Event):
-    if feature_manager.get("music_web"):
+    if feature_manager.can_use("music_web", event.get_user_id()):
         str = args.extract_plain_text()
         id = parse_music_id(str)
         if id == -1:
@@ -143,7 +143,7 @@ async def handle_function(args: Message = CommandArg(),event: Event = Event):
 wyysg = on_command("wyysg", aliases={"网易云搜歌","搜歌","搜索歌曲"}, priority=10, block=True)
 @wyysg.handle()
 async def handle_function(args: Message = CommandArg(),event: Event = Event):
-    if feature_manager.get("music_web"):
+    if feature_manager.can_use("music_web", event.get_user_id()):
         print()
     else:
         raise FinishedException

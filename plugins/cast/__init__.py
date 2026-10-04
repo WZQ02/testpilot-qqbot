@@ -16,7 +16,7 @@ group = 0
 cast = on_command("cast", aliases={"投放"}, priority=10, block=True)
 @cast.handle()
 async def handle_function(args: Message = CommandArg(),event: Event = Event):
-    if not feature_manager.get("cast"):
+    if not feature_manager.can_use("cast", event.get_user_id()):
         raise FinishedException
     bot = get_bot()
     uid = event.get_user_id()
@@ -31,7 +31,7 @@ async def handle_function(args: Message = CommandArg(),event: Event = Event):
 anocast = on_command("anocast", aliases={"匿名投放"}, priority=10, block=True)
 @anocast.handle()
 async def handle_function(args: Message = CommandArg(),event: Event = Event):
-    if not feature_manager.get("cast"):
+    if not feature_manager.can_use("cast", event.get_user_id()):
         raise FinishedException
     bot = get_bot()
     #uid = event.get_user_id()
@@ -46,7 +46,7 @@ async def handle_function(args: Message = CommandArg(),event: Event = Event):
 castgroup = on_command("castgroup", aliases={"投放群聊"}, priority=10, block=True)
 @castgroup.handle()
 async def handle_function(args: Message = CommandArg(),event: Event = Event):
-    if privilege_manager.checkuser(event.get_user_id()) and feature_manager.get("cast"):
+    if privilege_manager.checkuser(event.get_user_id()) and feature_manager.is_on("cast"):
         msg = args.extract_plain_text()
         if (str.isdigit(msg) and int(msg) >= 0):
             global group

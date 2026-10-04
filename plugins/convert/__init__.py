@@ -148,7 +148,7 @@ convert = on_command("convert", aliases={"转换", "转"}, priority=10, block=Tr
 
 @convert.handle()
 async def handle_function(bot: Bot = Bot, event: MessageEvent = Event):
-    if not feature_manager.get("convert"):
+    if not feature_manager.can_use("convert", event.get_user_id()):
         raise FinishedException
 
     rep_con = await plugins.test1.get_reply_content(event.original_message, bot)

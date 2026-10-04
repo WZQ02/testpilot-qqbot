@@ -2,7 +2,7 @@ from typing import Optional
 from nonebot.internal.params import Depends
 
 from nonebot import on_command
-from nonebot.adapters.onebot.v11 import Bot, MessageEvent
+from nonebot.adapters.onebot.v11 import Bot, MessageEvent, Event
 from nonebot.exception import FinishedException
 import feature_manager
 
@@ -17,8 +17,8 @@ def reply_message_id(event: MessageEvent) -> Optional[int]:
 
 revoke = on_command("revoke", aliases={"撤回"}, priority=10, block=True)
 @revoke.handle()
-async def handle_function(bot: Bot, reply_msg_id: Optional[int] = Depends(reply_message_id)):
-    if not feature_manager.get("revoke"):
+async def handle_function(bot: Bot, reply_msg_id: Optional[int] = Depends(reply_message_id), event: Event = Event):
+    if not feature_manager.can_use("revoke", event.get_user_id()):
         raise FinishedException
     if reply_msg_id is not None:
         await bot.delete_msg(message_id=reply_msg_id)

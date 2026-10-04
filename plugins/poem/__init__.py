@@ -1,5 +1,5 @@
 from nonebot import on_command
-from nonebot.adapters.onebot.v11 import Message
+from nonebot.adapters.onebot.v11 import Message, Event
 from nonebot.params import CommandArg
 from nonebot.exception import FinishedException
 import feature_manager
@@ -32,8 +32,8 @@ async def send_poem_lines(matcher, template_lines, keywords):
 
 poem = on_command("poem", aliases={"诗朗诵","吟诗","recite"}, priority=10, block=True)
 @poem.handle()
-async def handle_poem(args: Message = CommandArg()):
-    if not feature_manager.get("poem"):
+async def handle_poem(args: Message = CommandArg(), event: Event = Event):
+    if not feature_manager.can_use("poem", event.get_user_id()):
         raise FinishedException
     
     parsed_args = args.extract_plain_text().split()
@@ -59,8 +59,8 @@ async def handle_poem(args: Message = CommandArg()):
 
 list_poem = on_command("listpoem", aliases={"列出诗模板"}, priority=10, block=True)
 @list_poem.handle()
-async def handle_list_poem():
-    if not feature_manager.get("poem"):
+async def handle_list_poem(event: Event = Event):
+    if not feature_manager.can_use("poem", event.get_user_id()):
         raise FinishedException
     
     if not templates:
@@ -73,8 +73,8 @@ async def handle_list_poem():
 
 add_poem = on_command("addpoem", aliases={"添加诗模板"}, priority=10, block=True)
 @add_poem.handle()
-async def handle_add_poem(args: Message = CommandArg()):
-    if not feature_manager.get("poem"):
+async def handle_add_poem(args: Message = CommandArg(), event: Event = Event):
+    if not feature_manager.can_use("poem", event.get_user_id()):
         raise FinishedException
 
     parsed_args_str = args.extract_plain_text()
@@ -110,8 +110,8 @@ async def handle_add_poem(args: Message = CommandArg()):
 
 del_poem = on_command("delpoem", aliases={"删除诗模板"}, priority=10, block=True)
 @del_poem.handle()
-async def handle_del_poem(args: Message = CommandArg()):
-    if not feature_manager.get("poem"):
+async def handle_del_poem(args: Message = CommandArg(), event: Event = Event):
+    if not feature_manager.can_use("poem", event.get_user_id()):
         raise FinishedException
 
     template_name = args.extract_plain_text().strip()

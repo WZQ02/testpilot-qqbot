@@ -12,8 +12,8 @@ import asyncio
 
 miku = on_command("随机miku", aliases={"随机miratsu","miratsu","miku","39"}, priority=10, block=True)
 @miku.handle()
-async def handle_function():
-    if not feature_manager.get("rand_pic"):
+async def handle_function(event: Event = Event):
+    if not feature_manager.can_use("rand_pic", event.get_user_id()):
         raise FinishedException
     rd = math.ceil(random.random()*21)
     sfx = ""
@@ -25,32 +25,32 @@ async def handle_function():
 
 thwy = on_command("随机fio", aliases={"fio","thwy","璐璐"}, priority=10, block=True)
 @thwy.handle()
-async def handle_function():
-    if not feature_manager.get("rand_pic"):
+async def handle_function(event: Event = Event):
+    if not feature_manager.can_use("rand_pic", event.get_user_id()):
         raise FinishedException
     rd = str(math.ceil(random.random()*13))
     await thwy.finish(Message('[CQ:image,file=file:///'+path_manager.bf_path()+'images/fio/'+rd+'.jpg,sub_type=1,summary=&#91;fio&#93;]'))
 
 mieru = on_command("随机美瑠", aliases={"随机mieru","mieru","loulou","楼楼"}, priority=10, block=True)
 @mieru.handle()
-async def handle_function():
-    if not feature_manager.get("rand_pic"):
+async def handle_function(event: Event = Event):
+    if not feature_manager.can_use("rand_pic", event.get_user_id()):
         raise FinishedException
     rd = str(math.ceil(random.random()*15))
     await mieru.finish(Message('[CQ:image,file=file:///'+path_manager.bf_path()+'images/mieru/'+rd+'.jpg,sub_type=1,summary=&#91;美瑠&#93;]'))
 
 bocchi = on_command("随机bocchi", aliases={"bocchi","随机波奇","波奇","孤独摇滚","ぼっち"}, priority=10, block=True)
 @bocchi.handle()
-async def handle_function():
-    if not feature_manager.get("rand_pic"):
+async def handle_function(event: Event = Event):
+    if not feature_manager.can_use("rand_pic", event.get_user_id()):
         raise FinishedException
     rd = str(math.ceil(random.random()*15))
     await bocchi.finish(Message('[CQ:image,file=file:///'+path_manager.bf_path()+'images/bocchi/'+rd+'.gif,sub_type=1,summary=&#91;波奇酱&#93;]'))
 
 karen = on_command("随机可怜", aliases={"karen","九条可怜","随机金发"}, priority=10, block=True)
 @karen.handle()
-async def handle_function():
-    if not feature_manager.get("rand_pic"):
+async def handle_function(event: Event = Event):
+    if not feature_manager.can_use("rand_pic", event.get_user_id()):
         raise FinishedException
     rd = str(math.ceil(random.random()*20))
     await karen.finish(Message('[CQ:image,file=file:///'+path_manager.bf_path()+'images/karen/'+rd+'.jpg,sub_type=1,summary=&#91;可怜&#93;]'))
@@ -58,7 +58,7 @@ async def handle_function():
 wxhn = on_keyword(["我喜欢你","我爱你","亲亲","贴贴"], rule=to_me(), priority=10, block=True)
 @wxhn.handle()
 async def handle_function(event: Event):
-    if not feature_manager.get("meme_resp"):
+    if not feature_manager.can_use("meme_resp", event.get_user_id()):
         raise FinishedException
     rd = math.ceil(random.random()*7)
     path = "file:///"+path_manager.bf_path()+"images/wxhn/"
@@ -70,8 +70,8 @@ async def handle_function(event: Event):
 
 gugugaga = on_command("gugugaga", aliases={"咕咕嘎嘎","灵感菇里菇里菇里夸恰灵感菇灵感菇"}, priority=10, block=True)
 @gugugaga.handle()
-async def handle_function():
-    if not feature_manager.get("meme_resp"):
+async def handle_function(event: Event = Event):
+    if not feature_manager.can_use("meme_resp", event.get_user_id()):
         raise FinishedException
     await gugugaga.finish(Message('[CQ:record,file=file:///'+path_manager.bf_path()+'audio/gugugaga/gggg'+str(math.ceil(random.random()*8))+'.mp3]'))
 
@@ -80,8 +80,8 @@ passthe_lock = 0
 
 passthebutter = on_keyword(["pass the butter"], priority=10, block=True)
 @passthebutter.handle()
-async def handle_function():
-    if not feature_manager.get("meme_resp"):
+async def handle_function(event: Event = Event):
+    if not feature_manager.can_use("meme_resp", event.get_user_id()):
         raise FinishedException
     global passthe_flag, passthe_lock
     if not passthe_flag:

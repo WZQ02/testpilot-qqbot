@@ -374,7 +374,7 @@ class mai_sdt_gen:
 b50 = on_command("b50", priority=10, block=True)
 @b50.handle()
 async def handle_function(args: Message = CommandArg(),event: Event = Event):
-    if not feature_manager.get("maimai"):
+    if not feature_manager.can_use("maimai", event.get_user_id()):
         raise FinishedException
     # await b50.finish("awmc！抱歉，阁下不能帮你查b50，请另请高明吧！")
     misc_manager.tasks.append("maimai_b50_query")
@@ -397,7 +397,7 @@ async def handle_function(args: Message = CommandArg(),event: Event = Event):
 dxra = on_command("dxra", aliases={"rating"}, priority=10, block=True)
 @dxra.handle()
 async def handle_function(args: Message = CommandArg(),event: Event = Event):
-    if not feature_manager.get("maimai"):
+    if not feature_manager.can_use("maimai", event.get_user_id()):
         raise FinishedException
     #await achievement_manager.add(2,event)
     result = await qddata_pre(args,event,"dxra_detailed")
@@ -406,7 +406,7 @@ async def handle_function(args: Message = CommandArg(),event: Event = Event):
 dxdv = on_command("dxdv", aliases={"锐评b50","cb50","b50dv","b50方差"}, priority=10, block=True)
 @dxdv.handle()
 async def handle_function(args: Message = CommandArg(),event: Event = Event):
-    if not feature_manager.get("maimai"):
+    if not feature_manager.can_use("maimai", event.get_user_id()):
         raise FinishedException
     result = await qddata_pre(args,event,"dxdv")
     await dxdv.finish(result)    
@@ -415,8 +415,8 @@ b50_styles = ["testpilot","prism","circle","random"]
 
 b50stysw = on_command("bstyle", aliases={"b50样式"}, priority=10, block=True)
 @b50stysw.handle()
-async def handle_function(args: Message = CommandArg()):
-    if not feature_manager.get("maimai"):
+async def handle_function(args: Message = CommandArg(), event: Event = Event):
+    if not feature_manager.can_use("maimai", event.get_user_id()):
         raise FinishedException
     style = args.extract_plain_text()
     if style in b50_styles:
@@ -428,7 +428,7 @@ async def handle_function(args: Message = CommandArg()):
 boverlap = on_command("boverlap", aliases={"b50重合"}, priority=10, block=True)
 @boverlap.handle()
 async def handle_function(args: Message = CommandArg(),event: Event = Event):
-    if not feature_manager.get("maimai"):
+    if not feature_manager.can_use("maimai", event.get_user_id()):
         raise FinishedException
     qqnum1 = 0
     qqnum2 = 0
@@ -528,7 +528,7 @@ async def handle_function(args: Message = CommandArg(),event: Event = Event):
 aib50 = on_command("aib50", aliases={"dsb50","ai锐评b50","AI锐评b50"}, priority=10, block=True)
 @aib50.handle()
 async def handle_function(args: Message = CommandArg(),event: Event = Event):
-    if (not feature_manager.get("maimai")) or (not feature_manager.get("deepseek")):
+    if (not feature_manager.can_use("maimai", event.get_user_id())) or (not feature_manager.can_use("deepseek", event.get_user_id())):
         raise FinishedException
     misc_manager.tasks.append("maimai_dsb50")
     result = await qddata_pre(args,event,"json")
@@ -543,7 +543,7 @@ async def handle_function(args: Message = CommandArg(),event: Event = Event):
 maisdt = on_command("maisdt", aliases={"舞萌散点图","舞萌成绩散点图","maimai散点图"}, priority=10, block=True)
 @maisdt.handle()
 async def handle_function(args: Message = CommandArg(),event: Event = Event):
-    if not feature_manager.get("maimai"):
+    if not feature_manager.can_use("maimai", event.get_user_id()):
         raise FinishedException
     # 获取全曲成绩记录
     misc_manager.tasks.append("maimai_b50_query")

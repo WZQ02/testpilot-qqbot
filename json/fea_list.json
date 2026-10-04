@@ -2,35 +2,43 @@
     "fea_list": {
         "achievement_display": {
             "desc": "显示获得的成就",
-            "enable": true
+            "enable": true,
+            "perm": 2
         },
         "actualhelp": {
             "desc": "真正的帮助",
-            "enable": true
+            "enable": true,
+            "perm": 2
         },
         "autojie": {
             "desc": "自动接成语 - 用于“此方bot”所在群聊",
-            "enable": true
+            "enable": true,
+            "perm": 2
         },
         "autorepeat": {
             "desc": "自动复读",
-            "enable": false
+            "enable": false,
+            "perm": 0
         },
         "bilixcx": {
             "desc": "B站、网易云小程序自动解析",
-            "enable": true
+            "enable": true,
+            "perm": 2
         },
         "cast": {
             "desc": "将消息投放到留言板",
-            "enable": true
+            "enable": true,
+            "perm": 2
         },
         "ccb": {
             "desc": "踩踩背",
-            "enable": true
+            "enable": true,
+            "perm": 2
         },
         "changesex": {
             "desc": "变性",
-            "enable": true
+            "enable": true,
+            "perm": 2
         },
         "cmd": {
             "desc": "在bot所在主机上运行命令 - 仅bot作者可用",
@@ -38,7 +46,13 @@
         },
         "deepseek": {
             "desc": "AI相关功能",
-            "enable": true
+            "enable": true,
+            "perm": 2
+        },
+        "dsassist": {
+            "desc": "bot AI助手",
+            "enable": true,
+            "perm": 2
         },
         "websearch": {
             "desc": "联网搜索 - 用于AI对话 - 实验性功能",
@@ -46,19 +60,23 @@
         },
         "echo": {
             "desc": "复读发言",
-            "enable": true
+            "enable": true,
+            "perm": 2
         },
         "echocq": {
             "desc": "复读CQ码 - 仅管理员可用",
-            "enable": true
+            "enable": true,
+            "perm": 1
         },
         "explain": {
             "desc": "名词解释",
-            "enable": true
+            "enable": true,
+            "perm": 2
         },
         "fake": {
             "desc": "假扮群友",
-            "enable": true
+            "enable": true,
+            "perm": 2
         },
         "fake_headpic": {
             "desc": "假扮群友：允许更换头像",
@@ -66,47 +84,58 @@
         },
         "flipoff": {
             "desc": "gbc中指",
-            "enable": true
+            "enable": true,
+            "perm": 2
         },
         "help": {
             "desc": "帮助",
-            "enable": false
+            "enable": false,
+            "perm": 0
         },
         "maimai": {
             "desc": "「舞萌DX」游戏数据查询",
-            "enable": true
+            "enable": true,
+            "perm": 2
         },
         "maimai_emu": {
             "desc": "出勤模拟器",
-            "enable": true
+            "enable": true,
+            "perm": 2
         },
         "meme_resp": {
             "desc": "关键词回应 - 其他",
-            "enable": true
+            "enable": true,
+            "perm": 2
         },
         "meme_resp_laicai": {
             "desc": "关键词回应 - 来财",
-            "enable": true
+            "enable": true,
+            "perm": 2
         },
         "meme_resp_mai": {
             "desc": "关键词回应 - 舞萌",
-            "enable": false
+            "enable": false,
+            "perm": 0
         },
         "meme_resp_mygo": {
             "desc": "关键词回应 - MyGO!!!!!",
-            "enable": false
+            "enable": false,
+            "perm": 0
         },
         "meme_resp_sex": {
             "desc": "关键词回应 - sex",
-            "enable": false
+            "enable": false,
+            "perm": 0
         },
         "ping": {
             "desc": "检查bot在线状态",
-            "enable": true
+            "enable": true,
+            "perm": 2
         },
         "pixiv": {
             "desc": "获取pixiv插图",
-            "enable": true
+            "enable": true,
+            "perm": 2
         },
         "pixiv-r18": {
             "desc": "pixiv插图：允许R-18图片",
@@ -114,83 +143,103 @@
         },
         "poem": {
             "desc": "吟诗",
-            "enable": true
+            "enable": true,
+            "perm": 2
         },
         "poke": {
             "desc": "戳一戳反馈 / 群友戳一戳",
-            "enable": true
+            "enable": true,
+            "perm": 2
         },
         "poll": {
             "desc": "投票",
-            "enable": true
+            "enable": true,
+            "perm": 2
         },
         "qemu": {
             "desc": "虚拟机相关功能",
-            "enable": true
+            "enable": true,
+            "perm": 2
         },
         "qrcode": {
             "desc": "二维码生成、识别",
-            "enable": true
+            "enable": true,
+            "perm": 2
         },
         "rand_num": {
             "desc": "随机数字",
-            "enable": true
+            "enable": true,
+            "perm": 2
         },
         "rand_pic": {
             "desc": "随机表情包",
-            "enable": true
+            "enable": true,
+            "perm": 2
         },
         "randomcs": {
             "desc": "随机扔粑粑 - 用于“抓小哥”相关群聊",
-            "enable": true
+            "enable": true,
+            "perm": 2
         },
         "rendermd": {
             "desc": "将 Markdown 渲染为图片 - 实验性功能",
-            "enable": true
+            "enable": true,
+            "perm": 2
         },
         "repeat": {
             "desc": "复读上一句",
-            "enable": true
+            "enable": true,
+            "perm": 2
         },
         "revoke": {
             "desc": "撤回消息",
-            "enable": true
+            "enable": true,
+            "perm": 2
         },
         "tag_1": {
             "desc": "添加或删除标签",
-            "enable": true
+            "enable": true,
+            "perm": 2
         },
         "tag_2": {
             "desc": "查看标签",
-            "enable": true
+            "enable": true,
+            "perm": 2
         },
         "targetsend": {
             "desc": "定向发送",
-            "enable": true
+            "enable": true,
+            "perm": 2
         },
         "upscale": {
             "desc": "AI图片放大",
-            "enable": true
+            "enable": true,
+            "perm": 2
         },
         "video_web": {
             "desc": "获取网络视频",
-            "enable": true
+            "enable": true,
+            "perm": 2
         },
         "webss": {
             "desc": "网页屏幕截图 - 实验性功能 - 仅管理员可用",
-            "enable": true
+            "enable": true,
+            "perm": 1
         },
         "wzs": {
             "desc": "网站导航",
-            "enable": true
+            "enable": true,
+            "perm": 2
         },
         "xkcd": {
             "desc": "获取xkcd漫画",
-            "enable": true
+            "enable": true,
+            "perm": 2
         },
         "music_web": {
             "desc": "获取网络音乐",
-            "enable": true
+            "enable": true,
+            "perm": 2
         },
         "fakeclaw": {
             "desc": "假扮ClawdBot",
@@ -198,19 +247,28 @@
         },
         "saucenao": {
             "desc": "图片溯源",
-            "enable": true
+            "enable": true,
+            "perm": 2
         },
         "convert": {
             "desc": "转换媒体",
-            "enable": true
+            "enable": true,
+            "perm": 2
         },
         "group_summary": {
             "desc": "群省流",
-            "enable": true
+            "enable": true,
+            "perm": 2
         },
         "web_agent": {
             "desc": "AI上网",
-            "enable": true
+            "enable": true,
+            "perm": 2
+        },
+        "broadcast": {
+            "desc": "广播消息至bot所在所有群聊",
+            "enable": true,
+            "perm": 1
         }
     }
 }

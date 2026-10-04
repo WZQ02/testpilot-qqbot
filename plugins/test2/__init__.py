@@ -1,6 +1,6 @@
 from nonebot import on_command
 from nonebot.params import CommandArg
-from nonebot.adapters.onebot.v11 import Message
+from nonebot.adapters.onebot.v11 import Message, Event
 from nonebot.exception import FinishedException
 import feature_manager
 import path_manager
@@ -11,8 +11,8 @@ web.content_init()
     
 rendermd = on_command("rendermd", aliases={"md渲染","mdrender"}, priority=10, block=True)
 @rendermd.handle()
-async def handle_function(args: Message = CommandArg()):
-    if not feature_manager.get("rendermd"):
+async def handle_function(args: Message = CommandArg(), event: Event = Event):
+    if not feature_manager.can_use("rendermd", event.get_user_id()):
         raise FinishedException
     else:
         web.content_md(args.extract_plain_text())

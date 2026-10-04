@@ -140,7 +140,7 @@ searchpic = on_command("搜图", aliases={"saucenao", "searchpic"}, priority=10,
 
 @searchpic.handle()
 async def handle_function(args: Message = CommandArg(), bot: Bot = Bot, event: MessageEvent = Event):
-    if not feature_manager.get("saucenao"):
+    if not feature_manager.can_use("saucenao", event.get_user_id()):
         raise FinishedException
 
     img_url = ""

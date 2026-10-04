@@ -18,7 +18,7 @@ poke_user_history = []
 
 @pokeresp.handle()
 async def handle_function(event: NoticeEvent):
-    if not feature_manager.get("poke"):
+    if not feature_manager.can_use("poke", event.get_user_id()):
         raise FinishedException
     if isinstance(event, PokeNotifyEvent):
         # print(str(event.get_user_id()))

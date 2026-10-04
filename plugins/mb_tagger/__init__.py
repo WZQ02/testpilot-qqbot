@@ -2,7 +2,7 @@ import tagger
 import json
 
 from nonebot import on_command
-from nonebot.adapters import Message
+from nonebot.adapters import Message, Event
 from nonebot.params import CommandArg
 from nonebot import get_bot
 from nonebot.exception import FinishedException
@@ -10,8 +10,8 @@ import feature_manager
 
 tagger1 = on_command("添加标签", aliases={"tag","add"}, priority=10, block=True)
 @tagger1.handle()
-async def handle_function(args: Message = CommandArg()):
-    if not feature_manager.get("tag_1"):
+async def handle_function(args: Message = CommandArg(), event: Event = Event):
+    if not feature_manager.can_use("tag_1", event.get_user_id()):
         raise FinishedException
     bot = get_bot()
     tg_cm = args.extract_plain_text().split()
@@ -45,8 +45,8 @@ async def handle_function(args: Message = CommandArg()):
 
 tagger2 = on_command("删除标签", aliases={"del","rem"}, priority=10, block=True)
 @tagger2.handle()
-async def handle_function(args: Message = CommandArg()):
-    if not feature_manager.get("tag_1"):
+async def handle_function(args: Message = CommandArg(), event: Event = Event):
+    if not feature_manager.can_use("tag_1", event.get_user_id()):
         raise FinishedException
     bot = get_bot()
     tg_cm = args.extract_plain_text().split()
@@ -80,8 +80,8 @@ async def handle_function(args: Message = CommandArg()):
 
 tagger3 = on_command("查看标签", aliases={"que","查看","look","lookup","展示标签"}, priority=10, block=True)
 @tagger3.handle()
-async def handle_function(args: Message = CommandArg()):
-    if not feature_manager.get("tag_2"):
+async def handle_function(args: Message = CommandArg(), event: Event = Event):
+    if not feature_manager.can_use("tag_2", event.get_user_id()):
         raise FinishedException
     bot = get_bot()
     # 第一个参数是@群员

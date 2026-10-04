@@ -33,7 +33,7 @@ async def do_add(acid,qqid,groupid):
         user_list[qqid] = [acid]
     writeback()
     # 发送消息
-    if feature_manager.get("achievement_display"):
+    if feature_manager.can_use("achievement_display", qqid):
         target = TargetQQGroup(group_id=int(groupid))
         ach_desc = ach_list[acid]["desc"]
         if ach_desc != "":

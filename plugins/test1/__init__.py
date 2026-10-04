@@ -15,22 +15,22 @@ import plugins.member_stuff
 
 ping = on_command("ping", rule=to_me(), aliases={"喂","你好","hello","test","嗨"}, priority=10, block=True)
 @ping.handle()
-async def handle_function():
-    if not feature_manager.get("ping"):
+async def handle_function(event: Event = Event):
+    if not feature_manager.can_use("ping", event.get_user_id()):
         raise FinishedException
     await ping.finish("嗨！")
 
 mzsm = on_command("mzsm", aliases={"免责声明"}, priority=10, block=True)
 @mzsm.handle()
-async def handle_function():
-    if not feature_manager.get("ping"):
+async def handle_function(event: Event = Event):
+    if not feature_manager.can_use("ping", event.get_user_id()):
         raise FinishedException
     await mzsm.finish("免责声明：本 bot 发表的所有言论均只代表我自己的意见，不代表 bot 作者的个人立场，望周知。")
 
 ccb = on_command("ccb", aliases={"踩背","cb"}, priority=10, block=True)
 @ccb.handle()
 async def handle_function(args: Message = CommandArg(),bot: Bot = Bot, event: MessageEvent = Event):
-    if not feature_manager.get("ccb"):
+    if not feature_manager.can_use("ccb", event.get_user_id()):
         raise FinishedException
     # 优先获取args
     if len(args) > 0:
@@ -48,15 +48,15 @@ async def handle_function(args: Message = CommandArg(),bot: Bot = Bot, event: Me
 
 echo = on_command("echo", aliases={"复读"}, priority=10, block=True)
 @echo.handle()
-async def handle_function(args: Message = CommandArg()):
-    if not feature_manager.get("echo"):
+async def handle_function(args: Message = CommandArg(), event: Event = Event):
+    if not feature_manager.can_use("echo", event.get_user_id()):
         raise FinishedException
     await echo.finish(args)
 
 yes = on_command("是", aliases={"yes"}, priority=10, block=True)
 @yes.handle()
-async def handle_function():
-    if not feature_manager.get("meme_resp"):
+async def handle_function(event: Event = Event):
+    if not feature_manager.can_use("meme_resp", event.get_user_id()):
         raise FinishedException
     rd = random.random()
     if rd < .5:
@@ -66,8 +66,8 @@ async def handle_function():
 
 yes = on_command("不是", aliases={"no","否"}, priority=10, block=True)
 @yes.handle()
-async def handle_function():
-    if not feature_manager.get("meme_resp"):
+async def handle_function(event: Event = Event):
+    if not feature_manager.can_use("meme_resp", event.get_user_id()):
         raise FinishedException
     rd = random.random()
     if rd < .5:
@@ -77,8 +77,8 @@ async def handle_function():
 
 setu = on_keyword(["setu","色图","黄图","涩图","好涩","好色","🐍","打飞机","撸管","操逼","屄","操大逼","槽壁","草比"], priority=10, block=True)
 @setu.handle()
-async def handle_function():
-    if not feature_manager.get("meme_resp_sex"):
+async def handle_function(event: Event = Event):
+    if not feature_manager.can_use("meme_resp_sex", event.get_user_id()):
         raise FinishedException
     rd = random.random()
     if rd < .5 and plugins.member_stuff.bot_sex == 1:
@@ -90,8 +90,8 @@ async def handle_function():
 
 mtf = on_keyword(["男娘","南梁","香香软软"], priority=10, block=True)
 @mtf.handle()
-async def handle_function():
-    if not feature_manager.get("meme_resp"):
+async def handle_function(event: Event = Event):
+    if not feature_manager.can_use("meme_resp", event.get_user_id()):
         raise FinishedException
     rd = random.random()
     if rd < .5:
@@ -101,8 +101,8 @@ async def handle_function():
 
 awmc = on_keyword(["maimai","打mai","舞萌","乌蒙","大力拍打或滑动","滴蜡熊","迪拉熊","拉兹","纱露朵","新的旅行伙伴","101.0000%"], priority=10, block=True)
 @awmc.handle()
-async def handle_function():
-    if not feature_manager.get("meme_resp_mai"):
+async def handle_function(event: Event = Event):
+    if not feature_manager.can_use("meme_resp_mai", event.get_user_id()):
         raise FinishedException
     rd = random.random()
     if rd < .1:
@@ -116,8 +116,8 @@ async def handle_function():
 
 mygo = on_keyword(["mygo","MyGO","春日影","crychic","Crychic","组一辈子乐队","你这个人，真是满脑子都","素世","长期素食","要乐奈","丰川祥子","椎名立希","千早爱音","为什么要演奏","高松灯"], priority=10, block=True)
 @mygo.handle()
-async def handle_function():
-    if not feature_manager.get("meme_resp_mygo"):
+async def handle_function(event: Event = Event):
+    if not feature_manager.can_use("meme_resp_mygo", event.get_user_id()):
         raise FinishedException
     await mygo.finish("gop！？")
 
@@ -126,7 +126,7 @@ choslif = on_keyword(["牯岭街","袁正","choose life","虚无主义","犬儒"
 async def handle_function(event: Event = Event):
     if ("choose life" in event.get_plaintext()):
         await achievement_manager.add(10,event)
-    if not feature_manager.get("meme_resp"):
+    if not feature_manager.can_use("meme_resp", event.get_user_id()):
         raise FinishedException
     rd = random.random()
     if rd < .6:
@@ -138,22 +138,22 @@ async def handle_function(event: Event = Event):
 
 yrhy = on_keyword(["犹如幻翳","教你看电影","机械唯物"], priority=10, block=True)
 @yrhy.handle()
-async def handle_function():
-    if not feature_manager.get("meme_resp"):
+async def handle_function(event: Event = Event):
+    if not feature_manager.can_use("meme_resp", event.get_user_id()):
         raise FinishedException
     await yrhy.finish("在在在在在在在在在在在在")
 
 zlkj = on_keyword(["粘连","网络油饼","网络油侠"], priority=10, block=True)
 @zlkj.handle()
-async def handle_function():
-    if not feature_manager.get("meme_resp"):
+async def handle_function(event: Event = Event):
+    if not feature_manager.can_use("meme_resp", event.get_user_id()):
         raise FinishedException
     await zlkj.finish("😭😭😭😭😭")
 
 aywdm = on_keyword(["哎呦我滴妈","哈基米","胖宝宝","叮咚鸡","大狗叫"], priority=10, block=True)
 @aywdm.handle()
-async def handle_function():
-    if not feature_manager.get("meme_resp"):
+async def handle_function(event: Event = Event):
+    if not feature_manager.can_use("meme_resp", event.get_user_id()):
         raise FinishedException
     rd = random.random()
     if plugins.member_stuff.bot_sex == 2:
@@ -168,8 +168,8 @@ async def handle_function():
 
 whocallme = on_keyword(["w机","testpilot","wzq人机","wzqbot"], priority=10, block=True)
 @whocallme.handle()
-async def handle_function():
-    if not feature_manager.get("meme_resp"):
+async def handle_function(event: Event = Event):
+    if not feature_manager.can_use("meme_resp", event.get_user_id()):
         raise FinishedException
     rd = random.random()
     if rd < .6:
@@ -181,8 +181,8 @@ async def handle_function():
 
 sjdsw = on_keyword(["识人术","食人树"], priority=10, block=True)
 @sjdsw.handle()
-async def handle_function():
-    if not feature_manager.get("meme_resp"):
+async def handle_function(event: Event = Event):
+    if not feature_manager.can_use("meme_resp", event.get_user_id()):
         raise FinishedException
     await asyncio.sleep(.5)
     await sjdsw.send("社交的手腕")
@@ -193,8 +193,8 @@ async def handle_function():
 
 laicai = on_keyword(["来财"], priority=10, block=True)
 @laicai.handle()
-async def handle_function():
-    if not feature_manager.get("meme_resp_laicai"):
+async def handle_function(event: Event = Event):
+    if not feature_manager.can_use("meme_resp_laicai", event.get_user_id()):
         raise FinishedException
     await asyncio.sleep(.5)
     await laicai.send("来财")
@@ -212,22 +212,22 @@ async def handle_function():
 
 whosbot = on_keyword(["谁的bot","谁写的"], rule=to_me(), priority=10, block=True)
 @whosbot.handle()
-async def handle_function():
-    if not feature_manager.get("meme_resp"):
+async def handle_function(event: Event = Event):
+    if not feature_manager.can_use("meme_resp", event.get_user_id()):
         raise FinishedException
     await whosbot.finish("妈妈生的")
 
 jiahao = on_keyword(["嘉豪","佳豪","alan walker","艾伦沃克","faded","走路人"], priority=10, block=True)
 @jiahao.handle()
-async def handle_function():
-    if not feature_manager.get("meme_resp"):
+async def handle_function(event: Event = Event):
+    if not feature_manager.can_use("meme_resp", event.get_user_id()):
         raise FinishedException
     await jiahao.finish("哎呦我去艾露迪克")
 
 yyz = on_keyword(["快乐","开心"], priority=10, block=True)
 @yyz.handle()
-async def handle_function():
-    if not feature_manager.get("meme_resp"):
+async def handle_function(event: Event = Event):
+    if not feature_manager.can_use("meme_resp", event.get_user_id()):
         raise FinishedException
     rd = random.random()
     if rd > 0.8:
@@ -239,36 +239,36 @@ async def handle_function():
 
 haosharen1 = on_keyword(["你这人就好杀人"], priority=10, block=True)
 @haosharen1.handle()
-async def handle_function():
-    if not feature_manager.get("meme_resp"):
+async def handle_function(event: Event = Event):
+    if not feature_manager.can_use("meme_resp", event.get_user_id()):
         raise FinishedException
     await haosharen1.finish("对！")
 
 haosharen2 = on_keyword(["就说不听你话就全杀呗","就说不听你话全杀"], priority=10, block=True)
 @haosharen2.handle()
-async def handle_function():
-    if not feature_manager.get("meme_resp"):
+async def handle_function(event: Event = Event):
+    if not feature_manager.can_use("meme_resp", event.get_user_id()):
         raise FinishedException
     await haosharen2.finish("全杀！")
 
 flipof = on_keyword(["你是","机器人","人机","谁啊","没素质","傻逼","sb","你妈","赤石","谁家","杂鱼","低能","吃屎","弱智","操","草你","滚","去死","一边去","idiot","douchebag","bitch","脑残","asshole","牛魔","cnm","废物","飞舞"], rule=to_me(), priority=10, block=True)
 @flipof.handle()
-async def handle_function():
-    if not feature_manager.get("flipoff"):
+async def handle_function(event: Event = Event):
+    if not feature_manager.can_use("flipoff", event.get_user_id()):
         raise FinishedException
     await flipof.finish(Message('[CQ:image,file=file:///'+path_manager.bf_path()+'images/gbc_flip_off.webp,sub_type=1]'))
 
 flipof2 = on_command("flipoff", aliases={"竖中指","比中指"}, priority=10, block=True)
 @flipof2.handle()
-async def handle_function():
-    if not feature_manager.get("flipoff"):
+async def handle_function(event: Event = Event):
+    if not feature_manager.can_use("flipoff", event.get_user_id()):
         raise FinishedException
     await flipof2.finish(Message('[CQ:image,file=file:///'+path_manager.bf_path()+'images/gbc_flip_off.webp,sub_type=1]'))
 
 flipof3 = on_keyword(["滴泪","地雷女","宝宝"], rule=to_me(), priority=10, block=True)
 @flipof3.handle()
-async def handle_function():
-    if not feature_manager.get("flipoff"):
+async def handle_function(event: Event = Event):
+    if not feature_manager.can_use("flipoff", event.get_user_id()):
         raise FinishedException
     rd = random.random()
     if rd < .2:
@@ -279,8 +279,8 @@ async def handle_function():
 
 a67 = on_keyword(["67","sixseven","six seven","六七","刘琦","刘夫妻"], priority=10, block=True)
 @a67.handle()
-async def handle_function():
-    if not feature_manager.get("meme_resp"):
+async def handle_function(event: Event = Event):
+    if not feature_manager.can_use("meme_resp", event.get_user_id()):
         raise FinishedException
     rd = random.random()
     if rd < .67:
@@ -307,7 +307,7 @@ async def handle_function(event: Event = Event):
 upscale = on_command("upscale", aliases={"放大","zoom"}, priority=10, block=True)
 @upscale.handle()
 async def handle_function(args: Message = CommandArg(),bot: Bot = Bot, event: MessageEvent = Event):
-    if not feature_manager.get("upscale"):
+    if not feature_manager.can_use("upscale", event.get_user_id()):
         raise FinishedException
     rep_con = await get_reply_content(event.original_message,bot)
     # 优先从args附带的图片获取

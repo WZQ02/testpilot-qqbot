@@ -24,7 +24,7 @@ def sync():
 autojielong = on_message(priority=10, block=True)
 @autojielong.handle()
 async def handle_function(event: Event = Event):
-    if not feature_manager.get("autojie"):
+    if not feature_manager.can_use("autojie", event.get_user_id()):
         raise FinishedException
     # 检查消息是否由此方bot发起（如果是，则变更起始词语状态，并查找对于词语）
     if (int(event.get_user_id()) == 3928110595):
@@ -81,8 +81,8 @@ async def handle_function():
 
 change_jielong_probability = on_command("自动接龙概率", priority=10, block=True)
 @change_jielong_probability.handle()
-async def handle_function(args: Message = CommandArg()):
-    if not feature_manager.get("autojie"):
+async def handle_function(args: Message = CommandArg(), event: Event = Event):
+    if not feature_manager.can_use("autojie", event.get_user_id()):
         raise FinishedException
     ag = args.extract_plain_text()
     pattern = r'^[-+]?[0-9]+\.[0-9]+$'

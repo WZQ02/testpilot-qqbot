@@ -15,15 +15,15 @@ wztext5 = "https://wzq02.top/otomader-sites/ 音 MAD 作者 / 社团相关网站
 
 ahelp = on_command("actualhelp", aliases={"actual_help","真正的帮助","实际的帮助","真实的帮助"}, priority=10, block=True)
 @ahelp.handle()
-async def handle_function():
-    if not feature_manager.get("actualhelp"):
+async def handle_function(event: Event = Event):
+    if not feature_manager.can_use("actualhelp", event.get_user_id()):
         raise FinishedException
     await ahelp.finish(helptext)
 
 wzs = on_command("sites", aliases={"wzs","小站导航","网站导航"}, priority=10, block=True)
 @wzs.handle()
-async def handle_function(args: Message = CommandArg()):
-    if not feature_manager.get("wzs"):
+async def handle_function(args: Message = CommandArg(), event: Event = Event):
+    if not feature_manager.can_use("wzs", event.get_user_id()):
         raise FinishedException
     text = args.extract_plain_text()
     table = {"": f"{wztext}\n\n{wztext2}\n\n{wztext3}\n\n{wztext4}\n\n{wztext5}", "wzq": wztext, "aira": wztext2, "yzm": wztext3, "pt": wztext4, "otomad": wztext5}
@@ -31,9 +31,9 @@ async def handle_function(args: Message = CommandArg()):
 
 help = on_command("help", aliases={"帮助"}, priority=10, block=True)
 @help.handle()
-async def handle_function():
-    if not feature_manager.get("help"):
-        if not feature_manager.get("actualhelp"):
+async def handle_function(event: Event = Event):
+    if not feature_manager.can_use("help", event.get_user_id()):
+        if not feature_manager.can_use("actualhelp", event.get_user_id()):
             raise FinishedException
         else:
             # await help.finish("请输入 /actualhelp 指令获取帮助哦！")

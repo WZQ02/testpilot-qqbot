@@ -10,8 +10,8 @@ import achievement_manager
 
 xkcd = on_command("xkcd", aliases={"随机xkcd"}, priority=10, block=True)
 @xkcd.handle()
-async def handle_function(args: Message = CommandArg()):
-    if not feature_manager.get("xkcd"):
+async def handle_function(args: Message = CommandArg(), event: Event = Event):
+    if not feature_manager.can_use("xkcd", event.get_user_id()):
         raise FinishedException
     num = None
     ag = args.extract_plain_text()
@@ -24,7 +24,7 @@ async def handle_function(args: Message = CommandArg()):
 pix = on_command("pix", aliases={"p站图片","p站插图"}, priority=10, block=True)
 @pix.handle()
 async def handle_function(args: Message = CommandArg(),event: Event = Event):
-    if not feature_manager.get("pixiv"):
+    if not feature_manager.can_use("pixiv", event.get_user_id()):
         raise FinishedException
     ag = args.extract_plain_text()
     if str.isdigit(ag) and int(ag) >= 1:

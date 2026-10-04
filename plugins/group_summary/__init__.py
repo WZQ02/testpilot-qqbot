@@ -151,7 +151,7 @@ chat_record = on_message(priority=5, block=False)
 
 @chat_record.handle()
 async def handle_record(event: MessageEvent):
-    if not feature_manager.get("group_summary"):
+    if not feature_manager.can_use("group_summary", event.get_user_id()):
         return
     if not isinstance(event, GroupMessageEvent):
         return
@@ -176,7 +176,7 @@ group_summary = on_command("群省流", aliases={"群总结", "qsl"}, priority=1
 
 @group_summary.handle()
 async def handle_summary(event: MessageEvent):
-    if not feature_manager.get("group_summary"):
+    if not feature_manager.can_use("group_summary", event.get_user_id()):
         raise FinishedException
 
     # 私聊兜底

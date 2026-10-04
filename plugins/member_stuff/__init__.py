@@ -39,7 +39,7 @@ lvstr_list2 = ["我喜欢你","爱你喵","我爱你","贴贴","你是一个小�
 randomcs = on_command("rdcs", aliases={"随机赤石","randomchishi","randomcs","随机吃屎","随机扔粑粑"}, priority=10, block=True)
 @randomcs.handle()
 async def handle_function(event: Event = Event):
-    if feature_manager.get("randomcs"):
+    if feature_manager.can_use("randomcs", event.get_user_id()):
         bot = get_bot()
         group_id = get_group_id(event)
         if int(group_id) in spec_list["randomcs_whitelist_groups"]:
@@ -64,7 +64,7 @@ async def handle_function(event: Event = Event):
 randombb = on_command("rdbb", aliases={"randomlove","随机表白"}, priority=10, block=True)
 @randombb.handle()
 async def handle_function(event: Event = Event):
-    if feature_manager.get("randomcs"):
+    if feature_manager.can_use("randomcs", event.get_user_id()):
         bot = get_bot()
         group_id = get_group_id(event)
         mbl = await bot.get_group_member_list(group_id=group_id)
@@ -93,7 +93,7 @@ async def handle_function(event: Event = Event):
 randombb = on_command("rdcp", aliases={"随机凑CP","随机结婚证"}, priority=10, block=True)
 @randombb.handle()
 async def handle_function(args: Message = CommandArg(),event: Event = Event):
-    if feature_manager.get("randomcs"):
+    if feature_manager.can_use("randomcs", event.get_user_id()):
         bot = get_bot()
         group_id = get_group_id(event)
         mbl = await bot.get_group_member_list(group_id=group_id)
@@ -113,8 +113,8 @@ bot_sex = misc_manager.misc_data["bot_sex"]
 
 changesex = on_command("changesex", aliases={"变性","更改性别"}, priority=10, block=True)
 @changesex.handle()
-async def handle_function():
-    if not feature_manager.get("changesex"):
+async def handle_function(event: Event = Event):
+    if not feature_manager.can_use("changesex", event.get_user_id()):
         raise FinishedException
     global bot_sex
     bot = get_bot()
@@ -139,7 +139,7 @@ cf_id = 3928110595
 acexplode = on_command("炸空调", priority=10, block=True)
 @acexplode.handle()
 async def handle_function(event: Event = Event):
-    if not feature_manager.get("meme_resp"):
+    if not feature_manager.can_use("meme_resp", event.get_user_id()):
         raise FinishedException
     bot = get_bot()
     group_id = get_group_id(event)

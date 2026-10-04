@@ -23,7 +23,7 @@ enable_auto_select_bot()
 echocq = on_command("echocq", aliases={"复读CQ","cq"}, priority=10, block=True)
 @echocq.handle()
 async def handle_function(args: Message = CommandArg(),event: Event = Event):
-    if privilege_manager.checkuser(event.get_user_id()) and feature_manager.get("echocq"):
+    if feature_manager.can_use("echocq", event.get_user_id()):
         await echocq.finish(Message(args.extract_plain_text()))
     else:
         raise FinishedException
@@ -33,7 +33,7 @@ tar_send = on_command("send", aliases={"targetsend","定向发送","snd","sendcq
 @tar_send.handle()
 async def handle_function(args: Message = CommandArg(),event: Event = Event):
     # 改为所有人可用
-    if feature_manager.get("targetsend"):
+    if feature_manager.can_use("targetsend", event.get_user_id()):
         data = args.extract_plain_text().split()
         if len(data) > 1 and str.isdigit(data[0]):
             grnum = data[0]
@@ -78,7 +78,7 @@ async def handle_function(args: Message = CommandArg(),event: Event = Event):
 webscrnshot = on_command("webss", aliases={"网页截图"}, priority=10, block=True)
 @webscrnshot.handle()
 async def handle_function(args: Message = CommandArg(),event: Event = Event):
-    if privilege_manager.checkuser(event.get_user_id()) and feature_manager.get("webss"):
+    if feature_manager.can_use("webss", event.get_user_id()):
         await webss.take(args.extract_plain_text())
         await webscrnshot.finish(Message('[CQ:image,file=file:///'+path_manager.bf_path()+'webss/1.png]'))
     else:
@@ -87,17 +87,35 @@ async def handle_function(args: Message = CommandArg(),event: Event = Event):
 CHECK_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>'
 MINUS_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="3.5" stroke-linecap="round"><line x1="5" y1="12" x2="19" y2="12"/></svg>'
 
+def _feature_desc(info):
+    """剥离描述中静态的“仅管理员可用”后缀，改由权限状态实时决定是否追加。"""
+    desc = info.get("desc", "")
+    desc = desc.replace(" - 仅管理员可用", "").replace("-仅管理员可用", "")
+    return _escape_html(desc)
+
 async def render_fea_list():
-    """将功能列表渲染为图片（webss/1.png）。"""
+    """将功能列表渲染为图片（webss/1.png）。三态：0=红横杠，1=黄对勾，2=绿对勾。"""
     template_path = "web/templates/fea_list/index.html"
     with open(template_path, "r", encoding="utf-8") as f:
         template = f.read()
     cards_html = ""
     for name, info in feature_manager.fea_list.items():
-        desc = _escape_html(info.get("desc", ""))
-        enabled = info.get("enable", False)
-        status_cls = "status-on" if enabled else "status-off"
-        status_svg = CHECK_SVG if enabled else MINUS_SVG
+        desc = _feature_desc(info)
+        if "perm" in info:
+            level = info["perm"]
+        else:
+            # 不支持三级权限的功能沿用二元显示
+            level = 2 if info.get("enable", False) else 0
+        if level == 1:
+            status_cls = "status-admin"
+            status_svg = CHECK_SVG
+            desc += "（仅管理员可用）"
+        elif level == 2:
+            status_cls = "status-on"
+            status_svg = CHECK_SVG
+        else:
+            status_cls = "status-off"
+            status_svg = MINUS_SVG
         cards_html += (
             f'<div class="card">'
             f'<div class="card-text">'
@@ -137,6 +155,26 @@ async def handle_function(args: Message = CommandArg(),event: Event = Event):
         await fea3.finish(resp)
     else:
         raise FinishedException
+
+# 设置功能三级权限：0=禁用，1=仅管理员可用，2=全员可用
+fea6 = on_command("设置功能权限", aliases={"setfeature"}, priority=10, block=True)
+@fea6.handle()
+async def handle_function(args: Message = CommandArg(),event: Event = Event):
+    if not privilege_manager.checkuser(event.get_user_id()):
+        raise FinishedException
+    parts = args.extract_plain_text().split()
+    usage = "用法：/设置功能权限 [feature名称] [0/1/2]\n0=禁用，1=仅管理员可用，2=全员可用"
+    if len(parts) != 2:
+        await fea6.finish(usage)
+    fea_name, level_raw = parts
+    if fea_name not in feature_manager.fea_list:
+        await fea6.finish(f"不存在该功能：{fea_name}")
+    if fea_name in feature_manager.NO_PERM_FEATURES:
+        await fea6.finish("该功能不支持三级权限设置，请使用 /enable 或 /disable。")
+    if level_raw not in ("0", "1", "2"):
+        await fea6.finish(usage)
+    resp = feature_manager.set_perm(fea_name, int(level_raw))
+    await fea6.finish(resp)
     
 fea4 = on_command("importfea", aliases={"导入功能列表","import"}, priority=10, block=True)
 @fea4.handle()
@@ -265,11 +303,11 @@ async def handle_function(args: Message = CommandArg(),event: Event = Event):
     raise FinishedException
 """
 
-# 广播（发送至bot所在所有群聊）
+# 广播（发送至bot所在所有群聊），独立功能开关 broadcast（0=禁用，1=仅管理员，2=全员）
 broad = on_command("sendall", aliases={"broadcast","广播"}, priority=10, block=True)
 @broad.handle()
 async def handle_function(args: Message = CommandArg(),event: Event = Event):
-    if (privilege_manager.checkuser(event.get_user_id()) and feature_manager.get("targetsend")) or misc_manager.april_fools_flag():
+    if feature_manager.can_use("broadcast", event.get_user_id()) or misc_manager.april_fools_flag():
         bot = get_bot()
         gr_list = await bot.get_group_list()
         if len(args) > 0:
@@ -319,7 +357,7 @@ async def handle_function(event: Event = Event):
 viewlog = on_command("viewlog", aliases={"日志","查看日志"}, priority=10, block=True)
 @viewlog.handle()
 async def handle_function(event: Event = Event):
-    if privilege_manager.checkuser(event.get_user_id()) and feature_manager.get("rendermd"):
+    if privilege_manager.checkuser(event.get_user_id()) and feature_manager.is_on("rendermd"):
         if os.path.exists('nohup.out'):
             with open('nohup.out', 'r', encoding='utf-8') as f:
                 lines = f.readlines()

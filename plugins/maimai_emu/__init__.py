@@ -117,7 +117,7 @@ play_mai1 = on_command("出勤", aliases={"打舞萌","我要打舞萌","我要�
 @play_mai1.handle()
 async def handle_function(event: Event = Event):
     qqid = event.get_user_id()
-    if not feature_manager.get("maimai_emu") or not valid_player(qqid):
+    if not feature_manager.can_use("maimai_emu", qqid) or not valid_player(qqid):
         raise FinishedException
     global bot_mai_status
     if (bot_mai_status >= 0):
@@ -149,7 +149,7 @@ play_mai2 = on_command("选择难度", aliases={"难度"}, priority=10, block=Tr
 async def handle_function(args: Message = CommandArg(),event: Event = Event):
     qqid = event.get_user_id()
     global bot_mai_status, current_difficulty
-    if (not feature_manager.get("maimai_emu") or bot_mai_status < 1) or not valid_player(qqid):
+    if (not feature_manager.can_use("maimai_emu", qqid) or bot_mai_status < 1) or not valid_player(qqid):
         raise FinishedException
     current_difficulty = parse_difficulty(args.extract_plain_text())
     if current_difficulty > 0:
@@ -163,7 +163,7 @@ play_mai3 = on_command("开始游戏", aliases={"开始"}, priority=10, block=Tr
 async def handle_function(event: Event = Event):
     qqid = event.get_user_id()
     global bot_mai_status, current_difficulty, track_count
-    if (not feature_manager.get("maimai_emu") or bot_mai_status < 1) or not valid_player(qqid):
+    if (not feature_manager.can_use("maimai_emu", qqid) or bot_mai_status < 1) or not valid_player(qqid):
         raise FinishedException
     if bot_mai_status == 1:
         await play_mai3.finish("你还没选择难度！")
@@ -229,7 +229,7 @@ call_help = on_command("召唤机修", aliases={"呼叫机修"}, priority=10, bl
 @call_help.handle()
 async def handle_function(event: Event = Event):
     qqid = event.get_user_id()
-    if not feature_manager.get("maimai_emu") or not valid_player(qqid):
+    if not feature_manager.can_use("maimai_emu", qqid) or not valid_player(qqid):
         raise FinishedException
     global bot_mai_status
     if bot_mai_status >= 0:
@@ -246,7 +246,7 @@ runaway = on_command("更换机厅", priority=10, block=True)
 @runaway.handle()
 async def handle_function(event: Event = Event):
     qqid = event.get_user_id()
-    if not feature_manager.get("maimai_emu") or not valid_player(qqid):
+    if not feature_manager.can_use("maimai_emu", qqid) or not valid_player(qqid):
         raise FinishedException
     global bot_mai_status, track_count, played_time_in_this_session
     bot_mai_status = 0
@@ -258,7 +258,7 @@ async def handle_function(event: Event = Event):
 explos_his = on_command("炸机记录", aliases={"舞萌炸炸记录","炸机次数"}, priority=10, block=True)
 @explos_his.handle()
 async def handle_function(event: Event = Event):
-    if not feature_manager.get("maimai_emu"):
+    if not feature_manager.can_use("maimai_emu", event.get_user_id()):
         raise FinishedException
     qqid = event.get_user_id()
     if (qqid in misc_manager.misc_data["mai_expl_count"]):

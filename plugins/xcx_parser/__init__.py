@@ -30,7 +30,7 @@ xcx = on_message(priority=10, block=True)
 @xcx.handle()
 async def handle_function(event: MessageEvent):
     global xcxrepl_lastnotitime
-    if feature_manager.get("bilixcx"):
+    if feature_manager.can_use("bilixcx", event.get_user_id()):
         # 获取原始消息
         message = event.get_message()
         for segment in message:
@@ -56,7 +56,7 @@ async def handle_function(event: MessageEvent):
                     # 发出的消息
                     replcont = title+"\n"+url
                     # 判断是否需要添加小提示
-                    if (time.time() - xcxrepl_lastnotitime) > 3600*5 and feature_manager.get("video_web"):
+                    if (time.time() - xcxrepl_lastnotitime) > 3600*5 and feature_manager.can_use("video_web", event.get_user_id()):
                         xcxrepl_lastnotitime = time.time()
                         replcont += "\n小提示：发送 /bili "+bvid+" 即可在群聊预览该视频！"
                     await xcx.send(MessageSegment.reply(reply_id)+replcont)
@@ -76,7 +76,7 @@ async def handle_function(event: MessageEvent):
                     if meta["album"]:
                         msg += f'\n专辑：{meta["album"]}'
                     # 判断是否需要添加小提示
-                    if (time.time() - xcxrepl_lastnotitime) > 3600*5 and feature_manager.get("music_web"):
+                    if (time.time() - xcxrepl_lastnotitime) > 3600*5 and feature_manager.can_use("music_web", event.get_user_id()):
                         xcxrepl_lastnotitime = time.time()
                         msg += f"\n小提示：发送 /wyydl {id} 即可下载这首歌！"
                     # 获取消息id
