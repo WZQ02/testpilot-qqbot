@@ -417,6 +417,9 @@ async def analyze_image(url,prompt=anaimage_default_prompt):
     # 当使用glm时，自动切换到glm-4.6v（glm-5不支持图片分析）
     if config["current_engine"] == "zhipu":
         model_index = 1
+    # 当使用deepseek时，自动切换到flash（v4 pro不支持图片分析）
+    if config["current_engine"] == "deepseek":
+        model_index = 0
     resp = await client.chat.completions.create(
         model = config[config["current_engine"]]["models"][model_index],
         messages = [

@@ -5,6 +5,7 @@ from nonebot.params import CommandArg
 from nonebot.adapters.onebot.v11 import Message, Event, Bot, MessageEvent
 import random, math
 import asyncio
+import wave, io, base64
 import httpx
 from nonebot.exception import FinishedException
 import feature_manager
@@ -291,6 +292,32 @@ async def handle_function(event: Event = Event):
         await a67.finish(Message('[CQ:image,file=file:///'+path_manager.bf_path()+'images/67/2.gif,sub_type=1,summary=🫳🫴]'))
     else:
         await a67.finish(Message('[CQ:image,file=file:///'+path_manager.bf_path()+'images/67/3.gif,sub_type=1,summary=🫳🫴]'))
+
+iceaudio = on_keyword(["冰", "🧊"], priority=10, block=True)
+@iceaudio.handle()
+async def handle_function(event: Event = Event):
+    if not feature_manager.can_use("meme_resp", event.get_user_id()):
+        raise FinishedException
+    text = event.get_plaintext()
+    count_emoji = text.count("🧊")
+    count = count_emoji if count_emoji > 0 else text.count("冰")
+    wav_bytes = build_ice_audio(count)
+    b64 = base64.b64encode(wav_bytes).decode()
+    await iceaudio.finish(Message(f"[CQ:record,file=base64://{b64}]"))
+
+def build_ice_audio(count):
+    """按 (count-1) 份 b + 1 份 b2 在 RAM 中拼接 WAV，返回完整 WAV bytes。"""
+    with wave.open("audio/bbb/b.wav", "rb") as wb, \
+         wave.open("audio/bbb/b2.wav", "rb") as wb2:
+        params = wb.getparams()
+        b_frames = wb.readframes(wb.getnframes())
+        b2_frames = wb2.readframes(wb2.getnframes())
+    merged = b_frames * (count - 1) + b2_frames
+    buf = io.BytesIO()
+    with wave.open(buf, "wb") as out:
+        out.setparams(params)
+        out.writeframes(merged)
+    return buf.getvalue()
 
 async def get_image_data(url):
     async with httpx.AsyncClient() as client:
