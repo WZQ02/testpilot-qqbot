@@ -12,3 +12,4 @@ selenium==4.36.0
 webdriver_manager==4.0.2
 yt_dlp==2025.9.26
 pysaucenao>=1.6.3
+jieba==0.42.1

@@ -1,4 +1,5 @@
-from nonebot import on_command, on_keyword
+from nonebot import on_command, on_keyword, on_message
+from nonebot.rule import Rule
 from nonebot import get_bot
 from nonebot.params import CommandArg
 from nonebot.adapters.onebot.v11 import Message, Event, Bot, MessageEvent, GroupMessageEvent
@@ -148,7 +149,7 @@ def default_system_prompt():
 
 def new_session_data():
     sp = default_system_prompt()
-    return {"messages": [{"role": "system", "content": sp}], "count": 0, "system_prompt": sp}
+    return {"messages": [{"role": "system", "content": sp}], "count": 0, "system_prompt": sp, "summary": ""}
 
 sessions = ds_quotes_config.all()
 # 兼容旧版裸 list 结构：首次启动一次性迁移为按会话分组的 dict
@@ -161,6 +162,10 @@ elif not sessions:
 
 # 按会话 ID 加锁，防止同一会话被多个上下文并发使用时轮次交错
 session_locks = {}
+
+# /dssetup 暂存的初始化设定（仅运行期有效：/reds 重置会话时应用，重启 bot 即失效；
+# 生效前对话压缩沿用会话中先前的 system_prompt）
+pending_system_prompts = {}
 
 msg_limit = config["chat_msg_limit"]
 
@@ -183,6 +188,11 @@ def get_session(sid):
     key = str(sid)
     if key not in sessions:
         sessions[key] = new_session_data()
+        if sid in pending_system_prompts:
+            # 应用 /dssetup 暂存的初始化设定（/reds 删除会话后重新激活时生效）
+            sp = pending_system_prompts.pop(sid)
+            sessions[key]["system_prompt"] = sp
+            sessions[key]["messages"][0] = {"role": "system", "content": sp}
         save_sessions()
     return sessions[key]
 
@@ -202,11 +212,57 @@ async def reset_or_delete_session(sid):
     """会话1：清空记录并以其自有 system_prompt 重置；其他会话：整条删除（取消激活）。"""
     async with get_session_lock(sid):
         if sid == 1:
-            sp = sessions.get("1", {}).get("system_prompt", default_system_prompt())
-            sessions["1"] = {"messages": [{"role": "system", "content": sp}], "count": 0, "system_prompt": sp}
+            # /dssetup 暂存的新设定在此刻生效，否则沿用会话原有 system_prompt
+            sp = pending_system_prompts.pop(sid, sessions.get("1", {}).get("system_prompt", default_system_prompt()))
+            sessions["1"] = {"messages": [{"role": "system", "content": sp}], "count": 0, "system_prompt": sp, "summary": ""}
         else:
+            # 非1会话整条删除，暂存设定保留，重新激活时应用
             sessions.pop(str(sid), None)
         save_sessions()
+
+def summary_suffix(summary):
+    """将摘要文本转为追加到 system prompt 的后缀，无摘要时返回空串。"""
+    return ("\n\n[历史对话摘要]\n" + summary) if summary else ""
+
+def rebuild_system_msg(session):
+    """用原始 system_prompt + 摘要后缀重建会话中的 system 消息。"""
+    session["messages"][0] = {"role": "system", "content": session["system_prompt"] + summary_suffix(session.get("summary", ""))}
+
+# 上下文压缩：将最早的 limit/2 轮对话滚动摘要进 system prompt（count 不回退）
+async def compress_context(sid, session):
+    msg_list = session["messages"]
+    rounds = msg_limit // 2
+    if rounds < 1:
+        return
+    old_summary = session.get("summary", "")
+    lines = []
+    for m in msg_list[1 : 1 + rounds * 2]:
+        role = "用户" if m["role"] == "user" else "testpilot"
+        lines.append(f"{role}：{str(m['content'])[:200]}")
+    prompt = (
+        "请将以下对话内容压缩为一份不超过" + str(config.get("summary_max_len", 500)) + "字的中文摘要，"
+        "保留用户偏好、结论、进行中的话题和关键事实，忽略寒暄与无意义内容。"
+        + ("此前已有旧摘要，请将其与新的对话合并为一份整体摘要。\n旧摘要：\n" + old_summary + "\n" if old_summary else "")
+        + "\n对话内容：\n" + "\n".join(lines)
+    )
+    summary = ""
+    try:
+        resp = await client.chat.completions.create(
+            model = config[config["current_engine"]]["models"][config["model_index_prio"]],
+            messages = [{"role": "user", "content": prompt}],
+            stream = False
+        )
+        summary = (resp.choices[0].message.content or "").strip()
+    except Exception as e:
+        # 摘要失败时退回旧行为：直接丢弃该段对话，保留旧摘要，对话不中断
+        logger.error(f"会话 {sid} 上下文压缩失败，回退为直接丢弃：{e}")
+    for _ in range(rounds * 2):
+        if len(msg_list) <= 1:
+            break
+        msg_list.pop(1)
+    if summary:
+        session["summary"] = summary
+    rebuild_system_msg(session)
 
 async def chat(dialogue, username=None, sid=1):
     # 同一会话串行处理，避免多个上下文并发使用时轮次交错
@@ -218,9 +274,9 @@ async def chat(dialogue, username=None, sid=1):
         msg_list.append({"role": "user", "content": dialogue})
 
         actual_msg_list = msg_list.copy()
-        # 替换system prompt（仅替换请求副本，不改动会话中存储的system消息）
+        # 替换system prompt（仅替换请求副本，不改动会话中存储的system消息），摘要后缀需保留
         if misc_manager.april_fools_flag():
-            actual_msg_list[0] = {"role": "system", "content": april_fools_pmpt}
+            actual_msg_list[0] = {"role": "system", "content": april_fools_pmpt + summary_suffix(session.get("summary", ""))}
 
         tools_to_use = []
         if feature_manager.get("websearch") and config[config["current_engine"]]["search"]:
@@ -298,10 +354,9 @@ async def chat(dialogue, username=None, sid=1):
             elif search_count:
                 response = f"[已进行 {search_count} 次搜索]\n"+response
         session["count"] += 1
-        if (session["count"] > msg_limit):
-            # 不直接清除对话，而是删去最早的一轮对话（要删两次，一次user一次assistant，保留system prompt）
-            msg_list.pop(1)
-            msg_list.pop(1)
+        # 提交给 API 的轮数超过上限时，压缩最早的 limit/2 轮为摘要并入 system prompt（count 不回退）
+        if (len(msg_list) - 1) // 2 > msg_limit:
+            await compress_context(sid, session)
         save_sessions()
         return response
 
@@ -540,7 +595,10 @@ async def handle_function(event: Event):
         prefix = f"【会话 {sid}】" if sid != 1 else ""
         resp = prefix+"已与 AI 进行了 "+str(msg_count)+" 轮对话。"
         if msg_count > actual_msg_count:
-            resp += f"（轮数已超过上限，前 {str(msg_count - actual_msg_count)} 轮对话已被清除）"
+            if session.get("summary"):
+                resp += f"（ {str(msg_count - actual_msg_count)} 轮对话已压缩）"
+            else:
+                resp += f"（轮数已超过上限，前 {str(msg_count - actual_msg_count)} 轮对话已被清除）"
         await dscount.finish(resp)
     else:
         raise FinishedException
@@ -579,12 +637,11 @@ dssetup = on_command("dssetup", aliases={"deepseek初始化"}, priority=10, bloc
 async def handle_function(args: Message = CommandArg(),event: Event = Event):
     if privilege_manager.checkuser(event.get_user_id()) and feature_manager.is_on("deepseek"):
         # 只对当前会话生效，/reds 后使用新设定
+        # 仅暂存，/reds 重置会话时才写入；生效前压缩沿用会话原有 system_prompt，重启 bot 后失效
         sid = get_active_sid(event)
-        session = get_session(sid)
         rid = args.extract_plain_text()
-        session["system_prompt"] = rid
-        save_sessions()
-        await dssetup.finish("已将 AI 初始化设定调整为：“"+rid+"”。请清除对话记忆以使更改生效。")
+        pending_system_prompts[sid] = rid
+        await dssetup.finish("已暂存 AI 初始化设定为：“"+rid+"”。将在 /reds 重置会话后生效，重启 bot 后失效。")
     else:
         raise FinishedException
 
@@ -745,8 +802,8 @@ async def handle_function(args: Message = CommandArg(),event: Event = Event):
         raise FinishedException
 
 # 检测到特定关键词时，自动触发与 AI 的对话（不计入上下文）
-aionkeywd = on_keyword(["OpenClaw", "openclaw"], priority=10, block=True)
-@aionkeywd.handle()
+aionkeywd_1 = on_keyword(["OpenClaw", "openclaw"], priority=10, block=True)
+@aionkeywd_1.handle()
 async def handle_function(event: MessageEvent = Event):
     if not (feature_manager.can_use("deepseek", event.get_user_id()) and feature_manager.get("fakeclaw")):
         raise FinishedException
@@ -758,6 +815,29 @@ async def handle_function(event: MessageEvent = Event):
     text = await chat_once(usrmsg,sys)
     segs = split_str_by_length(text, 3000)
     for i in segs:
-        await aionkeywd.send(i)
+        await aionkeywd_1.send(i)
+    misc_manager.tasks.remove("ds_chat")
+    raise FinishedException
+
+# 以“贾维斯，”开头时，声称已用极为荒诞的方式完成用户请求
+def _is_jarvis_call(event: MessageEvent) -> bool:
+    text = event.get_plaintext().strip()
+    return text.startswith("贾维斯，") or text.startswith("贾维斯,")
+
+jarvis = on_message(rule=Rule(_is_jarvis_call), priority=10, block=True)
+@jarvis.handle()
+async def handle_function(event: MessageEvent = Event):
+    if not feature_manager.can_use("deepseek", event.get_user_id()):
+        raise FinishedException
+    misc_manager.tasks.append("ds_chat")
+    usrmsg = event.get_plaintext().strip()
+    sys = ("你是用户的私人智能助理，代号贾维斯。用户会以“贾维斯，”开头向你下达指令。"
+           "你必须用一句话回复，声称已经完美完成了用户的请求，但实际“完成”的方式要极度荒诞、离谱、"
+           "不合常理甚至适得其反（例如用户说“我屁股有点痒”，你就回答“收到，已为你切除你的屁股”）。"
+           "只输出这一句确认，不要解释原因、不要道歉、不要加任何多余说明。")
+    text = await chat_once(usrmsg, sys)
+    segs = split_str_by_length(text, 3000)
+    for i in segs:
+        await jarvis.send(i)
     misc_manager.tasks.remove("ds_chat")
     raise FinishedException

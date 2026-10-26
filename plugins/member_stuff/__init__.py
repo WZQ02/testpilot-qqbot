@@ -89,6 +89,29 @@ async def handle_function(event: Event = Event):
     else:
         raise FinishedException
 
+randomf8fq = on_command("随机f8fq", aliases={"随机飞八分钱","随机八分钱"}, priority=10, block=True)
+@randomf8fq.handle()
+async def handle_function(event: Event = Event):
+    if not feature_manager.can_use("randomcs", event.get_user_id()):
+        raise FinishedException
+    group_id = get_group_id(event)
+    if group_id == "0":
+        await randomf8fq.finish("哦对了")
+    bot = get_bot()
+    mbl = await bot.get_group_member_list(group_id=group_id)
+    member = mbl[random.randint(0,len(mbl)-1)]
+    chqq = str(member['user_id'])
+    # 优先取群名片，其次取昵称，用于拼接被@群员昵称的第一个字
+    name = member.get('card') or member.get('nickname') or chqq
+    if int(chqq) == bot_qq_id:
+        await achievement_manager.add(6,event)
+    if chqq == event.get_user_id():
+        await achievement_manager.add(11,event)
+    # 随机到的用户昵称/群名片含“顺飞”时，at 后回复特定内容
+    if "顺飞" in name:
+        await randomf8fq.finish(Message("[CQ:at,qq="+chqq+"] 咦？这都有飞马干哦"))
+    await randomf8fq.finish(Message("[CQ:at,qq="+chqq+"] 哦对了，"+name[0]+"八分钱"))
+
 """
 randombb = on_command("rdcp", aliases={"随机凑CP","随机结婚证"}, priority=10, block=True)
 @randombb.handle()

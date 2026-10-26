@@ -252,7 +252,7 @@ async def handle_function(event: Event = Event):
         raise FinishedException
     await haosharen2.finish("全杀！")
 
-flipof = on_keyword(["你是","机器人","人机","谁啊","没素质","傻逼","sb","你妈","赤石","谁家","杂鱼","低能","吃屎","弱智","操","草你","滚","去死","一边去","idiot","douchebag","bitch","脑残","asshole","牛魔","cnm","废物","飞舞"], rule=to_me(), priority=10, block=True)
+flipof = on_keyword(["你是","机器人","人机","谁啊","没素质","傻逼","sb","你妈","赤石","谁家","杂鱼","低能","吃屎","弱智","操","草你","滚","去死","一边去","idiot","douchebag","bitch","脑残","asshole","牛魔","cnm","废物","飞舞","八分钱","哦对了"], rule=to_me(), priority=10, block=True)
 @flipof.handle()
 async def handle_function(event: Event = Event):
     if not feature_manager.can_use("flipoff", event.get_user_id()):
@@ -276,7 +276,6 @@ async def handle_function(event: Event = Event):
         await flipof3.finish('捅死你喵！捅死你喵！捅死你喵！捅死你喵！捅死你喵！捅死你喵！')
     else:
         await flipof3.finish(Message('[CQ:image,file=file:///'+path_manager.bf_path()+'images/raincandy/cantflip.png]'))
-
 
 a67 = on_keyword(["67","sixseven","six seven","六七","刘琦","刘夫妻"], priority=10, block=True)
 @a67.handle()
@@ -318,6 +317,20 @@ def build_ice_audio(count):
         out.setparams(params)
         out.writeframes(merged)
     return buf.getvalue()
+
+fahh = on_keyword(["fahh"], priority=10, block=True)
+@fahh.handle()
+async def handle_function(event: Event = Event):
+    if not feature_manager.can_use("meme_resp", event.get_user_id()):
+        raise FinishedException
+    await a67.finish(Message('[CQ:record,file=file:///'+path_manager.bf_path()+'audio/fahh/fahh.mp3]'))
+
+mj = on_keyword(["mj"], priority=10, block=True)
+@mj.handle()
+async def handle_function(event: Event = Event):
+    if not feature_manager.can_use("meme_resp", event.get_user_id()):
+        raise FinishedException
+    await mj.finish(Message('[CQ:image,file=file:///'+path_manager.bf_path()+'images/mj.gif,sub_type=1,summary=&#91;蜘蛛侠&#93;]'))
 
 async def get_image_data(url):
     async with httpx.AsyncClient() as client:

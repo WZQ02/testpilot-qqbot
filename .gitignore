@@ -15,6 +15,7 @@ json/summary_quota.json
 json/web_agent_auth.json
 webss/1.png
 webss/browse_result.png
+webss/wordcloud_*.png
 
 video/temp/*
 music/temp/*

@@ -18,48 +18,50 @@ poke_user_history = []
 
 @pokeresp.handle()
 async def handle_function(event: NoticeEvent):
+    # 戳一戳以外的通知（如表情回应）是基础 NoticeEvent，没有用户上下文，取 user_id 会抛异常
+    if not isinstance(event, PokeNotifyEvent):
+        raise FinishedException
     if not feature_manager.can_use("poke", event.get_user_id()):
         raise FinishedException
-    if isinstance(event, PokeNotifyEvent):
-        # print(str(event.get_user_id()))
-        if event.target_id == event.self_id:
-            # group_id = event.group_id
-            # user_id = event.user_id
-            rd = math.ceil(random.random()*(13+4*2+6))
-            msg = ""
-            if rd <= 10:
-                msg = Message('[CQ:image,file=file:///'+path_manager.bf_path()+'images/poke/poke_'+str(rd)+'.jpg,sub_type=1]')
-            elif 10 < rd < 14: # 11、12、13
-                msg = Message('[CQ:image,file=file:///'+path_manager.bf_path()+'images/poke/poke_'+str(rd)+'.gif,sub_type=1]')
-            elif 13 < rd < 16: # 14、15
-                msg = "干嘛！"
-            elif 15 < rd < 18:
-                msg = "不可以戳我哟！"
-            elif 17 < rd < 20:
-                msg = "诶呦！"
-            elif 19 < rd < 22:
-                msg = "喵"
-            else:
-                msg = ""
-            await poke_user_chk(event)
-            if msg:
-                await pokeresp.send(msg)
-            else:
-                bot = get_bot()
-                group_id = plugins.member_stuff.get_group_id(event)
-                if group_id:
-                    await bot.group_poke(group_id=group_id, user_id=event.get_user_id())
-                else:
-                    await pokeresp.send("哼！")
-        elif int(event.target_id) == plugins.member_stuff.spec_list["special_users"][1]:
-            misc_manager.misc_data["aira_poke_count"] += 1
-        group_id = plugins.member_stuff.get_group_id(event)
-        if (group_id in misc_manager.misc_data["group_poke_count"]):
-            misc_manager.misc_data["group_poke_count"][group_id] += 1
+    # print(str(event.get_user_id()))
+    if event.target_id == event.self_id:
+        # group_id = event.group_id
+        # user_id = event.user_id
+        rd = math.ceil(random.random()*(13+4*2+6))
+        msg = ""
+        if rd <= 10:
+            msg = Message('[CQ:image,file=file:///'+path_manager.bf_path()+'images/poke/poke_'+str(rd)+'.jpg,sub_type=1]')
+        elif 10 < rd < 14: # 11、12、13
+            msg = Message('[CQ:image,file=file:///'+path_manager.bf_path()+'images/poke/poke_'+str(rd)+'.gif,sub_type=1]')
+        elif 13 < rd < 16: # 14、15
+            msg = "干嘛！"
+        elif 15 < rd < 18:
+            msg = "不可以戳我哟！"
+        elif 17 < rd < 20:
+            msg = "诶呦！"
+        elif 19 < rd < 22:
+            msg = "喵"
         else:
-            misc_manager.misc_data["group_poke_count"][group_id] = 1
-        misc_manager.writeback()
-        raise FinishedException
+            msg = ""
+        await poke_user_chk(event)
+        if msg:
+            await pokeresp.send(msg)
+        else:
+            bot = get_bot()
+            group_id = plugins.member_stuff.get_group_id(event)
+            if group_id:
+                await bot.group_poke(group_id=group_id, user_id=event.get_user_id())
+            else:
+                await pokeresp.send("哼！")
+    elif int(event.target_id) == plugins.member_stuff.spec_list["special_users"][1]:
+        misc_manager.misc_data["aira_poke_count"] += 1
+    group_id = plugins.member_stuff.get_group_id(event)
+    if (group_id in misc_manager.misc_data["group_poke_count"]):
+        misc_manager.misc_data["group_poke_count"][group_id] += 1
+    else:
+        misc_manager.misc_data["group_poke_count"][group_id] = 1
+    misc_manager.writeback()
+    raise FinishedException
 
 @emojiresp.handle()
 async def handle_function(bot: Bot, event: NoticeEvent):

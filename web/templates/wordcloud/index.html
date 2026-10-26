@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: "HarmonyOS Sans SC", "Microsoft YaHei", "Helvetica Neue", Arial, sans-serif;
+    background: #ffffff;
+    display: inline-block;
+  }
+  #container {
+    width: 1000px;
+    height: 648px;
+    padding: 24px 28px;
+    border-radius: 26px;
+    position: relative;
+    overflow: hidden;
+    background:
+      radial-gradient(circle at 12% 8%, rgba(120, 160, 255, 0.18), rgba(255, 255, 255, 0) 60%),
+      radial-gradient(circle at 88% 92%, rgba(160, 130, 255, 0.16), rgba(255, 255, 255, 0) 62%),
+      linear-gradient(140deg, #f2f6ff 0%, #f6f2ff 48%, #f0fbf8 100%);
+    box-shadow: inset 0 0 0 1px rgba(120, 150, 220, 0.14);
+  }
+  #wc {
+    display: block;
+    width: 944px;
+    height: 600px;
+  }
+</style>
+</head>
+<body>
+<div id="container">
+  <canvas id="wc" width="1888" height="1200"></canvas>
+</div>
+<script src="assets/wordcloud2.min.js"></script>
+<script>
+  // 每个词随机取色，风格参考浅色底 + 蓝紫红橙混排
+  var PALETTE = [
+    "#1e56e0", "#2b3f9e", "#5a3ff0", "#7b4dff",
+    "#e8452c", "#f0762a", "#f5b81e", "#2aa8f2",
+    "#4fb3ff", "#d94f9e", "#14b8a6", "#2f7d4f"
+  ];
+  var words = /*WORD_DATA*/ [];
+
+  function drawCloud() {
+    var canvas = document.getElementById("wc");
+    if (words.length === 0) return;
+    WordCloud(canvas, {
+      list: words,
+      fontFamily: '"HarmonyOS Sans SC", "Microsoft YaHei", sans-serif',
+      fontWeight: "600",
+      gridSize: 16,          // 画布是 2 倍分辨率，等同视觉上的 8px 网格
+      weightFactor: 2,       // 列表中的 size 按 CSS 像素给出，这里放大到 2 倍画布
+      minSize: 0,
+      color: function () {
+        return PALETTE[Math.floor(Math.random() * PALETTE.length)];
+      },
+      backgroundColor: "rgba(0,0,0,0)",
+      clearCanvas: true,
+      rotateRatio: 0,        // 全部横排，与参考图一致
+      shuffle: true,         // 词序随机 -> 位置随机
+      drawOutOfBound: false,
+      shrinkToFit: false,
+      shape: "diamond",
+      ellipticity: 0.5
+    });
+    window.__wc_done = true;
+  }
+
+  // 必须等字体加载完成再绘制，否则 canvas 会静默回落到默认字体，字号与宽度全变
+  if (document.fonts && document.fonts.load) {
+    Promise.all([
+      document.fonts.load('600 20px "HarmonyOS Sans SC"'),
+      document.fonts.load('800 20px "HarmonyOS Sans SC"')
+    ]).then(drawCloud).catch(drawCloud);
+  } else {
+    drawCloud();
+  }
+</script>
+</body>
+</html>

@@ -64,7 +64,7 @@
             "perm": 2
         },
         "echocq": {
-            "desc": "复读CQ码 - 仅管理员可用",
+            "desc": "复读CQ码",
             "enable": true,
             "perm": 1
         },
@@ -222,7 +222,7 @@
             "perm": 2
         },
         "webss": {
-            "desc": "网页屏幕截图 - 实验性功能 - 仅管理员可用",
+            "desc": "网页屏幕截图 - 实验性功能",
             "enable": true,
             "perm": 1
         },

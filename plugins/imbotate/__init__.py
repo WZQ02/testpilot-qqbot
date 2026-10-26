@@ -73,6 +73,10 @@ async def handle_function(args: Message = CommandArg(),event: Event = Event):
         # 如果指令不发起于群聊
         if not int(group_id):
             await fake.finish("请在群聊发起假扮！")
+        # 参数为 presets/预设时，列出所有可用的假扮预设名称
+        if args.extract_plain_text().strip() in ("presets", "预设"):
+            names = [fake_presets[i]["name"] for i in sorted(fake_presets.keys(), key=lambda x: int(x))]
+            await fake.finish("可用的假扮预设：\n" + "、".join(names))
         # 第一个参数是@群员
         if len(args) > 0 and args[0].type == 'at':
             qqnum = args[0].data['qq']

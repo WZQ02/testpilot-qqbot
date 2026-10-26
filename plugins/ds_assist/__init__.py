@@ -289,6 +289,10 @@ async def assist_chat(question):
             else:
                 output = json.dumps({"error": f"未知工具：{name}"})
             messages.append({"tool_call_id": tool_call.id, "role": "tool", "name": name, "content": output})
+    # AI 可能在工具调用后返回 content=None（仅含 tool_calls 的消息无文本），
+    # 或达到工具调用上限后仍未给出文本回答，此处兜底避免下游 split 崩溃。
+    if not remsg.content:
+        return "你的问题把我给绕晕了！换个方式提问吧。"
     return remsg.content
 
 assist = on_command("bot助手", aliases={"botass", "dshelp"}, priority=10, block=True)
